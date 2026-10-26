@@ -201,6 +201,13 @@
       </section>` : ""}
       <div class="franja">${sticker("lapiz", "st-lapiz")}${esc(T.franja || "")}${sticker("estrella", "st-estrella")}</div>
 
+      ${SC ? `<section class="seccion sc-promo-wrap"><a class="sc-promo" href="#/scoops">
+        <div><span class="sc-tag">✨ ${esc(SC.titulo || "Arma tu Scoop")}</span>
+          <h2>Lucky Scoops 🍬</h2><p>${esc(SC.intro || "Elige tus colores y personajes favoritos y armamos tu scoop.")}</p>
+          <span class="btn">Armar mi scoop</span></div>
+        <div class="sc-promo-imgs">${(SC.opciones || []).filter(o => o.imagen).slice(0, 3).map(o => `<img src="${esc(o.imagen)}" alt="">`).join("")}</div>
+      </a></section>` : ""}
+
       <div class="fondo-gris">
         <section class="seccion"><h2>Compra por categorías</h2>
           <div class="cats">${CATS.map(c => `<a class="cat" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
@@ -300,6 +307,145 @@
     };
   }
 
+  // ---------- Arma tu Scoop ----------
+  const SC = T.scoops && T.scoops.activo ? T.scoops : null;
+  if (SC) $("#menu-scoops").hidden = false;
+  const COLOR_HEX = { rosa: "#f7a1c4", lila: "#c9a7f0", celeste: "#9fd4f5", verde: "#9fe0b4", "verde menta": "#a8ecd0", amarillo: "#ffe27a",
+    blanco: "#ffffff", negro: "#2b2b2b", naranja: "#ffb27a", rojo: "#f26b6b", morado: "#a77bdb", azul: "#7fa8f0",
+    pastel: "linear-gradient(135deg,#f7a1c4,#c9a7f0,#9fd4f5)", multicolor: "linear-gradient(135deg,#f26b6b,#ffe27a,#9fe0b4,#9fd4f5,#c9a7f0)" };
+  const hexDe = c => COLOR_HEX[(c || "").toLowerCase().trim()] || "#f9dbe4";
+  function scoops() {
+    if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
+    const ops = (SC.opciones || []).filter(o => o.nombre && +o.precio > 0);
+    const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null };
+    const minC = +SC.minColores || 2, minP = +SC.minPersonajes || 2, pv = +SC.precioVideo || 0;
+    const ENT = (T.entregas || []).filter(Boolean);
+    app.innerHTML = `<div class="sc-wrap">
+      <section class="sc-hero">
+        <h1>${esc(SC.titulo || "Arma tu Scoop")} <span>🍬</span></h1>
+        <p>${esc(SC.intro || "Elige tu scoop, tus colores y personajes favoritos, ¡y nosotras lo armamos para ti!")}</p>
+      </section>
+      <form id="sc-form" class="sc-form" novalidate>
+        <section class="sc-paso"><div class="sc-num">1</div><div class="sc-cont">
+          <h2>Elige tu scoop</h2>
+          <div class="sc-ops">${ops.map((o, i) => `<label class="sc-op">
+            <input type="radio" name="op" value="${i}">
+            <span class="sc-op-in">${o.imagen ? `<img src="${esc(o.imagen)}" alt="">` : `<span class="sc-op-emoji">🍬</span>`}
+              <b>${esc(o.nombre)}</b><em>${bs(+o.precio)}</em>${o.detalle ? `<small>${esc(o.detalle)}</small>` : ""}</span></label>`).join("")}</div>
+          <div id="sc-contenido"></div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">2</div><div class="sc-cont">
+          <h2>🎨 Colores de preferencia <small>(elige mínimo ${minC})</small></h2>
+          <div class="sc-chips" data-grupo="colores">${(SC.colores || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}"><i style="background:${hexDe(c)}"></i>${esc(c)}</button>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">3</div><div class="sc-cont">
+          <h2>✨ Personajes de preferencia <small>(elige mínimo ${minP})</small></h2>
+          <div class="sc-chips" data-grupo="personajes">${(SC.personajes || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">4</div><div class="sc-cont">
+          <h2>🎥 Video de tu Scoop</h2>
+          ${pv ? `<label class="sc-video"><input type="checkbox" id="sc-video"><span><b>¡Sí, quiero el video! +${bs(pv)}</b><small>Grabamos cómo armamos tu scoop y te etiquetamos en TikTok</small></span></label>` : ""}
+          <div class="form"><input name="tiktok" placeholder="Tu usuario de TikTok (para etiquetarte) — ej: @tuusuario"></div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">5</div><div class="sc-cont">
+          <h2>📝 Tus datos</h2>
+          <div class="form sc-datos">
+            <input name="nombre" placeholder="Tu nombre" required>
+            <input name="telefono" type="tel" inputmode="tel" placeholder="Tu WhatsApp (ej: 71234567)" required>
+            ${ENT.length ? `<select name="entrega" required><option value="" disabled selected>¿Cómo quieres recibirlo?</option>${ENT.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : ""}
+            <input name="ciudad" placeholder="Ciudad" required>
+            <input name="direccion" placeholder="📍 Dirección de entrega" required>
+          </div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
+          <h2>💳 Pago por QR</h2>
+          <div class="sc-pago">
+            ${SC.qr ? `<img class="sc-qr" src="${esc(SC.qr)}" alt="QR de pago">` : ""}
+            <div>
+              <div class="sc-total"><span>Total a pagar</span><b id="sc-total">—</b></div>
+              <p class="nota">${SC.qr ? "Escanea el QR, paga el total y sube aquí la captura de tu comprobante." : "Te enviamos el QR por WhatsApp. Si ya pagaste, sube aquí tu comprobante."}</p>
+              <label class="sc-subir"><input type="file" id="sc-comp" accept="image/*,application/pdf"><span id="sc-comp-txt">📎 Subir comprobante</span></label>
+              <p class="nota">¿No puedes subirlo? Envíalo por WhatsApp después de mandar tu pedido.</p>
+            </div>
+          </div>
+        </div></section>
+
+        <p class="sc-aviso">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad. 💖")}</p>
+        <div class="sc-enviar"><div><small>Total</small><b id="sc-total2">—</b></div><button class="btn btn-wa" type="submit" id="sc-btn">Enviar mi pedido 💖</button></div>
+      </form></div>`;
+
+    const F = $("#sc-form");
+    const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0);
+    const pintarTotal = () => { const t = st.op === null ? "—" : bs(total()); $("#sc-total").textContent = $("#sc-total2").textContent = t; };
+    F.addEventListener("change", e => {
+      if (e.target.name === "op") {
+        st.op = +e.target.value;
+        const o = ops[st.op];
+        $("#sc-contenido").innerHTML = o.contenido ? `<div class="sc-incluye"><b>Incluye:</b><ul>${o.contenido.split("\n").filter(Boolean).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+      }
+      if (e.target.id === "sc-video") st.video = e.target.checked;
+      if (e.target.id === "sc-comp") { st.archivo = e.target.files[0] || null; $("#sc-comp-txt").textContent = st.archivo ? "✅ " + st.archivo.name : "📎 Subir comprobante"; }
+      pintarTotal();
+    });
+    F.addEventListener("click", e => {
+      const b = e.target.closest(".sc-chip"); if (!b) return;
+      const arr = st[b.parentElement.dataset.grupo], v = b.dataset.v, i = arr.indexOf(v);
+      i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0);
+    });
+    const ir = sel => F.querySelector(sel).scrollIntoView({ behavior: "smooth", block: "center" });
+    F.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (st.op === null) { toast("Elige tu scoop 🍬"); return ir(".sc-ops"); }
+      if (st.colores.length < minC) { toast(`Elige mínimo ${minC} colores 🎨`); return ir("[data-grupo=colores]"); }
+      if (st.personajes.length < minP) { toast(`Elige mínimo ${minP} personajes ✨`); return ir("[data-grupo=personajes]"); }
+      if (!F.reportValidity()) return;
+      const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
+      const ventana = window.open("", "_blank");
+      const base = SB.url ? SB.url.replace(/\/$/, "") : "", H = { apikey: SB.key, Authorization: `Bearer ${SB.key}` };
+      let comp = null, numero = null;
+      try {
+        if (st.archivo && base) {
+          const ext = (st.archivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+          const ruta = `pedidos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const r = await fetch(`${base}/storage/v1/object/comprobantes/${ruta}`, { method: "POST", headers: { ...H, "Content-Type": st.archivo.type || "application/octet-stream", "x-upsert": "false" }, body: st.archivo });
+          if (r.ok) comp = ruta;
+        }
+        if (base) {
+          const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
+            body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: f.get("ciudad"), direccion: f.get("direccion"),
+              entrega: f.get("entrega") || "", comprobante: comp,
+              scoop: { opcion: ops[st.op].nombre, cant: 1, video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "" } } }) });
+          if (r.ok) numero = await r.json();
+        }
+      } catch (err) { console.warn(err); }
+      const o = ops[st.op];
+      const msg = [`¡Hola ${T.nombre}! 💖 Quiero armar mi Scoop${numero ? ` (Pedido #${numero})` : ""}:`, "",
+        `📝 Nombre: ${f.get("nombre")}`,
+        `📦 Cantidad de scoops: ${o.nombre} — ${bs(+o.precio)}`,
+        st.video ? `🎥 Video de mi Scoop: +${bs(pv)}` : null,
+        `💳 Comprobante de pago por QR: ${comp ? "subido en la página ✅" : "te lo envío por aquí"}`,
+        `🎨 Colores de preferencia: ${st.colores.join(", ")}`,
+        `✨ Personajes de preferencia: ${st.personajes.join(", ")}`,
+        f.get("tiktok") ? `🎥 Usuario de TikTok: ${f.get("tiktok")}` : null,
+        f.get("entrega") ? `🚚 Entrega: ${f.get("entrega")}` : null,
+        `📍 Dirección de entrega: ${f.get("direccion")}, ${f.get("ciudad")}`,
+        `📱 WhatsApp: ${f.get("telefono")}`, "", `Total: ${bs(total())}`].filter(x => x !== null).join("\n");
+      const url = `https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`;
+      if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
+      btn.disabled = false; btn.textContent = "Enviar mi pedido 💖";
+      if (numero) { app.innerHTML = `<section class="seccion sc-gracias"><div class="banner">
+          ${o.imagen ? `<img src="${esc(o.imagen)}" alt="" style="width:180px;margin:0 auto 10px">` : ""}
+          <h2>¡Recibimos tu Scoop! 💖</h2><p>Tu pedido es el <b>#${numero}</b>. ${comp ? "Ya tenemos tu comprobante." : "Recuerda enviarnos tu comprobante por WhatsApp."} Te escribimos pronto para coordinar la entrega.</p>
+          <a class="btn" href="#/">Volver a la tienda</a></div></section>`; window.scrollTo(0, 0); }
+    });
+    pintarTotal();
+  }
+
   function nosotros() {
     app.innerHTML = `<section class="seccion"><h2>Nosotros</h2><p class="texto">${esc(T.nosotros).replace(/\n/g, "<br>")}</p></section>`;
   }
@@ -322,10 +468,11 @@
   // ---------- Rutas ----------
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
+    document.body.classList.toggle("en-scoop", (location.hash.split("/")[1] || "") === "scoops");
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), producto: () => producto(arg), nosotros, contacto }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), producto: () => producto(arg), nosotros, contacto, scoops }[sec] || inicio)();
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", ruta);

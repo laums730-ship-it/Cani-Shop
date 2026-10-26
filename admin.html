@@ -134,6 +134,15 @@
     .catf .bt{display:flex;gap:4px}
     .catf .bt button{min-width:32px;height:32px;border-radius:10px;border:0;background:#fff;font-weight:800;font-size:.8rem}
     .catf .bt button.q{background:#fdecee;color:var(--rojo)}
+    .scopf{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:start;background:var(--rosa-claro);border-radius:14px;padding:8px}
+    .scopf .cat-img{width:70px;height:70px}
+    .scopf-campos{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .scopf-fila{display:grid;grid-template-columns:1fr 90px;gap:6px}
+    .scopf input,.scopf textarea{border:2px solid var(--borde);border-radius:10px;padding:8px 10px;background:#fff;width:100%;min-width:0;font:inherit}
+    .scopf summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--rosa-osc)}
+    .scopf .bt{display:flex;flex-direction:column;gap:4px}
+    .scopf .bt button{width:32px;height:32px;border-radius:10px;border:0;background:#fff;font-weight:800}
+    .scopf .bt button.q{background:#fdecee;color:var(--rojo)}
     .subir-ancho{aspect-ratio:auto;padding:16px;margin-bottom:14px}
     .guardar-barra{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,#f8f3f5 30%)}
     .guardar-barra .btn{width:100%;padding:14px}
@@ -177,6 +186,8 @@
     .estados span{display:inline-block;border:2px solid var(--borde);border-radius:999px;padding:7px 12px;font-weight:800;font-size:.88rem;cursor:pointer;background:#fff}
     .estados input:checked+span{border-color:var(--rosa-tinta);background:var(--rosa-claro);color:var(--rosa-osc)}
     .ped-items{display:flex;flex-direction:column;gap:8px}
+    .extra-box{background:#fff;border:2px dashed var(--rosa-fuerte);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;margin-top:6px}
+    .extra-box h3{font-size:1.05rem}
     .pit{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px}
     .pit.sin{border-color:#f5c6cb;background:#fdf6f7}
     .pit h4{margin:0;font-size:.98rem}
@@ -310,6 +321,30 @@
     </div>
 
     <section class="caja">
+      <h2>🍬 Scoops (Arma tu Scoop)</h2>
+      <p class="ayuda">La página donde tus clientes arman su scoop. Ya la llené con tu catálogo; revisa y toca <b>Guardar cambios</b>.</p>
+      <label class="check" style="margin-bottom:12px"><input type="checkbox" name="sc_activo"> Mostrar “Arma tu Scoop” en mi tienda</label>
+      <div class="fila">
+        <div class="campo"><label>Título</label><input name="sc_titulo" placeholder="Arma tu Scoop"></div>
+        <div class="campo"><label>Precio del video (Bs)</label><input name="sc_precioVideo" type="number" min="0" step="0.5"></div>
+      </div>
+      <div class="campo"><label>Texto de bienvenida</label><input name="sc_intro"></div>
+      <div class="campo"><label>Opciones (tamaños)</label>
+        <div id="aj-scops" class="cats-ed"></div>
+        <button type="button" class="btn btn-sec btn-sm" id="aj-addscop" style="margin-top:10px;align-self:flex-start">＋ Agregar opción</button>
+      </div>
+      <div class="fila">
+        <div class="campo"><label>🎨 Colores (uno por línea)</label><textarea name="sc_colores" rows="6"></textarea>
+          <label style="font-weight:700;font-size:.85rem">Mínimo a elegir <input name="sc_minColores" type="number" min="0" max="10" style="width:70px;display:inline-block;padding:5px 8px"></label></div>
+        <div class="campo"><label>✨ Personajes (uno por línea)</label><textarea name="sc_personajes" rows="6"></textarea>
+          <label style="font-weight:700;font-size:.85rem">Mínimo a elegir <input name="sc_minPersonajes" type="number" min="0" max="10" style="width:70px;display:inline-block;padding:5px 8px"></label></div>
+      </div>
+      <div class="campo"><label>💳 Tu QR de pago</label><div class="mini" data-img="scQr"></div>
+        <p class="ayuda">Si lo subes, aparece en la página para que paguen y suban su comprobante.</p></div>
+      <div class="campo"><label>Nota final</label><textarea name="sc_nota" rows="2"></textarea></div>
+    </section>
+
+    <section class="caja">
       <h2>🏷️ Categorías</h2>
       <p class="ayuda">Toca el círculo para ponerle foto (si no, se muestra el emoji). <b>“Arriba”</b> = aparece en los círculos de arriba del inicio.</p>
       <div id="aj-cats" class="cats-ed"></div>
@@ -405,6 +440,7 @@
     <div class="campo"><label>Dirección</label><input name="direccion"></div>
     <div class="campo"><label>Nota</label><textarea name="nota" rows="2"></textarea></div>
 
+    <div id="ped-extra"></div>
     <div class="sep"></div>
     <div class="campo"><label>Productos</label>
       <div id="ped-items" class="ped-items"></div>
@@ -767,10 +803,40 @@
   let AJ = {}, banners = [], imgs = {};
   const LISTAS = ["avisos", "busquedas", "entregas"];
   const TEXTOS = ["franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
-  let categorias = [];
+  let categorias = [], scops = [];
+  function pintarScops() {
+    $("#aj-scops").innerHTML = scops.map((o, i) => `<div class="scopf">
+        <label class="cat-img" title="Cambiar imagen" style="border-radius:16px">${o.imagen ? `<img src="${esc(o.imagen)}" alt="" style="object-fit:contain">` : `<span>🍬</span>`}<input type="file" accept="image/*" hidden data-scimg="${i}"></label>
+        <div class="scopf-campos">
+          <div class="scopf-fila"><input data-sco="${i}" data-f="nombre" value="${esc(o.nombre)}" placeholder="Nombre (ej: 1 Scoop)">
+            <input data-sco="${i}" data-f="precio" type="number" min="0" step="0.5" value="${esc(o.precio)}" placeholder="Bs"></div>
+          <input data-sco="${i}" data-f="detalle" value="${esc(o.detalle || "")}" placeholder="Detalle (ej: Entre 10-13 productos)">
+          <details ${o.contenido ? "" : ""}><summary>Qué incluye (opcional)</summary><textarea data-sco="${i}" data-f="contenido" rows="4" placeholder="Un producto por línea">${esc(o.contenido || "")}</textarea></details>
+        </div>
+        <div class="bt">
+          <button type="button" data-scsube="${i}" ${i ? "" : "disabled"} aria-label="Subir">↑</button>
+          <button type="button" data-scbaja="${i}" ${i < scops.length - 1 ? "" : "disabled"} aria-label="Bajar">↓</button>
+          <button type="button" class="q" data-scborra="${i}" aria-label="Quitar">✕</button>
+        </div></div>`).join("");
+  }
   // Datos de tu tienda en Kyte, para que no tengas que escribirlos de nuevo
   const SH = "https://canishopbo.myshopify.com/cdn/shop/";
   const DEF = {
+    scoops: {
+      activo: true, titulo: "Arma tu Scoop", precioVideo: 5, minColores: 2, minPersonajes: 2,
+      intro: "Elige tu Lucky Scoop, tus colores y personajes favoritos ¡y lo armamos para ti! 💖",
+      opciones: [
+        { nombre: "1 Scoop", precio: 100, detalle: "Entre 10-13 productos", imagen: "img/scoop-1.webp", contenido: "" },
+        { nombre: "2 Scoops", precio: 190, detalle: "Entre 20-26 productos", imagen: "img/scoop-2.webp", contenido: "" },
+        { nombre: "3 Scoops", precio: 280, detalle: "Entre 30-36 productos", imagen: "img/scoop-3.webp", contenido: "" },
+        { nombre: "Cajita Mágica", precio: 180, detalle: "20 productos (Mini Ventilador, Bricks, Pecheras, Bolsos)", imagen: "img/cajita-magica.webp",
+          contenido: ["1 Estuche o Elemento Especial", "1 Libreta", "1 Vincha de skincare", "1 Tijera o Porta diurex", "1 Estuche de reglas", "1 Set de marcadores", "1 Cepillo Mediano", "1 Stationery Set", "1 Tajador", "1 Borrador",
+            "1 Post it", "1 Mascarilla de Skincare", "1 Resaltador", "1 Llavero o Mini Cuaderno", "1 Bálsamo", "1 Cuter o Corrector", "1 Lapicero borrable", "1 Washitape", "1 Lámina de stickers", "1 Borrador Sorpresa"].join("\n") }
+      ],
+      colores: ["Rosa", "Lila", "Celeste", "Verde", "Amarillo", "Blanco", "Naranja", "Rojo"],
+      personajes: ["My Melody", "Pochacco", "Kuromi", "Cinnamoroll", "Pompompurin", "Snoopy", "Hello Kitty", "Gatitos", "BTS", "Stitch"],
+      qr: "", nota: "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad. 💖"
+    },
     whatsapp: "59177885309", instagram: "https://instagram.com/canishopbo", ubicacion: "Santa Cruz de la Sierra, Bolivia",
     entregas: ["Envío por Yango (Santa Cruz)", "Recojo en Santa Cruz (coordinamos por WhatsApp)", "Envío a otra ciudad de Bolivia"],
     banners: [{ imagen: "https://firebasestorage.googleapis.com/v0/b/kyte-7c484.appspot.com/o/mR1noP057GhQAC%2FTz20crYCRofZFtA7m0wyjQ%3D%3D.jpg?alt=media&token=72439174-71f2-4cc4-88ed-373c2b8d6529", enlace: "#/catalogo" }],
@@ -814,8 +880,13 @@
     if (/^5917\d{7}$|^5916\d{7}$/.test(A.whatsapp.value)) A.whatsapp.value = A.whatsapp.value.slice(3);
     if (A.whatsapp.value === "70000000") A.whatsapp.value = "";
     banners = (AJ.banners || []).map(b => ({ ...b }));
-    imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "" };
-    pintarBanners(); pintarMinis(); pintarCats();
+    imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "", scQr: (AJ.scoops || {}).qr || "" };
+    const S0 = { ...DEF.scoops, ...(AJ.scoops || {}) };
+    A.sc_activo.checked = !!S0.activo;
+    ["titulo", "intro", "nota", "precioVideo", "minColores", "minPersonajes"].forEach(k => A["sc_" + k].value = S0[k] ?? "");
+    A.sc_colores.value = (S0.colores || []).join("\n"); A.sc_personajes.value = (S0.personajes || []).join("\n");
+    scops = (S0.opciones || []).map(o => ({ ...o }));
+    pintarBanners(); pintarMinis(); pintarCats(); pintarScops();
   }
 
   // Categorías
@@ -857,6 +928,21 @@
     }
     pintarCats();
   });
+  $("#aj-scops").addEventListener("input", e => { const { sco, f } = e.target.dataset; if (sco !== undefined) scops[sco][f] = f === "precio" ? (parseFloat(e.target.value) || 0) : e.target.value; });
+  $("#aj-scops").addEventListener("change", async e => {
+    const i = e.target.dataset.scimg; if (i === undefined || !e.target.files[0]) return;
+    toast("Subiendo…"); const u = await subirArchivo(e.target.files[0], "scoops", 700);
+    if (u) { scops[i].imagen = u; pintarScops(); toast("Listo, ahora toca Guardar cambios"); }
+  });
+  $("#aj-scops").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const d = b.dataset, mover = (i, j) => { [scops[i], scops[j]] = [scops[j], scops[i]]; };
+    if (d.scsube) mover(+d.scsube, +d.scsube - 1);
+    if (d.scbaja) mover(+d.scbaja, +d.scbaja + 1);
+    if (d.scborra && confirm(`¿Quitar "${scops[d.scborra].nombre}"?`)) scops.splice(+d.scborra, 1);
+    pintarScops();
+  });
+  $("#aj-addscop").onclick = () => { scops.push({ nombre: "", precio: 0, detalle: "", imagen: "", contenido: "" }); pintarScops(); };
   $("#aj-addcat").onclick = () => {
     categorias.push({ id: "", nombre: "", emoji: "🏷️" }); pintarCats();
     $(`[data-catnom="${categorias.length - 1}"]`).focus();
@@ -873,7 +959,7 @@
   A.addEventListener("change", async e => {
     const k = e.target.dataset.mini; if (!k || !e.target.files[0]) return;
     toast("Subiendo…");
-    const u = await subirArchivo(e.target.files[0], "tienda", 400);
+    const u = await subirArchivo(e.target.files[0], "tienda", k === "scQr" ? 1000 : 400);
     if (u) { imgs[k] = u; pintarMinis(); toast("Listo, ahora toca Guardar cambios"); }
   });
 
@@ -918,6 +1004,14 @@
       tiktok: red(A.tiktok.value, "https://www.tiktok.com/@"),
       banners: banners.map(b => ({ imagen: b.imagen, enlace: (b.enlace || "").trim() })),
       gatoIzq: imgs.gatoIzq, gatoDer: imgs.gatoDer,
+      scoops: {
+        activo: A.sc_activo.checked, titulo: A.sc_titulo.value.trim(), intro: A.sc_intro.value.trim(), nota: A.sc_nota.value.trim(),
+        precioVideo: num(A.sc_precioVideo.value), minColores: Math.round(num(A.sc_minColores.value)), minPersonajes: Math.round(num(A.sc_minPersonajes.value)),
+        colores: A.sc_colores.value.split("\n").map(x => x.trim()).filter(Boolean),
+        personajes: A.sc_personajes.value.split("\n").map(x => x.trim()).filter(Boolean),
+        opciones: scops.filter(o => o.nombre.trim() && num(o.precio) > 0).map(o => ({ nombre: o.nombre.trim(), precio: num(o.precio), detalle: (o.detalle || "").trim(), imagen: o.imagen || "", contenido: (o.contenido || "").trim() })),
+        qr: imgs.scQr || ""
+      },
       categorias: (() => {
         const usados = new Set();
         return categorias.filter(c => c.nombre.trim()).map(c => {
@@ -984,6 +1078,8 @@
           <h3>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</h3>
           <div class="meta"><span>${fecha(p.creado)}</span><span>${n} producto${n === 1 ? "" : "s"}</span>
             ${p.origen === "manual" ? `<span class="tag gris">Venta manual</span>` : ""}
+            ${(p.extra || {}).tipo === "scoop" ? `<span class="tag">🍬 Scoop</span>` : ""}
+            ${(p.extra || {}).comprobante ? `<span class="tag" style="background:#e8f8ef;color:#1d7a4c">📎 Comprobante</span>` : ""}
             ${p.entrega ? `<span>🚚 ${esc(p.entrega)}</span>` : ""}</div>
           ${faltaEn(p) ? `<div class="falta">⚠️ Falta stock de algún producto: revísalo</div>` : ""}
         </div>
@@ -1008,8 +1104,27 @@
     $("#ped-entregas").innerHTML = (AJ.entregas || []).map(x => `<option value="${esc(x)}">`).join("");
     $("#ped-prods").innerHTML = [...PRODS].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(p => `<option value="${esc(p.nombre)} · ${bs(p.precio)}">`).join("");
     $("#ped-borrar").hidden = !ED.numero;
-    pintarItems();
+    pintarExtra(); pintarItems();
     $("#ped-velo").hidden = $("#ped").hidden = false;
+  }
+  function pintarExtra() {
+    const x = ED.extra || {};
+    if (!x.tipo && !x.comprobante) { $("#ped-extra").innerHTML = ""; return; }
+    const chips = arr => (arr || []).map(c => `<span class="tag">${esc(c)}</span>`).join(" ") || "—";
+    $("#ped-extra").innerHTML = `<div class="extra-box">
+      ${x.tipo === "scoop" ? `<h3>🍬 Detalles del Scoop</h3>
+        <div><b>🎨 Colores:</b> ${chips(x.colores)}</div>
+        <div><b>✨ Personajes:</b> ${chips(x.personajes)}</div>
+        <div><b>🎥 Video:</b> ${x.video ? "Sí ✅" : "No"}${x.tiktok ? ` · TikTok: <b>${esc(x.tiktok)}</b>` : ""}</div>` : ""}
+      <div><b>💳 Comprobante:</b> ${x.comprobante ? `<button type="button" class="btn btn-sec btn-sm" id="ver-comp">📎 Ver comprobante</button>` : "No lo subió (pídelo por WhatsApp)"}</div>
+    </div>`;
+    const b = $("#ver-comp");
+    if (b) b.onclick = async () => {
+      const w = window.open("", "_blank");
+      const { data, error } = await db.storage.from("comprobantes").createSignedUrl(x.comprobante, 600);
+      if (error || !data) { if (w) w.close(); return toast("No se pudo abrir el comprobante", true); }
+      if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
+    };
   }
   function infoStock() {
     FP.classList.toggle("bloqueado", !!ED.stock_descontado);
@@ -1035,7 +1150,9 @@
     }).join("") : `<p class="ayuda" style="margin:0">Sin productos todavía.</p>`;
     totalesPed();
   }
+  const esScoop = i => i.id === "scoop" || i.id === "video-scoop";
   function txtStock(i) {
+    if (esScoop(i)) return "🍬 Se arma a pedido";
     const s = stockDe(i);
     return s === null ? "Este producto ya no existe en tu catálogo" : ED.stock_descontado ? "Stock descontado ✔" : s < num(i.cant) ? `⚠️ Solo hay ${s} en stock` : `Stock: ${s}`;
   }
@@ -1145,7 +1262,7 @@
     const tel = (T2.whatsapp || "").replace(/^591/, "");
     const filas = ED.items.map(i => `<tr>
         <td class="c">${num(i.cant)}</td>
-        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
+        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${i.id === "scoop" && (ED.extra || {}).tipo === "scoop" ? `<small>Colores: ${esc((ED.extra.colores || []).join(", "))}<br>Personajes: ${esc((ED.extra.personajes || []).join(", "))}</small>` : ""}${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="r">${bs(linea(i))}</td></tr>`).join("");
     const entrega = [v.entrega, v.ciudad, v.direccion].filter(Boolean).map(esc).join("<br>") || "—";
     const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
