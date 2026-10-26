@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cani Shop</title>
+  <meta name="description" content="Cani Shop — productos kawaii, Sanrio, Snoopy y papelería. Envíos a toda Bolivia.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="aviso"><span id="aviso-texto"></span></div>
+
+  <header class="cabecera">
+    <a href="#/" class="marca"><img id="logo" alt=""><span id="marca-nombre"></span></a>
+    <nav class="menu" id="menu">
+      <a href="#/">Inicio</a>
+      <a href="#/catalogo">Catálogo</a>
+      <a href="#/nosotros">Nosotros</a>
+      <a href="#/contacto">Contacto</a>
+    </nav>
+    <div class="acciones">
+      <button class="icono" id="btn-buscar" aria-label="Buscar">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      <button class="icono" id="btn-carrito" aria-label="Carrito">
+        <svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="contador" id="contador">0</span>
+      </button>
+      <button class="icono solo-movil" id="btn-menu" aria-label="Menú">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="barra-busqueda" id="barra-busqueda" hidden>
+    <input id="input-buscar" type="search" placeholder="Buscar productos…">
+  </div>
+
+  <main id="app"></main>
+
+  <footer class="pie">
+    <div><strong id="pie-nombre"></strong><p>Envíos a toda Bolivia 🐾</p></div>
+    <div id="pie-redes"></div>
+    <small>© <span id="anio"></span> <span id="pie-nombre2"></span></small>
+  </footer>
+
+  <!-- Carrito -->
+  <div class="velo" id="velo"></div>
+  <aside class="carrito" id="carrito" aria-label="Carrito">
+    <div class="carrito-cab">
+      <h2>Tu carrito</h2>
+      <button class="icono" id="cerrar-carrito" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="carrito-items" class="carrito-items"></div>
+    <div class="carrito-pie" id="carrito-pie">
+      <div class="total"><span>Subtotal</span><strong id="subtotal"></strong></div>
+      <p class="nota">El envío se coordina por WhatsApp.</p>
+      <form id="form-pedido" class="form">
+        <input name="nombre" placeholder="Tu nombre" required>
+        <input name="ciudad" placeholder="Ciudad" required>
+        <input name="direccion" placeholder="Dirección o punto de entrega">
+        <textarea name="nota" rows="2" placeholder="Nota (opcional)"></textarea>
+        <button class="btn btn-wa" type="submit">
+          <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z"/></svg>
+          Pedir por WhatsApp
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="productos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
