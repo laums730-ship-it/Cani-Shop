@@ -8,7 +8,16 @@ window.TIENDA = {
   whatsapp: "59170000000",
   moneda: "Bs",
   avisos: ["Scoops y ventas unitarias", "Envíos a toda Bolivia", "Te damos la bienvenida a nuestra tienda"],
-  logo: "https://canishopbo.myshopify.com/cdn/shop/files/Gatito_negro_con_hojas_verdes.png?v=1792972704&width=300",
+  // Tu logo: sube tu imagen a GitHub con el nombre logo.png (junto a index.html).
+  // Mientras no exista, se muestra el nombre con letras rosadas.
+  logo: "logo.png",
+  // Gatitos de la barra rosada de arriba (izquierda y derecha)
+  gatoIzq: "https://canishopbo.myshopify.com/cdn/shop/files/gato-negro-anuncio-der.png?v=1792971984&width=300",
+  gatoDer: "https://canishopbo.myshopify.com/cdn/shop/files/Gatito_negro_con_hojas_verdes.png?v=1792972704&width=300",
+  // Palabras que el buscador "escribe solo" como ejemplo
+  busquedas: ["Kuromi…", "Hello Kitty…", "Snoopy…", "stickers kawaii…", "papelería…", "Cinnamoroll…"],
+  // Franja rosada debajo de las marcas
+  franja: "Envíos a toda Bolivia · Pago con QR · Scoops y ventas unitarias",
   instagram: "",   // ej: "https://instagram.com/canishopbo"
   tiktok: "",
   nosotros:
@@ -17,10 +26,11 @@ window.TIENDA = {
     "Al enviar tu pedido por WhatsApp te confirmamos stock y el costo de envío, y te pasamos el QR para pagar."
 };
 
-// Categorías: el "id" se usa en cada producto
+// Categorías: el "id" se usa en cada producto.
+// marca: true → aparece en la fila de círculos de marcas debajo del buscador.
 window.CATEGORIAS = [
-  { id: "sanrio", nombre: "Sanrio", imagen: "https://canishopbo.myshopify.com/cdn/shop/files/Circulo_kawaii_de_personajes_Sanrio.png?v=1792954593&width=800" },
-  { id: "snoopy", nombre: "Snoopy", imagen: "https://canishopbo.myshopify.com/cdn/shop/files/Snoopy_abrazando_un_corazon_rojo.png?v=1792955473&width=800" },
+  { id: "sanrio", nombre: "Sanrio", marca: true, imagen: "https://canishopbo.myshopify.com/cdn/shop/files/Circulo_kawaii_de_personajes_Sanrio.png?v=1792954593&width=800" },
+  { id: "snoopy", nombre: "Snoopy", marca: true, imagen: "https://canishopbo.myshopify.com/cdn/shop/files/Snoopy_abrazando_un_corazon_rojo.png?v=1792955473&width=800" },
   { id: "papeleria", nombre: "Papelería", imagen: "https://canishopbo.myshopify.com/cdn/shop/collections/Papeleria_kawaii_en_circulo_pastel.png?v=1792963793&width=800" }
 ];
 

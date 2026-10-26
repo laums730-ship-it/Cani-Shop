@@ -234,6 +234,27 @@
   window.addEventListener("hashchange", ruta);
 
   $("#btn-menu").onclick = () => $("#menu").classList.toggle("abierto");
+  // Buscador que se escribe solo
+  (() => {
+    const inp = $("#input-buscar");
+    const frases = T.busquedas || ["Kuromi…", "Hello Kitty…", "Snoopy…", "Stickers kawaii…", "Papelería…", "Cinnamoroll…"];
+    let f = 0, i = 0, borrando = false;
+    const paso = () => {
+      if (document.activeElement === inp || inp.value) { inp.placeholder = "¿Qué estás buscando?"; return setTimeout(paso, 600); }
+      const txt = "Buscar " + frases[f];
+      if (!borrando) {
+        i++;
+        if (i >= txt.length) { borrando = true; inp.placeholder = txt; return setTimeout(paso, 1600); }
+      } else {
+        i--;
+        if (i <= 7) { borrando = false; f = (f + 1) % frases.length; }
+      }
+      inp.placeholder = txt.slice(0, i) + "|";
+      setTimeout(paso, borrando ? 45 : 95);
+    };
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(paso, 800);
+  })();
+
   $("#input-buscar").addEventListener("input", e => {
     const q = e.target.value.trim();
     app.onclick = null;
