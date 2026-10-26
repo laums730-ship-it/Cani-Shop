@@ -1,5 +1,6 @@
 (async () => {
-  const T = window.TIENDA, CATS = window.CATEGORIAS, SB = window.SUPABASE || {};
+  const T = window.TIENDA, SB = window.SUPABASE || {};
+  let CATS = window.CATEGORIAS || [];
   let PRODS = window.PRODUCTOS || [];
   const $ = s => document.querySelector(s);
   const app = $("#app");
@@ -36,6 +37,8 @@
 
   app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii… 🐾</p>`;
   await Promise.all([cargarAjustes(), cargarProductos()]);
+  if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
+  const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji">${esc(c.emoji || (c.nombre || "?")[0])}</span>`;
 
   // ---------- Datos fijos ----------
   document.title = T.nombre;
@@ -54,6 +57,12 @@
   gato("#gato-izq", T.gatoIzq); gato("#gato-der", T.gatoDer);
 
   $("#wa-flotante").href = `https://wa.me/${T.whatsapp}`;
+  if (T.ubicacion) $(".pie-marca").insertAdjacentHTML("beforeend", `<p>📍 ${esc(T.ubicacion)}</p>`);
+  if (T.whatsapp && !/^5917000000/.test(T.whatsapp)) $(".pie-marca").insertAdjacentHTML("beforeend", `<p>📞 +${esc(T.whatsapp)}</p>`);
+  // Formas de entrega en el carrito
+  const ENT = (T.entregas || []).filter(Boolean);
+  if (ENT.length) $("#sel-entrega").innerHTML = `<option value="" disabled selected>¿Cómo quieres recibirlo?</option>` + ENT.map(x => `<option>${esc(x)}</option>`).join("");
+  else $("#sel-entrega").remove();
   $("#pie-redes").insertAdjacentHTML("beforeend", [
     T.instagram && `<a href="${T.instagram}" target="_blank" rel="noopener">Instagram</a>`,
     T.tiktok && `<a href="${T.tiktok}" target="_blank" rel="noopener">TikTok</a>`,
@@ -132,6 +141,7 @@
     const total = carrito.reduce((a, i) => a + (PRODS.find(p => p.id === i.id)?.precio || 0) * i.cant, 0);
     const msg = [`¡Hola ${T.nombre}! Quiero hacer este pedido:`, "", ...lineas, "", `Subtotal: ${bs(total)}`, "",
       `Nombre: ${f.get("nombre")}`, `Ciudad: ${f.get("ciudad")}`,
+      f.get("entrega") ? `Entrega: ${f.get("entrega")}` : null,
       f.get("direccion") ? `Dirección: ${f.get("direccion")}` : null, f.get("nota") ? `Nota: ${f.get("nota")}` : null
     ].filter(x => x !== null).join("\n");
     window.open(`https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -161,13 +171,13 @@
         ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
       </div></section>` : ""}
       ${marcas.length ? `<section class="marcas">
-        <div class="marcas-fila">${marcas.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ"><img src="${c.imagen}" alt=""></div>${esc(c.nombre)}</a>`).join("")}</div>
+        <div class="marcas-fila">${marcas.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
       </section>` : ""}
       <div class="franja">${sticker("lapiz", "st-lapiz")}${esc(T.franja || "")}${sticker("estrella", "st-estrella")}</div>
 
       <div class="fondo-gris">
         <section class="seccion"><h2>Compra por categorías</h2>
-          <div class="cats">${CATS.map(c => `<a class="cat" href="#/catalogo/${c.id}"><div class="circ"><img src="${c.imagen}" alt=""></div>${esc(c.nombre)}</a>`).join("")}</div>
+          <div class="cats">${CATS.map(c => `<a class="cat" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
         </section>
       </div>
 

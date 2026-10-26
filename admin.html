@@ -122,6 +122,16 @@
     .ban .bt{display:flex;gap:4px}
     .ban .bt button{width:34px;height:34px;border-radius:10px;border:0;background:#fff;font-weight:800}
     .ban .bt button.q{background:#fdecee;color:var(--rojo)}
+    .cats-ed{display:flex;flex-direction:column;gap:8px}
+    .catf{display:grid;grid-template-columns:52px 1fr 70px auto auto;gap:8px;align-items:center;background:var(--rosa-claro);border-radius:14px;padding:7px}
+    .catf>input{border:2px solid var(--borde);border-radius:10px;padding:9px 11px;background:#fff;width:100%;min-width:0}
+    .catf .emo{text-align:center}
+    .cat-img{width:52px;height:52px;border-radius:50%;overflow:hidden;background:#fff;display:grid;place-items:center;cursor:pointer;border:2px dashed var(--rosa-fuerte);font-size:1.5rem}
+    .cat-img img{width:100%;height:100%;object-fit:cover}
+    .mini-check{padding:6px 10px;font-size:.85rem}
+    .catf .bt{display:flex;gap:4px}
+    .catf .bt button{min-width:32px;height:32px;border-radius:10px;border:0;background:#fff;font-weight:800;font-size:.8rem}
+    .catf .bt button.q{background:#fdecee;color:var(--rojo)}
     .subir-ancho{aspect-ratio:auto;padding:16px;margin-bottom:14px}
     .guardar-barra{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,#f8f3f5 30%)}
     .guardar-barra .btn{width:100%;padding:14px}
@@ -131,6 +141,10 @@
       .top img{height:40px}
       .top a{display:none}
       .ban{grid-template-columns:1fr auto}
+      .catf{grid-template-columns:52px 1fr 60px}
+      .catf .mini-check{grid-column:1/3;justify-self:start}
+      .catf .bt{grid-column:1/-1;justify-content:flex-end;margin-top:-42px}
+      .catf .mini-check{grid-column:1/-1}
       .ban img{width:100%;grid-column:1/-1}
     }
 
@@ -219,6 +233,17 @@
       Para usar esta pestaña falta un pasito: copia el archivo <b>supabase-ajustes.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
     </div>
 
+    <div class="aviso-config" id="aj-sin-guardar" hidden style="margin-bottom:16px">
+      ✨ Ya llené todo con los datos de tu tienda de Kyte (categorías, WhatsApp, entregas y banner). Revísalo y toca <b>Guardar cambios</b> abajo para que aparezca en tu tienda.
+    </div>
+
+    <section class="caja">
+      <h2>🏷️ Categorías</h2>
+      <p class="ayuda">Toca el círculo para ponerle foto (si no, se muestra el emoji). <b>“Arriba”</b> = aparece en los círculos de arriba del inicio.</p>
+      <div id="aj-cats" class="cats-ed"></div>
+      <button type="button" class="btn btn-sec btn-sm" id="aj-addcat" style="margin:10px 0 14px">＋ Agregar categoría</button>
+    </section>
+
     <section class="caja">
       <h2>📣 Barra de avisos</h2>
       <p class="ayuda">La barra rosada de arriba. Escribe <b>un aviso por línea</b>; se van pasando solos.</p>
@@ -263,7 +288,14 @@
     </section>
 
     <section class="caja">
+      <h2>🚚 Formas de entrega</h2>
+      <p class="ayuda">Tus clientes eligen una en el carrito y te llega en el WhatsApp. <b>Una por línea.</b></p>
+      <div class="campo"><textarea name="entregas" rows="3"></textarea></div>
+    </section>
+
+    <section class="caja">
       <h2>📱 Contacto y redes</h2>
+      <div class="campo"><label>Ubicación</label><input name="ubicacion" placeholder="Santa Cruz de la Sierra, Bolivia"></div>
       <div class="campo"><label>WhatsApp</label><input name="whatsapp" inputmode="tel" placeholder="70000000"><p class="ayuda">Tu número. Si es de Bolivia, el 591 se agrega solo.</p></div>
       <div class="campo"><label>Instagram</label><input name="instagram" placeholder="@canishopbo"></div>
       <div class="campo"><label>TikTok</label><input name="tiktok" placeholder="@canishopbo"></div>
@@ -321,7 +353,7 @@
 <script>
 (() => {
   const $ = s => document.querySelector(s);
-  const CATS = window.CATEGORIAS || [];
+  let CATS = window.CATEGORIAS || [];
   const CFG = window.SUPABASE || {};
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const bs = n => "Bs " + Number(n || 0).toFixed(2).replace(".", ",");
@@ -337,7 +369,7 @@
   async function iniciar() {
     const { data: { session } } = await db.auth.getSession();
     if (!session) return vista("login");
-    vista("panel"); cargar();
+    vista("panel"); await cargarAjustes(); cargar();
   }
   // Entrar / crear cuenta
   let registrando = false;
@@ -458,7 +490,8 @@
   const F = $("#f-prod");
   let edit = null, fotos = [], borrarFotos = [];
 
-  $("#ed-cats").innerHTML = CATS.map(c => `<label class="check"><input type="checkbox" value="${esc(c.id)}"> ${esc(c.nombre)}</label>`).join("");
+  const pintarCatsEditor = () => $("#ed-cats").innerHTML = CATS.map(c => `<label class="check"><input type="checkbox" value="${esc(c.id)}"> ${esc(c.nombre)}</label>`).join("");
+  pintarCatsEditor();
 
   function abrirEditor(p) {
     edit = p || null; borrarFotos = [];
@@ -589,8 +622,29 @@
   // ---------- Mi tienda ----------
   const A = $("#t-tienda");
   let AJ = {}, banners = [], imgs = {};
-  const LISTAS = ["avisos", "busquedas"];
-  const TEXTOS = ["franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok"];
+  const LISTAS = ["avisos", "busquedas", "entregas"];
+  const TEXTOS = ["franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
+  let categorias = [];
+  // Datos de tu tienda en Kyte, para que no tengas que escribirlos de nuevo
+  const SH = "https://canishopbo.myshopify.com/cdn/shop/";
+  const DEF = {
+    whatsapp: "59177885309", instagram: "https://instagram.com/canishopbo", ubicacion: "Santa Cruz de la Sierra, Bolivia",
+    entregas: ["Envío por Yango (Santa Cruz)", "Recojo en Santa Cruz (coordinamos por WhatsApp)", "Envío a otra ciudad de Bolivia"],
+    banners: [{ imagen: "https://firebasestorage.googleapis.com/v0/b/kyte-7c484.appspot.com/o/mR1noP057GhQAC%2FTz20crYCRofZFtA7m0wyjQ%3D%3D.jpg?alt=media&token=72439174-71f2-4cc4-88ed-373c2b8d6529", enlace: "#/catalogo" }],
+    categorias: [
+      { id: "sanrio", nombre: "Sanrio", marca: true, imagen: SH + "files/Circulo_kawaii_de_personajes_Sanrio.png?v=1792954593&width=800" },
+      { id: "gatitos", nombre: "Gatitos", emoji: "🐱" },
+      { id: "hello-kitty", nombre: "Hello Kitty", marca: true, emoji: "🎀" },
+      { id: "snoopy", nombre: "Snoopy", marca: true, imagen: SH + "files/Snoopy_abrazando_un_corazon_rojo.png?v=1792955473&width=800" },
+      { id: "bts", nombre: "BTS", marca: true, emoji: "💜" },
+      { id: "juegos-kawaii", nombre: "Juegos/Kawaii", emoji: "🎮" },
+      { id: "papeleria", nombre: "Papelería", imagen: SH + "collections/Papeleria_kawaii_en_circulo_pastel.png?v=1792963793&width=800" },
+      { id: "obakenu", nombre: "Obakenu", emoji: "👻" },
+      { id: "lapiceros", nombre: "Lapiceros", emoji: "🖊️" },
+      { id: "beauty", nombre: "Beauty", emoji: "💄" },
+      { id: "happy-box", nombre: "Happy Box", emoji: "🎁" }
+    ]
+  };
 
   async function subirArchivo(file, carpeta, max = 1400) {
     const { blob, ext, tipo } = await achicar(file, max);
@@ -605,7 +659,12 @@
     const { data, error } = await db.from("ajustes").select("datos").eq("id", "tienda").maybeSingle();
     if (error) { $("#aj-falta").hidden = false; return; }
     $("#aj-falta").hidden = true; ajCargados = true;
-    if (data && data.datos) Object.assign(AJ, data.datos);
+    if (/^5917000000/.test(AJ.whatsapp || "")) AJ.whatsapp = "";
+    for (const k of Object.keys(DEF)) if (!AJ[k] || (Array.isArray(AJ[k]) && !AJ[k].length)) AJ[k] = DEF[k];
+    if (data && data.datos) for (const [k, v] of Object.entries(data.datos)) if (v !== null && v !== undefined && v !== "") AJ[k] = v;
+    categorias = (AJ.categorias || []).map(c => ({ ...c }));
+    if (data && Array.isArray(data.datos.categorias) && data.datos.categorias.length) { CATS = data.datos.categorias; pintarCatsEditor(); pintar && PRODS.length && pintar(); }
+    $("#aj-sin-guardar").hidden = !!data;
     LISTAS.forEach(k => A[k].value = (AJ[k] || []).join("\n"));
     TEXTOS.forEach(k => A[k].value = AJ[k] || "");
     A.instagram.value = sinUrl(A.instagram.value); A.tiktok.value = sinUrl(A.tiktok.value);
@@ -613,8 +672,52 @@
     if (A.whatsapp.value === "70000000") A.whatsapp.value = "";
     banners = (AJ.banners || []).map(b => ({ ...b }));
     imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "" };
-    pintarBanners(); pintarMinis();
+    pintarBanners(); pintarMinis(); pintarCats();
   }
+
+  // Categorías
+  function pintarCats() {
+    $("#aj-cats").innerHTML = categorias.map((c, i) => `<div class="catf">
+        <label class="cat-img" title="Cambiar foto">${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span>${esc(c.emoji || "🏷️")}</span>`}<input type="file" accept="image/*" hidden data-catimg="${i}"></label>
+        <input data-catnom="${i}" value="${esc(c.nombre)}" placeholder="Nombre">
+        <input data-catemo="${i}" value="${esc(c.emoji || "")}" placeholder="Emoji" class="emo" title="Emoji (si no tiene foto)">
+        <label class="check mini-check"><input type="checkbox" data-catmar="${i}" ${c.marca ? "checked" : ""}> Arriba</label>
+        <div class="bt">
+          ${c.imagen ? `<button type="button" data-catsinimg="${i}" title="Quitar foto">🖼️✕</button>` : ""}
+          <button type="button" data-catsube="${i}" ${i ? "" : "disabled"} aria-label="Subir">↑</button>
+          <button type="button" data-catbaja="${i}" ${i < categorias.length - 1 ? "" : "disabled"} aria-label="Bajar">↓</button>
+          <button type="button" class="q" data-catborra="${i}" aria-label="Quitar">✕</button>
+        </div></div>`).join("");
+  }
+  $("#aj-cats").addEventListener("input", e => {
+    const d = e.target.dataset;
+    if (d.catnom !== undefined) categorias[d.catnom].nombre = e.target.value;
+    if (d.catemo !== undefined) { categorias[d.catemo].emoji = e.target.value.trim(); const s = e.target.parentElement.querySelector(".cat-img span"); if (s) s.textContent = e.target.value.trim() || "🏷️"; }
+    if (d.catmar !== undefined) categorias[d.catmar].marca = e.target.checked;
+  });
+  $("#aj-cats").addEventListener("change", async e => {
+    const i = e.target.dataset.catimg; if (i === undefined || !e.target.files[0]) return;
+    toast("Subiendo…");
+    const u = await subirArchivo(e.target.files[0], "categorias", 600);
+    if (u) { categorias[i].imagen = u; pintarCats(); toast("Listo, ahora toca Guardar cambios"); }
+  });
+  $("#aj-cats").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const d = b.dataset, mover = (i, j) => { [categorias[i], categorias[j]] = [categorias[j], categorias[i]]; };
+    if (d.catsube) mover(+d.catsube, +d.catsube - 1);
+    if (d.catbaja) mover(+d.catbaja, +d.catbaja + 1);
+    if (d.catsinimg) categorias[d.catsinimg].imagen = "";
+    if (d.catborra) {
+      const c = categorias[d.catborra], n = PRODS.filter(p => (p.categorias || []).includes(c.id)).length;
+      if (n && !confirm(`"${c.nombre}" tiene ${n} producto(s). ¿Quitar la categoría igual? Los productos no se borran.`)) return;
+      categorias.splice(+d.catborra, 1);
+    }
+    pintarCats();
+  });
+  $("#aj-addcat").onclick = () => {
+    categorias.push({ id: "", nombre: "", emoji: "🏷️" }); pintarCats();
+    $(`[data-catnom="${categorias.length - 1}"]`).focus();
+  };
   const sinUrl = v => v ? "@" + v.replace(/\/+$/, "").split("/").pop().replace(/^@/, "") : "";
 
   function pintarMinis() {
@@ -671,13 +774,24 @@
       instagram: red(A.instagram.value, "https://instagram.com/"),
       tiktok: red(A.tiktok.value, "https://www.tiktok.com/@"),
       banners: banners.map(b => ({ imagen: b.imagen, enlace: (b.enlace || "").trim() })),
-      gatoIzq: imgs.gatoIzq, gatoDer: imgs.gatoDer
+      gatoIzq: imgs.gatoIzq, gatoDer: imgs.gatoDer,
+      categorias: (() => {
+        const usados = new Set();
+        return categorias.filter(c => c.nombre.trim()).map(c => {
+          let id = c.id || slug(c.nombre), base = id, n = 1;
+          while (usados.has(id)) id = `${base}-${++n}`;
+          usados.add(id);
+          return { id, nombre: c.nombre.trim(), marca: !!c.marca, imagen: c.imagen || "", emoji: c.emoji || "" };
+        });
+      })()
     };
     const b = $("#aj-guardar"); b.disabled = true; b.textContent = "Guardando…";
     const { error } = await db.from("ajustes").upsert({ id: "tienda", datos, editado: new Date().toISOString() });
     b.disabled = false; b.textContent = "Guardar cambios";
     if (error) return toast("No se pudo guardar: " + error.message, true);
     AJ = { ...AJ, ...datos };
+    categorias = datos.categorias.map(c => ({ ...c })); CATS = datos.categorias;
+    pintarCats(); pintarCatsEditor(); pintar(); $("#aj-sin-guardar").hidden = true;
     toast("¡Guardado! Recarga tu tienda para verlo 💕");
   };
 
