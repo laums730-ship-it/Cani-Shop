@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Panel · Cani Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--rosa-fuerte:#f78db0;--rosa:#f9dbe4;--rosa-claro:#fdeef2;--rosa-tinta:#e8578a;--rosa-osc:#c93c6f;
+      --fondo:#fffafb;--tinta:#2b2b2b;--gris:#7a6a70;--borde:#f3d3dd;--verde:#2fb574;--rojo:#d94452;--radio:18px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Nunito,system-ui,sans-serif;background:#f8f3f5;color:var(--tinta)}
+    h1,h2,h3{font-family:Fredoka,Nunito,sans-serif;font-weight:600;margin:0}
+    button{font:inherit;cursor:pointer}
+    input,textarea,select{font:inherit;color:inherit}
+    img{display:block;max-width:100%}
+    [hidden]{display:none!important}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:999px;padding:11px 20px;font-weight:800;background:var(--rosa-tinta);color:#fff;white-space:nowrap}
+    .btn:hover{background:var(--rosa-osc)}
+    .btn:disabled{opacity:.5;cursor:wait}
+    .btn-sec{background:#fff;color:var(--tinta);border:2px solid var(--borde)}
+    .btn-sec:hover{background:var(--rosa-claro)}
+    .btn-peligro{background:#fff;color:var(--rojo);border:2px solid #f5c6cb}
+    .btn-peligro:hover{background:#fdecee}
+    .btn-sm{padding:7px 14px;font-size:.88rem}
+
+    /* Login */
+    .login{min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--rosa)}
+    .login-caja{background:#fff;border-radius:28px;padding:32px 28px;width:min(400px,100%);box-shadow:0 12px 40px rgba(232,87,138,.18);text-align:center}
+    .login-caja img{height:90px;margin:0 auto 10px}
+    .login-caja h1{font-size:1.5rem;margin-bottom:4px}
+    .login-caja p{color:var(--gris);margin:0 0 22px}
+    .campo{display:flex;flex-direction:column;gap:6px;text-align:left;margin-bottom:14px}
+    .campo label{font-weight:800;font-size:.9rem}
+    .campo input,.campo textarea,.campo select{border:2px solid var(--borde);border-radius:12px;padding:11px 13px;background:#fff;width:100%}
+    .campo input:focus,.campo textarea:focus{outline:none;border-color:var(--rosa-fuerte)}
+    .error{background:#fdecee;color:var(--rojo);border-radius:12px;padding:10px 12px;font-weight:700;font-size:.9rem;margin-bottom:14px;text-align:left}
+    .aviso-config{background:#fff8e1;border:2px dashed #f2c94c;border-radius:16px;padding:16px;text-align:left;line-height:1.5}
+
+    /* Panel */
+    .top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:10px clamp(12px,4vw,40px);background:var(--rosa)}
+    .top img{height:52px}
+    .top h1{font-size:1.15rem}
+    .top .esp{flex:1}
+    .top a{font-weight:700;color:var(--rosa-osc);text-decoration:none}
+    main{max-width:1000px;margin:0 auto;padding:22px clamp(12px,4vw,40px) 80px}
+    .resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+    .dato{background:#fff;border-radius:var(--radio);padding:14px 16px}
+    .dato b{display:block;font-family:Fredoka;font-size:1.7rem;color:var(--rosa-tinta)}
+    .dato span{color:var(--gris);font-size:.88rem;font-weight:700}
+    .barra{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .barra input{flex:1;min-width:180px;border:2px solid var(--borde);border-radius:999px;padding:10px 16px;background:#fff}
+    .filtro{border:2px solid var(--borde);background:#fff;border-radius:999px;padding:8px 14px;font-weight:700;font-size:.9rem}
+    .filtro.on{background:var(--tinta);border-color:var(--tinta);color:#fff}
+
+    .lista{display:flex;flex-direction:column;gap:12px}
+    .prod{background:#fff;border-radius:var(--radio);padding:14px;display:grid;grid-template-columns:76px 1fr auto;gap:14px;align-items:start}
+    .prod.oculto{opacity:.6}
+    .prod>img{width:76px;height:76px;border-radius:14px;object-fit:cover;background:var(--rosa-claro)}
+    .prod h3{font-size:1.05rem}
+    .prod .meta{color:var(--gris);font-size:.88rem;margin:3px 0 8px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+    .tag{border-radius:999px;padding:2px 9px;font-size:.75rem;font-weight:800;background:var(--rosa-claro);color:var(--rosa-osc)}
+    .tag.gris{background:#eee;color:#666}
+    .tag.rojo{background:#fdecee;color:var(--rojo)}
+    .stocks{display:flex;flex-wrap:wrap;gap:8px}
+    .st{display:inline-flex;align-items:center;gap:4px;border:2px solid var(--borde);border-radius:999px;padding:2px 4px 2px 12px;font-size:.88rem;font-weight:700}
+    .st.cero{border-color:#f5c6cb;background:#fdf3f4}
+    .st button{width:28px;height:28px;border-radius:50%;border:0;background:var(--rosa-claro);font-weight:800;font-size:1rem;line-height:1}
+    .st button:hover{background:var(--rosa)}
+    .st output{min-width:22px;text-align:center;font-weight:800}
+    .acc{display:flex;flex-direction:column;gap:6px}
+    .vacio{text-align:center;color:var(--gris);padding:40px;background:#fff;border-radius:var(--radio)}
+
+    /* Editor */
+    .velo{position:fixed;inset:0;background:rgba(43,43,43,.4);z-index:30}
+    .editor{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:var(--fondo);z-index:40;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.15)}
+    .ed-cab{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--rosa)}
+    .ed-cab h2{font-size:1.25rem}
+    .x{border:0;background:rgba(255,255,255,.7);width:38px;height:38px;border-radius:50%;font-size:1.1rem}
+    .ed-cuerpo{flex:1;overflow:auto;padding:20px}
+    .ed-pie{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--borde);background:#fff}
+    .ed-pie .btn:first-child{flex:1}
+    .fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .checks{display:flex;flex-wrap:wrap;gap:8px}
+    .check{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--borde);border-radius:999px;padding:7px 13px;font-weight:700;background:#fff;cursor:pointer;user-select:none}
+    .check input{accent-color:var(--rosa-tinta);width:16px;height:16px;margin:0}
+    .check:has(input:checked){border-color:var(--rosa-tinta);background:var(--rosa-claro)}
+    .fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}
+    .ft{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--rosa-claro)}
+    .ft img{width:100%;height:100%;object-fit:cover}
+    .ft .q{position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:.8rem}
+    .ft .p{position:absolute;bottom:5px;left:5px;border:0;border-radius:999px;background:rgba(255,255,255,.9);font-size:.7rem;font-weight:800;padding:3px 8px}
+    .ft.principal::after{content:"Principal";position:absolute;bottom:5px;left:5px;background:var(--rosa-tinta);color:#fff;font-size:.7rem;font-weight:800;padding:3px 8px;border-radius:999px}
+    .subir{aspect-ratio:1;border:2px dashed var(--rosa-fuerte);border-radius:14px;display:grid;place-items:center;text-align:center;color:var(--rosa-osc);font-weight:800;font-size:.85rem;cursor:pointer;background:#fff;padding:6px}
+    .subir:hover{background:var(--rosa-claro)}
+    .subir input{display:none}
+    .vars{display:flex;flex-direction:column;gap:8px}
+    .var{display:grid;grid-template-columns:1fr 110px 38px;gap:8px}
+    .var input{border:2px solid var(--borde);border-radius:12px;padding:10px 12px;background:#fff;width:100%}
+    .var .q{border:0;background:#fdecee;color:var(--rojo);border-radius:12px;font-weight:800}
+    .ayuda{color:var(--gris);font-size:.83rem;margin:4px 0 0}
+    .sep{height:1px;background:var(--borde);margin:20px 0}
+
+    .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--tinta);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;transition:transform .3s;z-index:60;max-width:90vw;text-align:center}
+    .toast.ver{transform:translate(-50%,0)}
+    .toast.mal{background:var(--rojo)}
+
+    @media (max-width:640px){
+      .top h1{display:none}
+      .resumen{grid-template-columns:repeat(3,1fr);gap:8px}
+      .dato{padding:10px 12px}.dato b{font-size:1.35rem}.dato span{font-size:.75rem}
+      .prod{grid-template-columns:60px 1fr}
+      .prod>img{width:60px;height:60px}
+      .acc{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
+      .acc .btn{flex:1}
+      .fila{grid-template-columns:1fr}
+      .var{grid-template-columns:1fr 90px 38px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== Login ===== -->
+<section class="login" id="v-login" hidden>
+  <form class="login-caja" id="f-login">
+    <img src="logo.png" alt="Cani Shop" onerror="this.remove()">
+    <h1>Panel de administración</h1>
+    <p>Entra para manejar tus productos y stock</p>
+    <div class="error" id="login-error" hidden></div>
+    <div class="campo"><label for="l-email">Correo</label><input id="l-email" type="email" autocomplete="email" required></div>
+    <div class="campo"><label for="l-pass">Contraseña</label><input id="l-pass" type="password" autocomplete="current-password" required></div>
+    <button class="btn" style="width:100%" id="b-login">Entrar</button>
+  </form>
+</section>
+
+<!-- ===== Sin configurar ===== -->
+<section class="login" id="v-config" hidden>
+  <div class="login-caja">
+    <img src="logo.png" alt="" onerror="this.remove()">
+    <h1>Falta conectar Supabase</h1>
+    <div class="aviso-config" style="margin-top:16px">
+      Abre <b>productos.js</b> en GitHub y pega tu <b>url</b> y tu <b>key</b> de Supabase en la parte de arriba
+      (<code>window.SUPABASE</code>). Los pasos están en <b>LEEME.md</b>.
+    </div>
+  </div>
+</section>
+
+<!-- ===== Panel ===== -->
+<div id="v-panel" hidden>
+  <header class="top">
+    <img src="logo.png" alt="" onerror="this.remove()">
+    <h1>Mis productos</h1>
+    <span class="esp"></span>
+    <a href="./" target="_blank">Ver tienda ↗</a>
+    <button class="btn btn-sec btn-sm" id="b-salir">Salir</button>
+  </header>
+  <main>
+    <div class="resumen">
+      <div class="dato"><b id="r-total">0</b><span>productos</span></div>
+      <div class="dato"><b id="r-unid">0</b><span>unidades en stock</span></div>
+      <div class="dato"><b id="r-agot">0</b><span>agotados</span></div>
+    </div>
+    <div class="barra">
+      <input id="buscar" type="search" placeholder="Buscar producto…">
+      <button class="btn" id="b-nuevo">＋ Nuevo producto</button>
+    </div>
+    <div class="barra" id="filtros">
+      <button class="filtro on" data-f="todos">Todos</button>
+      <button class="filtro" data-f="agotados">Agotados</button>
+      <button class="filtro" data-f="pocos">Pocas unidades</button>
+      <button class="filtro" data-f="ocultos">Ocultos</button>
+    </div>
+    <div class="lista" id="lista"></div>
+  </main>
+</div>
+
+<!-- ===== Editor ===== -->
+<div class="velo" id="velo" hidden></div>
+<aside class="editor" id="editor" hidden>
+  <div class="ed-cab"><h2 id="ed-titulo">Nuevo producto</h2><button class="x" id="ed-cerrar" aria-label="Cerrar">✕</button></div>
+  <form class="ed-cuerpo" id="f-prod">
+    <div class="campo"><label>Nombre del producto *</label><input name="nombre" required placeholder="Ej: Stickers Kuromi"></div>
+    <div class="fila">
+      <div class="campo"><label>Precio (Bs) *</label><input name="precio" type="number" min="0" step="0.5" required placeholder="12"></div>
+      <div class="campo"><label>Orden</label><input name="orden" type="number" step="1" placeholder="0"><p class="ayuda">Número más bajo = aparece primero</p></div>
+    </div>
+    <div class="campo"><label>Categorías</label><div class="checks" id="ed-cats"></div></div>
+    <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
+    <div class="checks" style="margin-bottom:6px">
+      <label class="check"><input type="checkbox" name="nuevo"> ✨ Mostrar en Novedades</label>
+      <label class="check"><input type="checkbox" name="activo" checked> 👀 Visible en la tienda</label>
+    </div>
+
+    <div class="sep"></div>
+    <div class="campo"><label>Fotos</label>
+      <div class="fotos" id="ed-fotos"></div>
+      <p class="ayuda">La primera foto es la principal. Las fotos se achican solas para que la tienda cargue rápido.</p>
+    </div>
+
+    <div class="sep"></div>
+    <div class="campo"><label>Stock</label>
+      <label class="check" style="align-self:flex-start"><input type="checkbox" id="ed-conmodelos"> Este producto tiene modelos (colores, personajes, tallas…)</label>
+    </div>
+    <div id="ed-sinmodelos" class="campo"><label>Unidades disponibles</label><input name="stock" type="number" min="0" step="1" value="0"></div>
+    <div id="ed-modelos" hidden>
+      <div class="var" style="font-weight:800;font-size:.85rem;color:var(--gris)"><span>Modelo</span><span>Unidades</span><span></span></div>
+      <div class="vars" id="ed-vars"></div>
+      <button type="button" class="btn btn-sec btn-sm" id="ed-addvar" style="margin-top:10px">＋ Agregar modelo</button>
+    </div>
+  </form>
+  <div class="ed-pie">
+    <button class="btn" id="ed-guardar">Guardar</button>
+    <button class="btn btn-peligro" id="ed-borrar" hidden>Borrar</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script src="productos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const CATS = window.CATEGORIAS || [];
+  const CFG = window.SUPABASE || {};
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const bs = n => "Bs " + Number(n || 0).toFixed(2).replace(".", ",");
+  const vista = v => ["login", "config", "panel"].forEach(x => $("#v-" + x).hidden = x !== v);
+  let tt; const toast = (t, mal) => { const e = $("#toast"); e.textContent = t; e.classList.toggle("mal", !!mal); e.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => e.classList.remove("ver"), 2600); };
+
+  if (!CFG.url || !CFG.key || !window.supabase) return vista("config");
+  const db = window.supabase.createClient(CFG.url, CFG.key);
+
+  let PRODS = [], filtro = "todos";
+
+  // ---------- Sesión ----------
+  async function iniciar() {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) return vista("login");
+    vista("panel"); cargar();
+  }
+  $("#f-login").onsubmit = async e => {
+    e.preventDefault();
+    const b = $("#b-login"); b.disabled = true; b.textContent = "Entrando…";
+    const { error } = await db.auth.signInWithPassword({ email: $("#l-email").value.trim(), password: $("#l-pass").value });
+    b.disabled = false; b.textContent = "Entrar";
+    const er = $("#login-error");
+    if (error) { er.hidden = false; er.textContent = /invalid/i.test(error.message) ? "Correo o contraseña incorrectos." : error.message; return; }
+    er.hidden = true; iniciar();
+  };
+  $("#b-salir").onclick = async () => { await db.auth.signOut(); vista("login"); };
+
+  // ---------- Lista ----------
+  const tieneVar = p => Array.isArray(p.variantes) && p.variantes.length > 0;
+  const total = p => tieneVar(p) ? p.variantes.reduce((a, v) => a + (+v.stock || 0), 0) : (+p.stock || 0);
+
+  async function cargar() {
+    $("#lista").innerHTML = `<div class="vacio">Cargando… 🐾</div>`;
+    const { data, error } = await db.from("productos").select("*").order("orden").order("creado", { ascending: false });
+    if (error) { $("#lista").innerHTML = `<div class="vacio">No se pudo cargar: ${esc(error.message)}</div>`; return; }
+    PRODS = data; pintar();
+  }
+
+  function pintar() {
+    const q = $("#buscar").value.trim().toLowerCase();
+    $("#r-total").textContent = PRODS.length;
+    $("#r-unid").textContent = PRODS.reduce((a, p) => a + total(p), 0);
+    $("#r-agot").textContent = PRODS.filter(p => total(p) === 0).length;
+    let l = PRODS.filter(p => !q || (p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(q));
+    if (filtro === "agotados") l = l.filter(p => total(p) === 0 || (tieneVar(p) && p.variantes.some(v => !+v.stock)));
+    if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => +v.stock > 0 && +v.stock <= 3) : (total(p) > 0 && total(p) <= 3));
+    if (filtro === "ocultos") l = l.filter(p => !p.activo);
+    if (!l.length) { $("#lista").innerHTML = `<div class="vacio">${PRODS.length ? "No hay productos con ese filtro." : "Todavía no tienes productos. ¡Agrega el primero! 💕"}</div>`; return; }
+    $("#lista").innerHTML = l.map(p => {
+      const stocks = tieneVar(p) ? p.variantes.map((v, i) => chip(p.id, i, v.nombre, +v.stock || 0)).join("") : chip(p.id, -1, "Unidades", +p.stock || 0);
+      const cats = (p.categorias || []).map(c => (CATS.find(x => x.id === c) || {}).nombre || c);
+      return `<div class="prod ${p.activo ? "" : "oculto"}">
+        <img src="${esc((p.imagenes || [])[0] || "logo.png")}" alt="">
+        <div>
+          <h3>${esc(p.nombre)}</h3>
+          <div class="meta"><b style="color:var(--rosa-tinta)">${bs(p.precio)}</b>
+            ${cats.map(c => `<span class="tag">${esc(c)}</span>`).join("")}
+            ${p.nuevo ? `<span class="tag">✨ Nuevo</span>` : ""}
+            ${!p.activo ? `<span class="tag gris">Oculto</span>` : ""}
+            ${total(p) === 0 ? `<span class="tag rojo">Agotado</span>` : ""}</div>
+          <div class="stocks">${stocks}</div>
+        </div>
+        <div class="acc">
+          <button class="btn btn-sec btn-sm" data-editar="${esc(p.id)}">✏️ Editar</button>
+          <button class="btn btn-sec btn-sm" data-ver="${esc(p.id)}">${p.activo ? "🙈 Ocultar" : "👀 Mostrar"}</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  const chip = (id, i, nombre, n) => `<span class="st ${n ? "" : "cero"}">${esc(nombre)}
+    <button data-st="${esc(id)}" data-i="${i}" data-d="-1" aria-label="Restar">−</button><output>${n}</output><button data-st="${esc(id)}" data-i="${i}" data-d="1" aria-label="Sumar">+</button></span>`;
+
+  $("#buscar").oninput = pintar;
+  $("#filtros").onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; filtro = b.dataset.f; document.querySelectorAll(".filtro").forEach(x => x.classList.toggle("on", x === b)); pintar(); };
+
+  // Cambios rápidos de stock (se guardan solos)
+  const pendientes = {};
+  $("#lista").onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.editar) return abrirEditor(PRODS.find(p => p.id === b.dataset.editar));
+    if (b.dataset.ver) {
+      const p = PRODS.find(x => x.id === b.dataset.ver); p.activo = !p.activo; pintar();
+      const { error } = await db.from("productos").update({ activo: p.activo }).eq("id", p.id);
+      if (error) { p.activo = !p.activo; pintar(); return toast("No se pudo guardar: " + error.message, true); }
+      return toast(p.activo ? "Ahora se ve en la tienda 👀" : "Producto oculto 🙈");
+    }
+    if (b.dataset.st) {
+      const p = PRODS.find(x => x.id === b.dataset.st), i = +b.dataset.i, d = +b.dataset.d;
+      if (i >= 0) p.variantes[i].stock = Math.max(0, (+p.variantes[i].stock || 0) + d);
+      else p.stock = Math.max(0, (+p.stock || 0) + d);
+      pintar();
+      clearTimeout(pendientes[p.id]);
+      pendientes[p.id] = setTimeout(async () => {
+        const { error } = await db.from("productos").update(i >= 0 ? { variantes: p.variantes } : { stock: p.stock }).eq("id", p.id);
+        error ? toast("No se guardó el stock: " + error.message, true) : toast("Stock guardado ✔");
+      }, 700);
+    }
+  };
+
+  // ---------- Editor ----------
+  const F = $("#f-prod");
+  let edit = null, fotos = [], borrarFotos = [];
+
+  $("#ed-cats").innerHTML = CATS.map(c => `<label class="check"><input type="checkbox" value="${esc(c.id)}"> ${esc(c.nombre)}</label>`).join("");
+
+  function abrirEditor(p) {
+    edit = p || null; borrarFotos = [];
+    $("#ed-titulo").textContent = p ? "Editar producto" : "Nuevo producto";
+    $("#ed-borrar").hidden = !p;
+    F.reset();
+    F.nombre.value = p?.nombre || "";
+    F.precio.value = p?.precio ?? "";
+    F.orden.value = p?.orden ?? 0;
+    F.descripcion.value = p?.descripcion || "";
+    F.nuevo.checked = p ? !!p.nuevo : true;
+    F.activo.checked = p ? !!p.activo : true;
+    F.stock.value = p?.stock ?? 0;
+    document.querySelectorAll("#ed-cats input").forEach(i => i.checked = (p?.categorias || []).includes(i.value));
+    fotos = [...(p?.imagenes || [])]; pintarFotos();
+    const conVar = p ? tieneVar(p) : false;
+    $("#ed-conmodelos").checked = conVar; modo();
+    $("#ed-vars").innerHTML = "";
+    (conVar ? p.variantes : [{ nombre: "", stock: 0 }]).forEach(v => addVar(v));
+    $("#velo").hidden = $("#editor").hidden = false;
+    setTimeout(() => F.nombre.focus(), 50);
+  }
+  const cerrar = () => { $("#velo").hidden = $("#editor").hidden = true; };
+  $("#b-nuevo").onclick = () => abrirEditor(null);
+  $("#ed-cerrar").onclick = $("#velo").onclick = cerrar;
+
+  const modo = () => { const c = $("#ed-conmodelos").checked; $("#ed-modelos").hidden = !c; $("#ed-sinmodelos").hidden = c; };
+  $("#ed-conmodelos").onchange = modo;
+  function addVar(v = { nombre: "", stock: 0 }) {
+    const d = document.createElement("div"); d.className = "var";
+    d.innerHTML = `<input placeholder="Ej: Kuromi" value="${esc(v.nombre)}"><input type="number" min="0" step="1" value="${+v.stock || 0}"><button type="button" class="q" aria-label="Quitar modelo">✕</button>`;
+    d.querySelector(".q").onclick = () => d.remove();
+    $("#ed-vars").appendChild(d);
+  }
+  $("#ed-addvar").onclick = () => { addVar(); $("#ed-vars").lastChild.querySelector("input").focus(); };
+
+  // Fotos
+  function pintarFotos() {
+    $("#ed-fotos").innerHTML = fotos.map((u, i) => `<div class="ft ${i === 0 ? "principal" : ""}">
+        <img src="${esc(u)}" alt=""><button type="button" class="q" data-q="${i}" aria-label="Quitar foto">✕</button>
+        ${i > 0 ? `<button type="button" class="p" data-p="${i}">★ Principal</button>` : ""}</div>`).join("")
+      + `<label class="subir"><input type="file" accept="image/*" multiple id="ed-file">📷<br>Agregar fotos</label>`;
+    $("#ed-file").onchange = e => subir([...e.target.files]);
+  }
+  $("#ed-fotos").onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.q !== undefined) { const [u] = fotos.splice(+b.dataset.q, 1); if (u.includes("/storage/v1/object/public/fotos/")) borrarFotos.push(u); }
+    if (b.dataset.p !== undefined) { const [u] = fotos.splice(+b.dataset.p, 1); fotos.unshift(u); }
+    pintarFotos();
+  };
+  async function achicar(file, max = 1400) {
+    try {
+      const img = await createImageBitmap(file);
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, "image/webp", .85));
+      return blob && blob.type === "image/webp" ? { blob, ext: "webp", tipo: "image/webp" } : { blob: file, ext: (file.name.split(".").pop() || "jpg").toLowerCase(), tipo: file.type };
+    } catch { return { blob: file, ext: (file.name.split(".").pop() || "jpg").toLowerCase(), tipo: file.type }; }
+  }
+  async function subir(files) {
+    if (!files.length) return;
+    const lbl = document.querySelector(".subir"); lbl.innerHTML = "Subiendo…";
+    for (const f of files) {
+      const { blob, ext, tipo } = await achicar(f);
+      const ruta = `productos/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const { error } = await db.storage.from("fotos").upload(ruta, blob, { contentType: tipo, cacheControl: "31536000" });
+      if (error) { toast("No se pudo subir una foto: " + error.message, true); continue; }
+      fotos.push(db.storage.from("fotos").getPublicUrl(ruta).data.publicUrl);
+    }
+    pintarFotos();
+  }
+
+  const slug = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "producto";
+  const rutaDe = u => decodeURIComponent(u.split("/storage/v1/object/public/fotos/")[1] || "").split("?")[0];
+
+  $("#ed-guardar").onclick = async () => {
+    if (!F.reportValidity()) return;
+    const conVar = $("#ed-conmodelos").checked;
+    const variantes = conVar ? [...document.querySelectorAll("#ed-vars .var")].map(d => {
+      const [n, s] = d.querySelectorAll("input"); return { nombre: n.value.trim(), stock: Math.max(0, parseInt(s.value) || 0) };
+    }).filter(v => v.nombre) : [];
+    if (conVar && !variantes.length) return toast("Agrega al menos un modelo con nombre", true);
+    const datos = {
+      nombre: F.nombre.value.trim(),
+      precio: parseFloat(F.precio.value) || 0,
+      orden: parseInt(F.orden.value) || 0,
+      descripcion: F.descripcion.value.trim(),
+      nuevo: F.nuevo.checked, activo: F.activo.checked,
+      categorias: [...document.querySelectorAll("#ed-cats input:checked")].map(i => i.value),
+      imagenes: fotos, variantes,
+      stock: conVar ? 0 : Math.max(0, parseInt(F.stock.value) || 0)
+    };
+    const b = $("#ed-guardar"); b.disabled = true; b.textContent = "Guardando…";
+    let error;
+    if (edit) ({ error } = await db.from("productos").update(datos).eq("id", edit.id));
+    else {
+      let id = slug(datos.nombre), n = 1;
+      while (PRODS.some(p => p.id === id)) id = `${slug(datos.nombre)}-${++n}`;
+      ({ error } = await db.from("productos").insert({ id, ...datos }));
+    }
+    b.disabled = false; b.textContent = "Guardar";
+    if (error) return toast("No se pudo guardar: " + error.message, true);
+    if (borrarFotos.length) await db.storage.from("fotos").remove(borrarFotos.map(rutaDe).filter(Boolean));
+    cerrar(); toast(edit ? "Cambios guardados 💕" : "¡Producto agregado! 🎉"); cargar();
+  };
+
+  $("#ed-borrar").onclick = async () => {
+    if (!edit || !confirm(`¿Borrar "${edit.nombre}" para siempre?\n\nSi solo quieres que no se vea, mejor usa "Ocultar".`)) return;
+    const { error } = await db.from("productos").delete().eq("id", edit.id);
+    if (error) return toast("No se pudo borrar: " + error.message, true);
+    const propias = (edit.imagenes || []).concat(borrarFotos).map(rutaDe).filter(Boolean);
+    if (propias.length) await db.storage.from("fotos").remove(propias);
+    cerrar(); toast("Producto borrado"); cargar();
+  };
+
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#editor").hidden) cerrar(); });
+  iniciar();
+})();
+</script>
+</body>
+</html>

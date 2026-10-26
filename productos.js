@@ -2,6 +2,14 @@
 //  CONFIGURACIÓN DE TU TIENDA — edita solo este archivo
 // =====================================================
 
+// ---- Conexión con tu panel de administrador (Supabase) ----
+// Pega aquí los 2 datos de tu proyecto de Supabase (Project Settings → API).
+// Mientras estén vacíos, la tienda usa los productos escritos más abajo.
+window.SUPABASE = {
+  url: "",   // ej: "https://abcdxyz.supabase.co"
+  key: ""    // la clave "anon" o "publishable" (es pública, no pasa nada)
+};
+
 window.TIENDA = {
   nombre: "Cani Shop",
   // Tu número de WhatsApp con código de país, sin + ni espacios (Bolivia = 591)
@@ -34,8 +42,8 @@ window.CATEGORIAS = [
   { id: "papeleria", nombre: "Papelería", imagen: "https://canishopbo.myshopify.com/cdn/shop/collections/Papeleria_kawaii_en_circulo_pastel.png?v=1792963793&width=800" }
 ];
 
-// Productos. Para agregar uno, copia un bloque { ... } y cambia los datos.
-// "variantes" es opcional. stock: true = disponible, false = agotado.
+// Productos de respaldo: solo se usan si Supabase no está conectado.
+// Una vez conectado, tus productos se manejan desde admin.html.
 window.PRODUCTOS = [
   {
     id: "armable-acrilico-sanrio",

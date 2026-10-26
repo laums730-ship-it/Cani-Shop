@@ -1,10 +1,26 @@
 (() => {
-  const T = window.TIENDA, CATS = window.CATEGORIAS, PRODS = window.PRODUCTOS;
+  const T = window.TIENDA, CATS = window.CATEGORIAS, SB = window.SUPABASE || {};
+  let PRODS = window.PRODUCTOS || [];
   const $ = s => document.querySelector(s);
   const app = $("#app");
-  const bs = n => `${T.moneda} ${n.toFixed(2).replace(".", ",")}`;
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const hayStock = p => !p.variantes ? p.stock !== false : p.variantes.some(v => v.stock);
+  const bs = n => `${T.moneda} ${Number(n).toFixed(2).replace(".", ",")}`;
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // stock puede ser número (cantidad) o true/false
+  const disp = x => x === true || (typeof x === "number" && x > 0);
+  const tieneVar = p => Array.isArray(p.variantes) && p.variantes.length > 0;
+  const hayStock = p => tieneVar(p) ? p.variantes.some(v => disp(v.stock)) : (p.stock === undefined || disp(p.stock));
+  const foto = p => (p.imagenes && p.imagenes[0]) || T.logo;
+  const maxDe = (p, vari) => { const s = tieneVar(p) ? (p.variantes.find(v => v.nombre === vari) || {}).stock : p.stock; return typeof s === "number" ? s : 99; };
+
+  async function cargarProductos() {
+    if (!SB.url || !SB.key) return;
+    try {
+      const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/productos?select=*&activo=eq.true&order=orden.asc,creado.desc`,
+        { headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}` } });
+      if (!r.ok) throw new Error(r.status);
+      PRODS = (await r.json()).map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+    } catch (e) { console.warn("No se pudieron cargar los productos de Supabase", e); }
+  }
 
   // ---------- Datos fijos ----------
   document.title = T.nombre;
@@ -64,7 +80,7 @@
     const items = carrito.map((i, k) => ({ ...i, k, p: PRODS.find(p => p.id === i.id) })).filter(i => i.p);
     $("#carrito-items").innerHTML = items.length ? items.map(i => `
       <div class="item">
-        <img src="${i.p.imagenes[0]}" alt="">
+        <img src="${foto(i.p)}" alt="">
         <div>
           <h4>${esc(i.p.nombre)}</h4>
           ${i.variante ? `<small>${esc(i.variante)}</small><br>` : ""}
@@ -78,7 +94,7 @@
   }
   $("#carrito-items").addEventListener("click", e => {
     const d = e.target.dataset;
-    if (d.mas) carrito[d.mas].cant++;
+    if (d.mas) { const it = carrito[d.mas], p = PRODS.find(x => x.id === it.id); if (p && it.cant >= maxDe(p, it.variante)) return toast("No hay más stock de este modelo"); it.cant++; }
     else if (d.menos) { carrito[d.menos].cant--; if (carrito[d.menos].cant < 1) carrito.splice(d.menos, 1); }
     else if (d.quitar) carrito.splice(d.quitar, 1);
     else return;
@@ -108,7 +124,7 @@
   // ---------- Vistas ----------
   const tarjeta = p => `
     <a class="tarjeta" href="#/producto/${p.id}">
-      <div class="foto"><img loading="lazy" src="${p.imagenes[0]}" alt="${esc(p.nombre)}">
+      <div class="foto"><img loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">
         ${!hayStock(p) ? `<span class="etiqueta agotado">Agotado</span>` : p.nuevo ? `<span class="etiqueta">Nuevo</span>` : ""}</div>
       <div class="info"><h3>${esc(p.nombre)}</h3><div class="precio">${bs(p.precio)}</div>
         <span class="ver-mas">${hayStock(p) ? "Ver opciones →" : "Ver detalles →"}</span></div>
@@ -160,7 +176,7 @@
   function catalogo(cat, q) {
     let lista = PRODS;
     if (cat) lista = lista.filter(p => p.categorias?.includes(cat));
-    if (q) { const t = q.toLowerCase(); lista = lista.filter(p => (p.nombre + " " + p.descripcion).toLowerCase().includes(t)); }
+    if (q) { const t = q.toLowerCase(); lista = lista.filter(p => (p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t)); }
     app.innerHTML = `<section class="seccion">
       <h2>${q ? `Resultados para “${esc(q)}”` : cat ? esc(CATS.find(c => c.id === cat)?.nombre || "Catálogo") : "Catálogo"}</h2>
       <div class="filtros"><a class="chip ${!cat ? "activo" : ""}" href="#/catalogo">Todo</a>
@@ -171,24 +187,27 @@
   function producto(id) {
     const p = PRODS.find(x => x.id === id);
     if (!p) return catalogo();
-    let img = 0, cant = 1, vari = p.variantes ? (p.variantes.find(v => v.stock) || {}).nombre : null;
+    let img = 0, cant = 1, vari = tieneVar(p) ? (p.variantes.find(v => disp(v.stock)) || {}).nombre : null;
+    const imgs = p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)];
     const pintar = () => {
-      const dispo = p.variantes ? !!vari : p.stock !== false;
+      const dispo = tieneVar(p) ? !!vari : hayStock(p);
+      const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
+      const pocos = dispo && max <= 3 ? `<p class="pocos">¡Solo ${max === 1 ? "queda 1" : `quedan ${max}`}! 🏃‍♀️</p>` : "";
       app.innerHTML = `<section class="seccion">
         <a class="volver" href="#/catalogo">← Volver al catálogo</a>
         <div class="producto">
           <div class="galeria">
-            <div class="principal"><img src="${p.imagenes[img]}" alt="${esc(p.nombre)}"></div>
-            ${p.imagenes.length > 1 ? `<div class="miniaturas">${p.imagenes.map((s, k) => `<button class="${k === img ? "activo" : ""}" data-img="${k}"><img src="${s}" alt=""></button>`).join("")}</div>` : ""}
+            <div class="principal"><img src="${imgs[img]}" alt="${esc(p.nombre)}"></div>
+            ${imgs.length > 1 ? `<div class="miniaturas">${imgs.map((s, k) => `<button class="${k === img ? "activo" : ""}" data-img="${k}"><img src="${s}" alt=""></button>`).join("")}</div>` : ""}
           </div>
           <div>
             <h1>${esc(p.nombre)}</h1>
             <div class="precio">${bs(p.precio)}</div>
             <p>${esc(p.descripcion || "")}</p>
-            ${p.variantes ? `<div class="etiq">Modelo</div><div class="opciones">${p.variantes.map(v => `<button class="opcion ${v.nombre === vari ? "activo" : ""}" data-var="${esc(v.nombre)}" ${v.stock ? "" : "disabled"}>${esc(v.nombre)}</button>`).join("")}</div>` : ""}
+            ${tieneVar(p) ? `<div class="etiq">Modelo</div><div class="opciones">${p.variantes.map(v => `<button class="opcion ${v.nombre === vari ? "activo" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${esc(v.nombre)}</button>`).join("")}</div>` : ""}
             <div class="etiq">Cantidad</div>
             <div class="cantidad"><button data-c="-1">−</button><span>${cant}</span><button data-c="1">+</button></div><br>
-            <button class="btn" id="agregar" ${dispo ? "" : "disabled"}>${dispo ? "Agregar al carrito" : "Agotado"}</button>
+            ${pocos}<button class="btn" id="agregar" ${dispo ? "" : "disabled"}>${dispo ? "Agregar al carrito" : "Agotado"}</button>
             <p class="nota" style="margin-top:16px">${esc(T.pago)}</p>
           </div>
         </div></section>`;
@@ -198,7 +217,7 @@
       const b = e.target.closest("button"); if (!b) return;
       if (b.dataset.img) { img = +b.dataset.img; pintar(); }
       else if (b.dataset.var) { vari = b.dataset.var; pintar(); }
-      else if (b.dataset.c) { cant = Math.max(1, cant + +b.dataset.c); pintar(); }
+      else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintar(); }
       else if (b.id === "agregar") agregar(p.id, vari, cant);
     };
   }
@@ -261,5 +280,6 @@
     q ? catalogo(null, q) : ruta();
   });
 
-  pintarCarrito(); ruta();
+  app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii… 🐾</p>`;
+  cargarProductos().then(() => { pintarCarrito(); ruta(); });
 })();

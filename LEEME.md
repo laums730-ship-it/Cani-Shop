@@ -1,36 +1,59 @@
 # Cani Shop — tu tienda propia
 
-Tienda estática (sin servidor ni base de datos): catálogo, buscador, carrito y pedidos por WhatsApp.
-Funciona en Vercel, Cloudflare Pages, Netlify o GitHub Pages sin cambiar nada.
+Catálogo, buscador, carrito, pedidos por WhatsApp y **panel de administrador** para manejar productos y stock.
 
 ## Archivos
-- `productos.js` → **el único que necesitas editar**: tu WhatsApp, textos, categorías y productos.
-- `index.html`, `styles.css`, `app.js` → el diseño y funcionamiento.
+- `index.html`, `styles.css`, `app.js` → la tienda.
+- `admin.html` → tu panel de administrador (entras en `tutienda.vercel.app/admin.html`).
+- `productos.js` → configuración: WhatsApp, textos, categorías y la conexión con Supabase.
+- `logo.png` → tu logo.
+- `supabase-setup.sql` → crea la base de datos (se usa una sola vez).
 
-## 1. Configura tu WhatsApp
-En `productos.js`, cambia `whatsapp: "59170000000"` por tu número con 591 delante, sin espacios.
+## Conectar el panel de administrador (una sola vez, ~5 min)
 
-## 2. Agrega productos
-Copia el bloque del producto de ejemplo y cambia nombre, precio, fotos y variantes.
-- `stock: false` en una variante la muestra como agotada.
-- `nuevo: true` lo pone en "Novedades" con etiqueta.
+### 1. Crea tu proyecto en Supabase (gratis)
+1. Entra a **supabase.com** → **Start your project** → entra con tu cuenta de GitHub.
+2. **New project** → nombre: `canishop`, inventa una contraseña de base de datos (guárdala),
+   región: **South America (São Paulo)** → **Create new project**. Espera 1-2 minutos.
 
-## 3. Fotos (importante antes de cancelar Shopify)
-Ahora las fotos se cargan desde los servidores de Shopify. Si cierras Shopify, **dejarán de verse**.
-Antes de cancelar:
-1. Descarga cada foto (abre el enlace del archivo y guárdala).
-2. Crea una carpeta `img` junto a `index.html` y ponlas ahí.
-3. En `productos.js` cambia los enlaces por `"img/nombre-foto.webp"`.
+### 2. Crea la base de datos
+1. En el menú izquierdo: **SQL Editor** → **New query**.
+2. Abre `supabase-setup.sql`, copia TODO el texto, pégalo y toca **Run**.
+   Debe decir "Success". (Arriba del archivo está tu correo como administradora; si quieres usar otro, cámbialo antes de correrlo.)
 
-## 4. Subir a Vercel (sin programar)
-1. Crea una cuenta en vercel.com (puedes entrar con GitHub o tu correo).
-2. Instala nada: ve a **vercel.com/new**, elige la opción de subir/importar un proyecto.
-   La forma más fácil: sube esta carpeta a un repositorio de **GitHub** (botón "Add file → Upload files")
-   y luego en Vercel elige "Import" sobre ese repositorio. Framework: **Other**. Deploy.
-3. Cada vez que edites `productos.js` en GitHub, Vercel actualiza la tienda solo.
+### 3. Crea tu usuario de administradora
+1. Menú izquierdo: **Authentication** → **Users** → **Add user** → **Create new user**.
+2. Pon **el mismo correo** del paso anterior y una contraseña. Marca **Auto Confirm User**. Crear.
+3. Para que nadie más pueda registrarse: **Authentication** → **Sign In / Providers** (o **Settings**)
+   → apaga **Allow new users to sign up** → Save.
 
-Recuerda: el plan gratis de Vercel (Hobby) es solo para uso no comercial; una tienda requiere el plan Pro.
-Alternativa gratis que sí permite tiendas: **Cloudflare Pages** (pages.cloudflare.com → "Upload assets" → arrastra la carpeta).
+### 4. Conecta tu tienda
+1. En Supabase: **Project Settings** (engranaje) → **API** / **API Keys**.
+2. Copia el **Project URL** y la clave **anon** o **publishable**.
+3. En GitHub abre `productos.js` → lápiz ✏️ → pégalos arriba:
+   ```js
+   window.SUPABASE = {
+     url: "https://tuproyecto.supabase.co",
+     key: "tu-clave-anon-o-publishable"
+   };
+   ```
+4. **Commit changes**. ¡Listo! Entra a `tutienda.vercel.app/admin.html` con tu correo y contraseña.
 
-## 5. Dominio propio
-En el panel de Vercel o Cloudflare: Settings → Domains → agrega tu dominio y sigue las instrucciones DNS.
+## Usar el panel
+- **＋ Nuevo producto**: nombre, precio, categorías, descripción, fotos y stock.
+- **Modelos**: activa "Este producto tiene modelos" y pon cuántas unidades hay de cada uno.
+- **− / +** en la lista: sube o baja el stock al instante (se guarda solo).
+- Con 0 unidades se muestra **Agotado**; con 3 o menos, "¡Solo quedan X!".
+- **Ocultar**: el producto deja de verse en la tienda sin borrarlo.
+- Cuando vendas por WhatsApp, baja el stock con el botón **−**.
+
+## Lo que sigue en productos.js
+WhatsApp, avisos, textos, redes sociales y categorías se cambian ahí (lápiz ✏️ en GitHub).
+
+## Fotos que venían de Shopify
+El primer producto usa fotos guardadas en Shopify. Antes de cancelar Shopify, entra a editarlo en el panel,
+quita esas fotos y vuelve a subirlas desde tu celular o compu.
+
+## Hosting
+El plan gratis de Vercel (Hobby) es solo para uso no comercial; una tienda requiere el plan Pro.
+Alternativa gratis que sí permite tiendas: **Cloudflare Pages**. Supabase gratis sí permite uso comercial.
