@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Diagnóstico · Cani Shop</title>
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fdeef2;color:#2b2b2b}
+  main{max-width:640px;margin:0 auto;padding:24px 16px 60px}
+  h1{color:#e8578a;font-size:1.6rem;margin:0 0 4px}
+  p.sub{color:#7a6a70;margin:0 0 20px}
+  .item{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;display:grid;grid-template-columns:32px 1fr;gap:8px;align-items:start}
+  .ico{font-size:1.4rem;line-height:1.2}
+  .item b{display:block}
+  .item small{display:block;color:#7a6a70;margin-top:3px;line-height:1.4}
+  .item.mal{border:2px solid #f5a3b0}
+  .resumen{background:#e8578a;color:#fff;border-radius:16px;padding:16px;margin-top:16px;font-weight:700;line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+  <h1>🔎 Diagnóstico de Cani Shop</h1>
+  <p class="sub">Revisa que todo esté bien conectado. Mándale una captura de esta página a Claude.</p>
+  <div id="lista"><div class="item"><div class="ico">⏳</div><div><b>Revisando…</b></div></div></div>
+  <div class="resumen" id="resumen" hidden></div>
+</main>
+<script src="productos.js"></script>
+<script>
+(async () => {
+  const L = [], ok = (t, d) => L.push(["✅", t, d, 0]), mal = (t, d) => L.push(["❌", t, d, 1]), ojo = (t, d) => L.push(["⚠️", t, d, 1]);
+  const SB = window.SUPABASE || {};
+  const nc = "?nc=" + Date.now();
+  const txt = async u => { try { const r = await fetch(u + nc, { cache: "no-store" }); return r.ok ? await r.text() : null; } catch { return null; } };
+
+  // 1) Archivos de la página
+  const idx = await txt("index.html"), app = await txt("app.js"), adm = await txt("admin.html");
+  idx && /app\.js\?v=20261026c/.test(idx) ? ok("index.html actualizado") : mal("index.html es una versión vieja", "Sube el index.html del último zip a GitHub.");
+  app && app.includes("function scoops()") && app.includes('cat.after(m)') ? ok("app.js actualizado (con Scoops)") : mal("app.js es una versión vieja", "Sube el app.js del último zip a GitHub.");
+  adm && adm.includes("sc_activo") ? ok("admin.html actualizado (con Scoops en Mi tienda)") : mal("admin.html es una versión vieja", "Sube el admin.html del último zip a GitHub.");
+  try { const r = await fetch("img/scoop-1.webp" + nc, { cache: "no-store" }); r.ok ? ok("Carpeta img con los dibujos de scoops") : mal("Falta la carpeta img", "En GitHub sube también la carpeta img (arrástrala completa)."); } catch { mal("Falta la carpeta img", "Sube la carpeta img a GitHub."); }
+
+  // 2) Supabase
+  if (!SB.url || !SB.key) { mal("productos.js sin claves de Supabase", "Pega tu url y key en productos.js (lápiz ✏️ en GitHub)."); }
+  else {
+    ok("Claves de Supabase en productos.js");
+    const H = { apikey: SB.key, Authorization: "Bearer " + SB.key };
+    const base = SB.url.replace(/\/$/, "");
+    try {
+      const r = await fetch(base + "/rest/v1/productos?select=id&limit=1000", { headers: H });
+      if (r.ok) { const d = await r.json(); ok("Productos: " + d.length + " visibles"); } else mal("No se pudieron leer los productos (" + r.status + ")", "Corre cani-shop-todo.sql en Supabase.");
+    } catch (e) { mal("No conecta con Supabase", String(e)); }
+    try {
+      const r = await fetch(base + "/rest/v1/ajustes?id=eq.tienda&select=datos", { headers: H });
+      if (!r.ok) mal("Falta la tabla de Mi tienda (" + r.status + ")", "Corre cani-shop-todo.sql en Supabase.");
+      else {
+        const [f] = await r.json();
+        if (!f) mal("Nunca guardaste Mi tienda", "Panel → 🎀 Mi tienda → toca Guardar cambios (abajo).");
+        else {
+          ok("Mi tienda guardada");
+          const s = f.datos.scoops;
+          if (!s) mal("Scoops NO guardados en Mi tienda", "Panel → 🎀 Mi tienda → sección 🍬 Scoops → toca Guardar cambios. (Si no ves la sección, el admin.html es viejo.)");
+          else if (!s.activo) mal("Scoops guardados pero APAGADOS", "Panel → 🎀 Mi tienda → 🍬 Scoops → marca “Mostrar Arma tu Scoop en mi tienda” → Guardar cambios.");
+          else if (!(s.opciones || []).length) mal("Scoops sin opciones", "Agrega opciones con precio en 🍬 Scoops y guarda.");
+          else ok("Scoops activos: " + s.opciones.map(o => o.nombre + " Bs " + o.precio).join(", "), s.qr ? "QR de pago subido ✔" : "Todavía no subiste tu QR (opcional).");
+        }
+      }
+    } catch (e) { mal("Error leyendo Mi tienda", String(e)); }
+    try {
+      const r = await fetch(base + "/rest/v1/rpc/crear_pedido", { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ p: { scoop: { opcion: "__prueba_diagnostico__" } } }) });
+      const t = await r.text();
+      if (/Opción de scoop no válida|no están disponibles/.test(t)) ok("Base de datos lista para pedidos de Scoops");
+      else if (/Pedido vacío|Ningún producto/.test(t)) mal("La base de datos no tiene la parte de Scoops", "Corre el cani-shop-todo.sql NUEVO en Supabase (SQL Editor → Run).");
+      else if (r.status === 404) mal("Faltan los pedidos en la base de datos", "Corre cani-shop-todo.sql en Supabase.");
+      else ojo("Respuesta rara de pedidos (" + r.status + ")", t.slice(0, 160));
+    } catch (e) { mal("Error revisando pedidos", String(e)); }
+  }
+
+  document.getElementById("lista").innerHTML = L.map(([i, t, d, m]) => `<div class="item ${m ? "mal" : ""}"><div class="ico">${i}</div><div><b>${t}</b>${d ? `<small>${d}</small>` : ""}</div></div>`).join("");
+  const malos = L.filter(x => x[3]).length, R = document.getElementById("resumen"); R.hidden = false;
+  R.innerHTML = malos ? `Hay ${malos} cosa(s) por arreglar ☝️ Sigue lo que dice en rojo, o mándale una captura a Claude.` : "¡Todo está perfecto! 🎉 Abre tu tienda y busca “🍬 Arma tu Scoop” en el menú. Si no lo ves, recarga con Ctrl+Shift+R.";
+})();
+</script>
+</body>
+</html>
