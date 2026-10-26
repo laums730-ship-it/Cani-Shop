@@ -38,6 +38,7 @@
     .campo input,.campo textarea,.campo select{border:2px solid var(--borde);border-radius:12px;padding:11px 13px;background:#fff;width:100%}
     .campo input:focus,.campo textarea:focus{outline:none;border-color:var(--rosa-fuerte)}
     .error{background:#fdecee;color:var(--rojo);border-radius:12px;padding:10px 12px;font-weight:700;font-size:.9rem;margin-bottom:14px;text-align:left}
+    .ok{background:#e8f8ef;color:#1d7a4c;border-radius:12px;padding:10px 12px;font-weight:700;font-size:.9rem;margin-bottom:14px;text-align:left;line-height:1.45}
     .aviso-config{background:#fff8e1;border:2px dashed #f2c94c;border-radius:16px;padding:16px;text-align:left;line-height:1.5}
 
     /* Panel */
@@ -132,7 +133,10 @@
     <div class="error" id="login-error" hidden></div>
     <div class="campo"><label for="l-email">Correo</label><input id="l-email" type="email" autocomplete="email" required></div>
     <div class="campo"><label for="l-pass">Contraseña</label><input id="l-pass" type="password" autocomplete="current-password" required></div>
+    <div class="campo" id="campo-pass2" hidden><label for="l-pass2">Repite la contraseña</label><input id="l-pass2" type="password" autocomplete="new-password" minlength="6"></div>
+    <div class="ok" id="login-ok" hidden></div>
     <button class="btn" style="width:100%" id="b-login">Entrar</button>
+    <p style="margin:16px 0 0"><a href="#" id="cambiar-modo" style="color:var(--rosa-osc);font-weight:800">¿Primera vez? Crear mi cuenta</a></p>
   </form>
 </section>
 
@@ -242,14 +246,46 @@
     if (!session) return vista("login");
     vista("panel"); cargar();
   }
+  // Entrar / crear cuenta
+  let registrando = false;
+  const er = $("#login-error"), ok = $("#login-ok");
+  const msg = (el, t) => { er.hidden = ok.hidden = true; if (el) { el.hidden = false; el.textContent = t; } };
+  const traducir = m =>
+    /invalid login/i.test(m) ? "Correo o contraseña incorrectos." :
+    /not confirmed/i.test(m) ? "Todavía no confirmaste tu correo. Revisa tu bandeja de entrada (y spam) y toca el link de Supabase." :
+    /already registered|already exists/i.test(m) ? "Ese correo ya tiene cuenta. Toca \"Ya tengo cuenta\" y entra." :
+    /at least 6/i.test(m) ? "La contraseña debe tener al menos 6 caracteres." :
+    /signups not allowed|signup.*disabled/i.test(m) ? "Los registros están apagados en Supabase. Actívalos en Authentication → Sign In / Providers → Allow new users to sign up." :
+    /rate limit/i.test(m) ? "Demasiados intentos. Espera unos minutos y vuelve a probar." : m;
+  $("#cambiar-modo").onclick = e => {
+    e.preventDefault(); registrando = !registrando; msg();
+    $("#campo-pass2").hidden = !registrando;
+    $("#l-pass").autocomplete = registrando ? "new-password" : "current-password";
+    $("#b-login").textContent = registrando ? "Crear mi cuenta" : "Entrar";
+    $("#cambiar-modo").textContent = registrando ? "Ya tengo cuenta, quiero entrar" : "¿Primera vez? Crear mi cuenta";
+    document.querySelector(".login-caja h1").textContent = registrando ? "Crear cuenta de administradora" : "Panel de administración";
+  };
   $("#f-login").onsubmit = async e => {
     e.preventDefault();
-    const b = $("#b-login"); b.disabled = true; b.textContent = "Entrando…";
-    const { error } = await db.auth.signInWithPassword({ email: $("#l-email").value.trim(), password: $("#l-pass").value });
+    const email = $("#l-email").value.trim(), password = $("#l-pass").value;
+    const b = $("#b-login"); b.disabled = true;
+    if (registrando) {
+      if (password.length < 6) { b.disabled = false; return msg(er, "La contraseña debe tener al menos 6 caracteres."); }
+      if (password !== $("#l-pass2").value) { b.disabled = false; return msg(er, "Las contraseñas no son iguales."); }
+      b.textContent = "Creando…";
+      const { data, error } = await db.auth.signUp({ email, password, options: { emailRedirectTo: location.href.split("#")[0] } });
+      b.disabled = false; b.textContent = "Crear mi cuenta";
+      if (error) return msg(er, traducir(error.message));
+      if (data.session) return iniciar();
+      msg(ok, "¡Cuenta creada! 💕 Te mandamos un correo de Supabase. Ábrelo, toca \"Confirm your mail\" y luego vuelve aquí y entra con tu correo y contraseña.");
+      $("#cambiar-modo").click(); ok.hidden = false;
+      return;
+    }
+    b.textContent = "Entrando…";
+    const { error } = await db.auth.signInWithPassword({ email, password });
     b.disabled = false; b.textContent = "Entrar";
-    const er = $("#login-error");
-    if (error) { er.hidden = false; er.textContent = /invalid/i.test(error.message) ? "Correo o contraseña incorrectos." : error.message; return; }
-    er.hidden = true; iniciar();
+    if (error) return msg(er, traducir(error.message));
+    msg(); iniciar();
   };
   $("#b-salir").onclick = async () => { await db.auth.signOut(); vista("login"); };
 
