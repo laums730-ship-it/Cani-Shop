@@ -6,8 +6,8 @@
 // Pega aquí los 2 datos de tu proyecto de Supabase (Project Settings → API).
 // Mientras estén vacíos, la tienda usa los productos escritos más abajo.
 window.SUPABASE = {
-  url: "",   // ej: "https://abcdxyz.supabase.co"
-  key: ""    // la clave "anon" o "publishable" (es pública, no pasa nada)
+  url: "https://hsruqcqsjfukalcmnfcx.supabase.co",   // ej: "https://abcdxyz.supabase.co"
+  key: "sb_publishable_filrpWieQVbCIJsql_Z2ZA_mZgHNmKk"    // la clave "anon" o "publishable" (es pública, no pasa nada)
 };
 
 window.TIENDA = {
