@@ -188,6 +188,14 @@
     .ped-items{display:flex;flex-direction:column;gap:8px}
     .extra-box{background:#fff;border:2px dashed var(--rosa-fuerte);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;margin-top:6px}
     .extra-box h3{font-size:1.05rem}
+    .mini-campo{display:flex;flex-direction:column;gap:4px;font-weight:800;font-size:.85rem}
+    .mini-campo select,.mini-campo input{border:2px solid var(--borde);border-radius:10px;padding:8px 10px;background:#fff;font:inherit;font-weight:400}
+    .chips-sel{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .chip-sel{border:2px solid var(--borde);background:#fff;border-radius:999px;padding:5px 11px;font-weight:700;font-size:.85rem}
+    .chip-sel.on{background:var(--rosa-tinta);border-color:var(--rosa-tinta);color:#fff}
+    .cli-peds{display:flex;flex-direction:column;gap:6px}
+    .cli-ped{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:2px solid var(--borde);border-radius:12px;padding:9px 12px;cursor:pointer}
+    .cli-ped:hover{border-color:var(--rosa-fuerte)}
     .pit{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px}
     .pit.sin{border-color:#f5c6cb;background:#fdf6f7}
     .pit h4{margin:0;font-size:.98rem}
@@ -261,6 +269,7 @@
     <nav class="tabs" id="tabs">
       <button class="on" data-tab="productos">🛍️ Productos</button>
       <button data-tab="pedidos">🧾 Pedidos<span class="badge" id="badge-ped" hidden></span></button>
+      <button data-tab="clientes">👥 Clientes</button>
       <button data-tab="tienda">🎀 Mi tienda</button>
     </nav>
     <span class="esp"></span>
@@ -293,7 +302,7 @@
    <div id="t-pedidos" hidden>
     <div class="barra">
       <input id="ped-buscar" type="search" placeholder="Buscar por cliente, número o teléfono…">
-      <button class="btn" id="ped-nuevo">＋ Venta manual</button>
+      <button class="btn" id="ped-nuevo">＋ Nuevo pedido</button>
     </div>
     <div class="barra" id="ped-filtros">
       <button class="filtro on" data-pf="activos">Por atender</button>
@@ -308,6 +317,19 @@
       Para usar los pedidos falta un pasito: copia el archivo <b>supabase-pedidos.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
     </div>
     <div class="lista" id="ped-lista"></div>
+   </div>
+
+   <!-- ===== Clientes ===== -->
+   <div id="t-clientes" hidden>
+    <div class="resumen" style="grid-template-columns:1fr"><div class="dato"><b id="cli-total">0</b><span>clientes registrados</span></div></div>
+    <div class="barra">
+      <input id="cli-buscar" type="search" placeholder="Buscar por nombre, teléfono, ciudad o TikTok…">
+      <button class="btn" id="cli-nuevo">＋ Nuevo cliente</button>
+    </div>
+    <div class="aviso-config" id="cli-falta" hidden style="margin-bottom:16px">
+      Para usar el registro de clientes falta un pasito: pega el archivo <b>cani-shop-todo.sql</b> en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
+    </div>
+    <div class="lista" id="cli-lista"></div>
    </div>
 
    <!-- ===== Mi tienda ===== -->
@@ -413,6 +435,32 @@
   </main>
 </div>
 
+<!-- ===== Editor de cliente ===== -->
+<div class="velo" id="cli-velo" hidden></div>
+<aside class="editor" id="cli" hidden>
+  <div class="ed-cab"><h2 id="cli-titulo">Cliente</h2><button class="x" id="cli-cerrar" aria-label="Cerrar">✕</button></div>
+  <form class="ed-cuerpo" id="f-cli" autocomplete="off" onsubmit="return false">
+    <div class="fila">
+      <div class="campo"><label>Nombre</label><input name="nombre"></div>
+      <div class="campo"><label>WhatsApp</label><input name="telefono" inputmode="tel"></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label>Ciudad</label><input name="ciudad"></div>
+      <div class="campo"><label>TikTok</label><input name="tiktok" placeholder="@usuario"></div>
+    </div>
+    <div class="campo"><label>Dirección</label><input name="direccion"></div>
+    <div class="campo"><label>Nota</label><textarea name="nota" rows="2" placeholder="Ej: le gusta Kuromi, cumple en marzo…"></textarea></div>
+    <div class="sep"></div>
+    <div class="campo"><label>Pedidos</label><div id="cli-peds" class="cli-peds"></div></div>
+  </form>
+  <div class="ed-pie ped-pie">
+    <button class="btn" id="cli-guardar">Guardar</button>
+    <button class="btn btn-sec" id="cli-pedido">＋ Nuevo pedido</button>
+    <button class="btn btn-sec" id="cli-wa" title="WhatsApp">💬</button>
+    <button class="btn btn-peligro" id="cli-borrar" title="Borrar">🗑</button>
+  </div>
+</aside>
+
 <!-- ===== Editor de pedido ===== -->
 <div class="velo" id="ped-velo" hidden></div>
 <aside class="editor editor-ancho" id="ped" hidden>
@@ -429,6 +477,7 @@
       <p class="ayuda" id="ped-stock-info"></p>
     </div>
 
+    <div class="campo"><label>👤 Cliente registrado</label><input id="ped-cli" list="ped-clis" placeholder="Busca por nombre o teléfono para llenar sus datos…"><datalist id="ped-clis"></datalist></div>
     <div class="fila">
       <div class="campo"><label>Cliente</label><input name="cliente"></div>
       <div class="campo"><label>Teléfono</label><input name="telefono" inputmode="tel"></div>
@@ -542,7 +591,7 @@
   async function iniciar() {
     const { data: { session } } = await db.auth.getSession();
     if (!session) return vista("login");
-    vista("panel"); await cargarAjustes(); cargar(); cargarPedidos();
+    vista("panel"); await cargarAjustes(); cargar(); cargarPedidos(); cargarClientes();
     setInterval(() => cargarPedidos(true), 60000);   // revisa pedidos nuevos cada minuto
   }
   // Entrar / crear cuenta
@@ -792,7 +841,8 @@
   $("#tabs").onclick = e => {
     const b = e.target.closest("[data-tab]"); if (!b) return;
     document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
-    ["productos", "tienda", "pedidos"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    ["productos", "tienda", "pedidos", "clientes"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    if (b.dataset.tab === "clientes") { cargarClientes(); if (!PEDS.length) cargarPedidos(true); }
     if (b.dataset.tab === "pedidos") cargarPedidos();
     if (b.dataset.tab === "tienda" && !ajCargados) cargarAjustes();
     window.scrollTo(0, 0);
@@ -1097,7 +1147,8 @@
   function abrirPedido(p) {
     ED = p ? JSON.parse(JSON.stringify(p)) : { numero: null, estado: "nuevo", origen: "manual", items: [], envio: 0, pagado: 0, creado: new Date().toISOString(), stock_descontado: false,
       cliente: "", telefono: "", ciudad: "", direccion: "", entrega: "", nota: "" };
-    $("#ped-titulo").textContent = ED.numero ? `Pedido #${ED.numero}` : "Nueva venta manual";
+    $("#ped-titulo").textContent = ED.numero ? `Pedido #${ED.numero}` : "Nuevo pedido";
+    $("#ped-cli").value = "";
     ["cliente", "telefono", "ciudad", "direccion", "entrega", "nota"].forEach(k => FP[k].value = ED[k] || "");
     FP.envio.value = num(ED.envio); FP.pagado.value = num(ED.pagado);
     FP.querySelectorAll("[name=estado]").forEach(r => r.checked = r.value === ED.estado);
@@ -1107,17 +1158,33 @@
     pintarExtra(); pintarItems();
     $("#ped-velo").hidden = $("#ped").hidden = false;
   }
+  // Detalles del scoop (editable) + comprobante
+  const SCF = () => AJ.scoops || {};
+  const hayScoop = () => ED.items.some(i => i.id === "scoop");
   function pintarExtra() {
-    const x = ED.extra || {};
-    if (!x.tipo && !x.comprobante) { $("#ped-extra").innerHTML = ""; return; }
-    const chips = arr => (arr || []).map(c => `<span class="tag">${esc(c)}</span>`).join(" ") || "—";
-    $("#ped-extra").innerHTML = `<div class="extra-box">
-      ${x.tipo === "scoop" ? `<h3>🍬 Detalles del Scoop</h3>
-        <div><b>🎨 Colores:</b> ${chips(x.colores)}</div>
-        <div><b>✨ Personajes:</b> ${chips(x.personajes)}</div>
-        <div><b>🎥 Video:</b> ${x.video ? "Sí ✅" : "No"}${x.tiktok ? ` · TikTok: <b>${esc(x.tiktok)}</b>` : ""}</div>` : ""}
-      <div><b>💳 Comprobante:</b> ${x.comprobante ? `<button type="button" class="btn btn-sec btn-sm" id="ver-comp">📎 Ver comprobante</button>` : "No lo subió (pídelo por WhatsApp)"}</div>
-    </div>`;
+    const x = ED.extra = ED.extra || {}, S = SCF(), ops = (S.opciones || []), pv = num(S.precioVideo || 5);
+    const lock = !!ED.stock_descontado;
+    const comp = `<div><b>💳 Comprobante:</b> ${x.comprobante ? `<button type="button" class="btn btn-sec btn-sm" id="ver-comp">📎 Ver comprobante</button>` : (ED.origen === "web" ? "No lo subió (pídelo por WhatsApp)" : "—")}</div>`;
+    if (!hayScoop()) {
+      $("#ped-extra").innerHTML = (x.comprobante ? `<div class="extra-box">${comp}</div>` : "")
+        + (ops.length && !lock ? `<button type="button" class="btn btn-sec btn-sm" id="sc-add" style="margin-top:8px">🍬 Agregar scoop</button>` : "");
+    } else {
+      const it = ED.items.find(i => i.id === "scoop"), conVideo = ED.items.some(i => i.id === "video-scoop");
+      const cols = [...new Set([...(S.colores || []), ...(x.colores || [])])], pers = [...new Set([...(S.personajes || []), ...(x.personajes || [])])];
+      const chip = (g, v) => `<button type="button" class="chip-sel ${(x[g] || []).includes(v) ? "on" : ""}" data-g="${g}" data-v="${esc(v)}">${esc(v)}</button>`;
+      $("#ped-extra").innerHTML = `<div class="extra-box">
+        <h3>🍬 Scoop</h3>
+        <div class="fila">
+          <label class="mini-campo">Opción<select id="sc-op" ${lock ? "disabled" : ""}>${[...new Set([it.nombre, ...ops.map(o => o.nombre)])].map(n => `<option ${n === it.nombre ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+          <label class="check" style="align-self:end"><input type="checkbox" id="sc-vid" ${conVideo ? "checked" : ""} ${lock ? "disabled" : ""}> 🎥 Video (+${bs(pv)})</label>
+        </div>
+        <div><b>🎨 Colores</b><div class="chips-sel">${cols.map(c => chip("colores", c)).join("")}</div></div>
+        <div><b>✨ Personajes</b><div class="chips-sel">${pers.map(c => chip("personajes", c)).join("")}</div></div>
+        <label class="mini-campo">Usuario de TikTok<input id="sc-tk" value="${esc(x.tiktok || "")}" placeholder="@usuario"></label>
+        ${comp}
+        ${lock ? "" : `<button type="button" class="btn btn-peligro btn-sm" id="sc-quitar" style="align-self:flex-start">Quitar scoop</button>`}
+      </div>`;
+    }
     const b = $("#ver-comp");
     if (b) b.onclick = async () => {
       const w = window.open("", "_blank");
@@ -1126,6 +1193,106 @@
       if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
     };
   }
+  $("#ped-extra").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || !ED) return;
+    const S = SCF(), ops = S.opciones || [];
+    if (b.id === "sc-add") {
+      const o = ops[0];
+      ED.items.unshift({ id: "scoop", nombre: o.nombre, variante: null, cant: 1, precio: num(o.precio), desc: 0, desc_nota: "" });
+      ED.extra = { ...(ED.extra || {}), tipo: "scoop", colores: ED.extra?.colores || [], personajes: ED.extra?.personajes || [], video: false };
+      const cli = CLIS.find(c => c.tel_norm && c.tel_norm === telWa(FP.telefono.value)); if (cli && cli.tiktok && !ED.extra.tiktok) ED.extra.tiktok = cli.tiktok;
+      pintarExtra(); pintarItems();
+    }
+    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => i.id !== "scoop" && i.id !== "video-scoop"); delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.dataset.g) { const arr = ED.extra[b.dataset.g] = ED.extra[b.dataset.g] || [], v = b.dataset.v, i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0); }
+  });
+  $("#ped-extra").addEventListener("change", e => {
+    if (!ED) return;
+    const S = SCF();
+    if (e.target.id === "sc-op") {
+      const o = (S.opciones || []).find(o => o.nombre === e.target.value), it = ED.items.find(i => i.id === "scoop");
+      if (o && it) { it.nombre = o.nombre; it.precio = num(o.precio); } pintarItems();
+    }
+    if (e.target.id === "sc-vid") {
+      ED.items = ED.items.filter(i => i.id !== "video-scoop");
+      if (e.target.checked) { const k = ED.items.findIndex(i => i.id === "scoop"); ED.items.splice(k + 1, 0, { id: "video-scoop", nombre: "Video de tu Scoop", variante: null, cant: 1, precio: num(S.precioVideo || 5), desc: 0, desc_nota: "" }); }
+      ED.extra.video = e.target.checked; pintarItems();
+    }
+  });
+  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); });
+
+  // ---------- Clientes ----------
+  let CLIS = [], EC = null;
+  async function cargarClientes() {
+    const { data, error } = await db.from("clientes").select("*").order("nombre");
+    if (error) { $("#cli-falta").hidden = false; CLIS = []; return; }
+    $("#cli-falta").hidden = true; CLIS = data || [];
+    $("#ped-clis").innerHTML = CLIS.map(c => `<option value="${esc(c.nombre || "Sin nombre")} · ${esc(c.telefono)}">`).join("");
+    if (!$("#t-clientes").hidden) pintarClientes();
+  }
+  const pedsDe = c => PEDS.filter(p => c.tel_norm && telWa(p.telefono) === c.tel_norm);
+  function pintarClientes() {
+    const q = $("#cli-buscar").value.trim().toLowerCase();
+    const l = CLIS.filter(c => !q || `${c.nombre} ${c.telefono} ${c.ciudad} ${c.tiktok}`.toLowerCase().includes(q));
+    $("#cli-total").textContent = CLIS.length;
+    if (!l.length) { $("#cli-lista").innerHTML = `<div class="vacio">${CLIS.length ? "Nadie con esa búsqueda." : "Todavía no tienes clientes registrados. Se agregan solos con cada pedido 💕"}</div>`; return; }
+    $("#cli-lista").innerHTML = l.map(c => {
+      const ps = pedsDe(c).filter(p => p.estado !== "cancelado"), gasto = ps.reduce((a, p) => a + cuentas(p.items || [], p.envio, p.pagado).total, 0);
+      return `<div class="ped-card" data-cli="${c.id}">
+        <div><h3>${esc(c.nombre || "Sin nombre")}</h3>
+          <div class="meta"><span>📱 ${esc(c.telefono || "—")}</span>${c.ciudad ? `<span>📍 ${esc(c.ciudad)}</span>` : ""}${c.tiktok ? `<span>🎥 ${esc(c.tiktok)}</span>` : ""}</div></div>
+        <div class="der"><b>${bs(gasto)}</b><span class="tag">${ps.length} pedido${ps.length === 1 ? "" : "s"}</span></div>
+      </div>`;
+    }).join("");
+  }
+  $("#cli-buscar").oninput = pintarClientes;
+  $("#cli-lista").onclick = e => { const c = e.target.closest("[data-cli]"); if (c) abrirCliente(CLIS.find(x => x.id == c.dataset.cli)); };
+  $("#cli-nuevo").onclick = () => abrirCliente(null);
+  const FC = $("#f-cli");
+  function abrirCliente(c) {
+    EC = c ? { ...c } : { id: null };
+    $("#cli-titulo").textContent = c ? (c.nombre || "Cliente") : "Nuevo cliente";
+    ["nombre", "telefono", "ciudad", "direccion", "tiktok", "nota"].forEach(k => FC[k].value = (c && c[k]) || "");
+    const ps = c ? pedsDe(c) : [];
+    $("#cli-peds").innerHTML = ps.length ? ps.map(p => `<div class="cli-ped" data-ped="${p.numero}"><span>#${p.numero} · ${fecha(p.creado).split(",")[0]}</span>
+        <span class="est est-${p.estado}">${ESTADO_TXT[p.estado] || p.estado}</span><b>${bs(cuentas(p.items || [], p.envio, p.pagado).total)}</b></div>`).join("")
+      : `<p class="ayuda" style="margin:0">${c ? "Todavía no tiene pedidos." : "Guarda el cliente para empezar."}</p>`;
+    $("#cli-borrar").hidden = !c;
+    $("#cli-velo").hidden = $("#cli").hidden = false;
+  }
+  const cerrarCli = () => { $("#cli-velo").hidden = $("#cli").hidden = true; EC = null; };
+  $("#cli-cerrar").onclick = $("#cli-velo").onclick = cerrarCli;
+  $("#cli-peds").onclick = e => { const r = e.target.closest("[data-ped]"); if (!r) return; cerrarCli(); abrirPedido(PEDS.find(p => p.numero == r.dataset.ped)); };
+  async function guardarCliente() {
+    const d = Object.fromEntries(["nombre", "telefono", "ciudad", "direccion", "tiktok", "nota"].map(k => [k, FC[k].value.trim()]));
+    if (!d.nombre && !d.telefono) { toast("Escribe al menos el nombre o el teléfono", true); return null; }
+    d.tel_norm = telWa(d.telefono) || null;
+    let r = EC.id ? await db.from("clientes").update(d).eq("id", EC.id).select().single() : await db.from("clientes").insert(d).select().single();
+    if (r.error) { toast(/duplicate|unique/i.test(r.error.message) ? "Ya tienes un cliente con ese teléfono" : "No se pudo guardar: " + r.error.message, true); return null; }
+    EC = r.data; await cargarClientes(); return EC;
+  }
+  $("#cli-guardar").onclick = async () => { const c = await guardarCliente(); if (c) { toast("Cliente guardado 💕"); abrirCliente(c); } };
+  $("#cli-pedido").onclick = async () => {
+    const c = await guardarCliente(); if (!c) return;
+    cerrarCli(); abrirPedido(null); llenarCliente(c);
+  };
+  $("#cli-wa").onclick = () => { const t = telWa(FC.telefono.value); if (!t) return toast("Sin teléfono", true); window.open(`https://wa.me/${t}?text=${encodeURIComponent(`¡Hola ${FC.nombre.value.trim()}! 💕 Te escribimos de ${AJ.nombre || "Cani Shop"}.`)}`, "_blank"); };
+  $("#cli-borrar").onclick = async () => {
+    if (!EC || !EC.id || !confirm(`¿Borrar a ${EC.nombre || "este cliente"} del registro?\nSus pedidos no se borran.`)) return;
+    const { error } = await db.from("clientes").delete().eq("id", EC.id);
+    if (error) return toast("No se pudo borrar: " + error.message, true);
+    cerrarCli(); toast("Cliente borrado"); cargarClientes();
+  };
+  function llenarCliente(c) {
+    FP.cliente.value = c.nombre || ""; FP.telefono.value = c.telefono || ""; FP.ciudad.value = c.ciudad || ""; FP.direccion.value = c.direccion || "";
+    if (ED && c.tiktok && hayScoop() && !ED.extra.tiktok) { ED.extra.tiktok = c.tiktok; pintarExtra(); }
+    $("#ped-cli").value = "";
+  }
+  $("#ped-cli").addEventListener("change", e => {
+    const v = e.target.value, c = CLIS.find(c => `${c.nombre || "Sin nombre"} · ${c.telefono}` === v);
+    if (c) { llenarCliente(c); toast(`Cliente: ${c.nombre}`); }
+  });
+
   function infoStock() {
     FP.classList.toggle("bloqueado", !!ED.stock_descontado);
     $("#ped-stock-info").innerHTML = ED.stock_descontado
@@ -1198,6 +1365,9 @@
       ...Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega", "nota"].map(k => [k, FP[k].value.trim()])),
       items: ED.items.map(i => ({ id: i.id, nombre: i.nombre, variante: i.variante || null, cant: Math.max(1, Math.round(num(i.cant))), precio: num(i.precio), desc: num(i.desc), desc_nota: (i.desc_nota || "").trim() })),
       envio: num(FP.envio.value), pagado: num(FP.pagado.value) };
+    const ex = { ...(ED.extra || {}) };
+    if (ED.items.some(i => i.id === "scoop")) { ex.tipo = "scoop"; ex.video = ED.items.some(i => i.id === "video-scoop"); } else { delete ex.tipo; delete ex.colores; delete ex.personajes; delete ex.video; }
+    datos.extra = ex;
     const b = $("#ped-guardar"); b.disabled = true; b.textContent = "Guardando…";
     const fin = () => { b.disabled = false; b.textContent = "Guardar"; };
     // 1) devolver stock si vuelve a Nuevo o se cancela
@@ -1226,7 +1396,7 @@
       aviso = "¡Pedido confirmado y stock descontado! 📦";
     }
     fin();
-    await Promise.all([cargarPedidos(), cargar()]);
+    await Promise.all([cargarPedidos(), cargar(), cargarClientes()]);
     abrirPedido(PEDS.find(p => p.numero === ED.numero));
     toast(aviso);
   };

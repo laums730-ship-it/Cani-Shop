@@ -61,7 +61,7 @@
   if (T.whatsapp && !/^5917000000/.test(T.whatsapp)) $(".pie-marca").insertAdjacentHTML("beforeend", `<p>📞 +${esc(T.whatsapp)}</p>`);
   // Formas de entrega en el carrito
   const ENT = (T.entregas || []).filter(Boolean);
-  if (ENT.length) $("#sel-entrega").innerHTML = `<option value="" disabled selected>¿Cómo quieres recibirlo?</option>` + ENT.map(x => `<option>${esc(x)}</option>`).join("");
+  if (!$("#sel-entrega")) {} else if (ENT.length) $("#sel-entrega").innerHTML = `<option value="" disabled selected>¿Cómo quieres recibirlo?</option>` + ENT.map(x => `<option>${esc(x)}</option>`).join("");
   else $("#sel-entrega").remove();
   $("#pie-redes").insertAdjacentHTML("beforeend", [
     T.instagram && `<a href="${T.instagram}" target="_blank" rel="noopener">Instagram</a>`,
@@ -309,7 +309,12 @@
 
   // ---------- Arma tu Scoop ----------
   const SC = T.scoops && T.scoops.activo ? T.scoops : null;
-  if (SC) $("#menu-scoops").hidden = false;
+  // Mostrar "Arma tu Scoop" en el menú (si el index.html viejo no tiene el enlace, lo agrega)
+  if (SC) {
+    let m = $("#menu-scoops");
+    if (!m) { m = document.createElement("a"); m.id = "menu-scoops"; m.href = "#/scoops"; m.textContent = "🍬 Arma tu Scoop"; const cat = document.querySelector('.menu a[href="#/catalogo"]'); cat ? cat.after(m) : $("#menu").appendChild(m); }
+    m.hidden = false;
+  }
   const COLOR_HEX = { rosa: "#f7a1c4", lila: "#c9a7f0", celeste: "#9fd4f5", verde: "#9fe0b4", "verde menta": "#a8ecd0", amarillo: "#ffe27a",
     blanco: "#ffffff", negro: "#2b2b2b", naranja: "#ffb27a", rojo: "#f26b6b", morado: "#a77bdb", azul: "#7fa8f0",
     pastel: "linear-gradient(135deg,#f7a1c4,#c9a7f0,#9fd4f5)", multicolor: "linear-gradient(135deg,#f26b6b,#ffe27a,#9fe0b4,#9fd4f5,#c9a7f0)" };
