@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const T = window.TIENDA, CATS = window.CATEGORIAS, SB = window.SUPABASE || {};
   let PRODS = window.PRODUCTOS || [];
   const $ = s => document.querySelector(s);
@@ -21,6 +21,21 @@
       PRODS = (await r.json()).map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
     } catch (e) { console.warn("No se pudieron cargar los productos de Supabase", e); }
   }
+
+  // Ajustes que cambias desde el panel (avisos, banners, textos…)
+  async function cargarAjustes() {
+    if (!SB.url || !SB.key) return;
+    try {
+      const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/ajustes?id=eq.tienda&select=datos`,
+        { headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}` } });
+      if (!r.ok) throw new Error(r.status);
+      const [fila] = await r.json();
+      if (fila && fila.datos) for (const [k, v] of Object.entries(fila.datos)) if (v !== null && v !== undefined) T[k] = v;
+    } catch (e) { console.warn("No se pudieron cargar los ajustes", e); }
+  }
+
+  app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii… 🐾</p>`;
+  await Promise.all([cargarAjustes(), cargarProductos()]);
 
   // ---------- Datos fijos ----------
   document.title = T.nombre;
@@ -46,14 +61,17 @@
   ].filter(Boolean).join(""));
 
   // Barra de avisos con flechas
+  const AV = (T.avisos || []).filter(Boolean); if (!AV.length) AV.push("");
   let ia = 0, reloj; const av = $("#aviso-texto");
   const mostrarAviso = d => {
-    ia = (ia + d + T.avisos.length) % T.avisos.length;
+    ia = (ia + d + AV.length) % AV.length;
     av.style.opacity = 0;
-    setTimeout(() => { av.textContent = T.avisos[ia]; av.style.opacity = 1; }, 200);
+    setTimeout(() => { av.textContent = AV[ia]; av.style.opacity = 1; }, 200);
     clearInterval(reloj); reloj = setInterval(() => mostrarAviso(1), 4500);
   };
-  av.textContent = T.avisos[0]; reloj = setInterval(() => mostrarAviso(1), 4500);
+  av.textContent = AV[0];
+  if (AV.length > 1) reloj = setInterval(() => mostrarAviso(1), 4500);
+  else $("#aviso-prev").style.visibility = $("#aviso-sig").style.visibility = "hidden";
   $("#aviso-prev").onclick = () => mostrarAviso(-1);
   $("#aviso-sig").onclick = () => mostrarAviso(1);
 
@@ -134,7 +152,14 @@
   function inicio() {
     const nuevos = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)).slice(0, 8);
     const marcas = CATS.filter(c => c.marca);
+    const bans = (T.banners || []).filter(b => b && b.imagen);
     app.innerHTML = `
+      ${bans.length ? `<section class="carrusel-wrap"><div class="carrusel">
+        <div class="car-pista" id="car-pista">${bans.map(b => b.enlace
+          ? `<a class="slide" href="${esc(b.enlace)}"${/^https?:/.test(b.enlace) ? ' target="_blank" rel="noopener"' : ""}><img src="${esc(b.imagen)}" alt=""></a>`
+          : `<div class="slide"><img src="${esc(b.imagen)}" alt=""></div>`).join("")}</div>
+        ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
+      </div></section>` : ""}
       ${marcas.length ? `<section class="marcas">
         <div class="marcas-fila">${marcas.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ"><img src="${c.imagen}" alt=""></div>${esc(c.nombre)}</a>`).join("")}</div>
       </section>` : ""}
@@ -166,11 +191,28 @@
           ${sticker("corazon", "st-corazon", "top:18px;left:24px;transform:rotate(-14deg)")}
           ${sticker("corazon", "st-corazon", "bottom:20px;right:30px;transform:rotate(12deg)")}
           ${sticker("estrella", "", "top:16px;right:16%;width:40px;height:40px")}
-          <h2>¿Buscas algo especial?</h2>
-          <p>Escríbenos y te ayudamos a encontrarlo 💕</p>
-          <a class="btn" href="https://wa.me/${T.whatsapp}" target="_blank" rel="noopener">Hablar por WhatsApp</a>
+          <h2>${esc(T.bannerTitulo || "¿Buscas algo especial?")}</h2>
+          <p>${esc(T.bannerTexto || "Escríbenos y te ayudamos a encontrarlo 💕")}</p>
+          <a class="btn" href="https://wa.me/${T.whatsapp}" target="_blank" rel="noopener">${esc(T.bannerBoton || "Hablar por WhatsApp")}</a>
         </div>
       </section>`;
+    if (bans.length > 1) carrusel(bans.length);
+  }
+
+  let carReloj;
+  function carrusel(n) {
+    const pista = $("#car-pista"), puntos = [...document.querySelectorAll("#car-puntos button")];
+    let i = 0;
+    const ir = k => { i = (k + n) % n; pista.scrollTo({ left: i * pista.clientWidth, behavior: "smooth" }); };
+    const auto = () => { clearInterval(carReloj); carReloj = setInterval(() => ir(i + 1), 5000); };
+    pista.addEventListener("scroll", () => {
+      const k = Math.round(pista.scrollLeft / pista.clientWidth);
+      if (k !== i) { i = k; }
+      puntos.forEach((p, j) => p.classList.toggle("on", j === k));
+    }, { passive: true });
+    pista.addEventListener("pointerdown", auto);
+    puntos.forEach(p => p.onclick = () => { ir(+p.dataset.s); auto(); });
+    auto();
   }
 
   function catalogo(cat, q) {
@@ -223,7 +265,7 @@
   }
 
   function nosotros() {
-    app.innerHTML = `<section class="seccion"><h2>Nosotros</h2><p class="texto">${esc(T.nosotros)}</p></section>`;
+    app.innerHTML = `<section class="seccion"><h2>Nosotros</h2><p class="texto">${esc(T.nosotros).replace(/\n/g, "<br>")}</p></section>`;
   }
   function contacto() {
     app.innerHTML = `<section class="seccion"><h2>Contacto</h2>
@@ -243,7 +285,7 @@
 
   // ---------- Rutas ----------
   function ruta() {
-    app.onclick = null;
+    app.onclick = null; clearInterval(carReloj);
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
@@ -280,6 +322,5 @@
     q ? catalogo(null, q) : ruta();
   });
 
-  app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii… 🐾</p>`;
-  cargarProductos().then(() => { pintarCarrito(); ruta(); });
+  pintarCarrito(); ruta();
 })();

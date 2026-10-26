@@ -105,6 +105,35 @@
     .ayuda{color:var(--gris);font-size:.83rem;margin:4px 0 0}
     .sep{height:1px;background:var(--borde);margin:20px 0}
 
+    /* Pestañas y Mi tienda */
+    .tabs{display:flex;gap:6px;background:rgba(255,255,255,.55);padding:4px;border-radius:999px}
+    .tabs button{border:0;background:none;border-radius:999px;padding:8px 14px;font-weight:800;white-space:nowrap}
+    .tabs button.on{background:#fff;color:var(--rosa-osc);box-shadow:0 2px 8px rgba(232,87,138,.15)}
+    .caja{background:#fff;border-radius:var(--radio);padding:18px 18px 6px;margin-bottom:14px}
+    .caja h2{font-size:1.15rem;margin-bottom:4px}
+    .caja>.ayuda{margin:0 0 12px}
+    .mini{display:flex;align-items:center;gap:10px}
+    .mini .ft{width:76px;flex:none}
+    .mini .ft img{object-fit:contain}
+    .banners{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+    .ban{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;background:var(--rosa-claro);border-radius:14px;padding:8px}
+    .ban img{width:150px;aspect-ratio:8/3;object-fit:cover;border-radius:10px;background:#fff}
+    .ban input{border:2px solid var(--borde);border-radius:10px;padding:9px 11px;background:#fff;width:100%;min-width:0}
+    .ban .bt{display:flex;gap:4px}
+    .ban .bt button{width:34px;height:34px;border-radius:10px;border:0;background:#fff;font-weight:800}
+    .ban .bt button.q{background:#fdecee;color:var(--rojo)}
+    .subir-ancho{aspect-ratio:auto;padding:16px;margin-bottom:14px}
+    .guardar-barra{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,#f8f3f5 30%)}
+    .guardar-barra .btn{width:100%;padding:14px}
+    @media (max-width:640px){
+      .tabs button{padding:7px 9px;font-size:.85rem}
+      .top{gap:8px}
+      .top img{height:40px}
+      .top a{display:none}
+      .ban{grid-template-columns:1fr auto}
+      .ban img{width:100%;grid-column:1/-1}
+    }
+
     .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--tinta);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;transition:transform .3s;z-index:60;max-width:90vw;text-align:center}
     .toast.ver{transform:translate(-50%,0)}
     .toast.mal{background:var(--rojo)}
@@ -156,12 +185,16 @@
 <div id="v-panel" hidden>
   <header class="top">
     <img src="logo.png" alt="" onerror="this.remove()">
-    <h1>Mis productos</h1>
+    <nav class="tabs" id="tabs">
+      <button class="on" data-tab="productos">🛍️ Productos</button>
+      <button data-tab="tienda">🎀 Mi tienda</button>
+    </nav>
     <span class="esp"></span>
     <a href="./" target="_blank">Ver tienda ↗</a>
     <button class="btn btn-sec btn-sm" id="b-salir">Salir</button>
   </header>
   <main>
+   <div id="t-productos">
     <div class="resumen">
       <div class="dato"><b id="r-total">0</b><span>productos</span></div>
       <div class="dato"><b id="r-unid">0</b><span>unidades en stock</span></div>
@@ -178,6 +211,66 @@
       <button class="filtro" data-f="ocultos">Ocultos</button>
     </div>
     <div class="lista" id="lista"></div>
+   </div>
+
+   <!-- ===== Mi tienda ===== -->
+   <form id="t-tienda" hidden autocomplete="off">
+    <div class="aviso-config" id="aj-falta" hidden style="margin-bottom:16px">
+      Para usar esta pestaña falta un pasito: copia el archivo <b>supabase-ajustes.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
+    </div>
+
+    <section class="caja">
+      <h2>📣 Barra de avisos</h2>
+      <p class="ayuda">La barra rosada de arriba. Escribe <b>un aviso por línea</b>; se van pasando solos.</p>
+      <div class="campo"><textarea name="avisos" rows="4" placeholder="Envíos a toda Bolivia&#10;Scoops y ventas unitarias"></textarea></div>
+      <div class="fila">
+        <div class="campo"><label>Gatito izquierdo</label><div class="mini" data-img="gatoIzq"></div></div>
+        <div class="campo"><label>Gatito derecho</label><div class="mini" data-img="gatoDer"></div></div>
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2>🖼️ Banners del inicio</h2>
+      <p class="ayuda">Fotos grandes arriba de tu tienda que se pasan solas. Tamaño ideal: <b>1600 × 600</b> (horizontal). Puedes ponerle un link a cada una, por ejemplo a una categoría.</p>
+      <div class="banners" id="aj-banners"></div>
+      <label class="subir subir-ancho"><input type="file" accept="image/*" multiple id="aj-file-ban">📷 Agregar banner</label>
+    </section>
+
+    <section class="caja">
+      <h2>🔎 Buscador animado</h2>
+      <p class="ayuda">Palabras que el buscador “escribe solo”. <b>Una por línea.</b></p>
+      <div class="campo"><textarea name="busquedas" rows="4" placeholder="Kuromi…&#10;Hello Kitty…"></textarea></div>
+    </section>
+
+    <section class="caja">
+      <h2>🎀 Franja rosada</h2>
+      <p class="ayuda">El texto de la franja con el lapicito y la estrella.</p>
+      <div class="campo"><input name="franja" placeholder="Envíos a toda Bolivia · Pago con QR"></div>
+    </section>
+
+    <section class="caja">
+      <h2>💌 Banner del final</h2>
+      <p class="ayuda">El recuadro rosado con corazones al final del inicio.</p>
+      <div class="campo"><label>Título</label><input name="bannerTitulo" placeholder="¿Buscas algo especial?"></div>
+      <div class="campo"><label>Texto</label><input name="bannerTexto" placeholder="Escríbenos y te ayudamos a encontrarlo 💕"></div>
+      <div class="campo"><label>Texto del botón</label><input name="bannerBoton" placeholder="Hablar por WhatsApp"></div>
+    </section>
+
+    <section class="caja">
+      <h2>📝 Textos</h2>
+      <div class="campo"><label>Página “Nosotros”</label><textarea name="nosotros" rows="5"></textarea></div>
+      <div class="campo"><label>Nota de pago (sale en cada producto)</label><textarea name="pago" rows="2"></textarea></div>
+    </section>
+
+    <section class="caja">
+      <h2>📱 Contacto y redes</h2>
+      <div class="campo"><label>WhatsApp</label><input name="whatsapp" inputmode="tel" placeholder="70000000"><p class="ayuda">Tu número. Si es de Bolivia, el 591 se agrega solo.</p></div>
+      <div class="campo"><label>Instagram</label><input name="instagram" placeholder="@canishopbo"></div>
+      <div class="campo"><label>TikTok</label><input name="tiktok" placeholder="@canishopbo"></div>
+    </section>
+
+    <div class="guardar-barra"><button class="btn" id="aj-guardar" type="submit">Guardar cambios</button></div>
+   </form>
   </main>
 </div>
 
@@ -480,6 +573,112 @@
     const propias = (edit.imagenes || []).concat(borrarFotos).map(rutaDe).filter(Boolean);
     if (propias.length) await db.storage.from("fotos").remove(propias);
     cerrar(); toast("Producto borrado"); cargar();
+  };
+
+  // ---------- Pestañas ----------
+  let ajCargados = false;
+  $("#tabs").onclick = e => {
+    const b = e.target.closest("[data-tab]"); if (!b) return;
+    document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
+    $("#t-productos").hidden = b.dataset.tab !== "productos";
+    $("#t-tienda").hidden = b.dataset.tab !== "tienda";
+    if (b.dataset.tab === "tienda" && !ajCargados) cargarAjustes();
+    window.scrollTo(0, 0);
+  };
+
+  // ---------- Mi tienda ----------
+  const A = $("#t-tienda");
+  let AJ = {}, banners = [], imgs = {};
+  const LISTAS = ["avisos", "busquedas"];
+  const TEXTOS = ["franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok"];
+
+  async function subirArchivo(file, carpeta, max = 1400) {
+    const { blob, ext, tipo } = await achicar(file, max);
+    const ruta = `${carpeta}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const { error } = await db.storage.from("fotos").upload(ruta, blob, { contentType: tipo, cacheControl: "31536000" });
+    if (error) { toast("No se pudo subir la foto: " + error.message, true); return null; }
+    return db.storage.from("fotos").getPublicUrl(ruta).data.publicUrl;
+  }
+
+  async function cargarAjustes() {
+    AJ = { ...(window.TIENDA || {}) };
+    const { data, error } = await db.from("ajustes").select("datos").eq("id", "tienda").maybeSingle();
+    if (error) { $("#aj-falta").hidden = false; return; }
+    $("#aj-falta").hidden = true; ajCargados = true;
+    if (data && data.datos) Object.assign(AJ, data.datos);
+    LISTAS.forEach(k => A[k].value = (AJ[k] || []).join("\n"));
+    TEXTOS.forEach(k => A[k].value = AJ[k] || "");
+    A.instagram.value = sinUrl(A.instagram.value); A.tiktok.value = sinUrl(A.tiktok.value);
+    if (/^5917\d{7}$|^5916\d{7}$/.test(A.whatsapp.value)) A.whatsapp.value = A.whatsapp.value.slice(3);
+    if (A.whatsapp.value === "70000000") A.whatsapp.value = "";
+    banners = (AJ.banners || []).map(b => ({ ...b }));
+    imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "" };
+    pintarBanners(); pintarMinis();
+  }
+  const sinUrl = v => v ? "@" + v.replace(/\/+$/, "").split("/").pop().replace(/^@/, "") : "";
+
+  function pintarMinis() {
+    document.querySelectorAll(".mini").forEach(d => {
+      const k = d.dataset.img, u = imgs[k];
+      d.innerHTML = (u ? `<div class="ft"><img src="${esc(u)}" alt=""><button type="button" class="q" data-quitar-mini="${k}" aria-label="Quitar">✕</button></div>` : "")
+        + `<label class="btn btn-sec btn-sm" style="cursor:pointer"><input type="file" accept="image/*" hidden data-mini="${k}">${u ? "Cambiar" : "Subir imagen"}</label>`;
+    });
+  }
+  A.addEventListener("change", async e => {
+    const k = e.target.dataset.mini; if (!k || !e.target.files[0]) return;
+    toast("Subiendo…");
+    const u = await subirArchivo(e.target.files[0], "tienda", 400);
+    if (u) { imgs[k] = u; pintarMinis(); toast("Listo, ahora toca Guardar cambios"); }
+  });
+
+  function pintarBanners() {
+    $("#aj-banners").innerHTML = banners.length ? banners.map((b, i) => `<div class="ban">
+        <img src="${esc(b.imagen)}" alt="">
+        <input data-enlace="${i}" value="${esc(b.enlace || "")}" placeholder="Link (opcional)">
+        <div class="bt">
+          <button type="button" data-sube="${i}" aria-label="Subir" ${i ? "" : "disabled"}>↑</button>
+          <button type="button" data-baja="${i}" aria-label="Bajar" ${i < banners.length - 1 ? "" : "disabled"}>↓</button>
+          <button type="button" class="q" data-borra="${i}" aria-label="Quitar">✕</button>
+        </div></div>`).join("") : `<p class="ayuda" style="margin:0">Todavía no tienes banners.</p>`;
+  }
+  $("#aj-banners").addEventListener("input", e => { const i = e.target.dataset.enlace; if (i !== undefined) banners[i].enlace = e.target.value.trim(); });
+  $("#aj-banners").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const mover = (i, j) => { [banners[i], banners[j]] = [banners[j], banners[i]]; };
+    if (b.dataset.sube) mover(+b.dataset.sube, +b.dataset.sube - 1);
+    if (b.dataset.baja) mover(+b.dataset.baja, +b.dataset.baja + 1);
+    if (b.dataset.borra) banners.splice(+b.dataset.borra, 1);
+    pintarBanners();
+  });
+  A.addEventListener("click", e => { const k = e.target.dataset.quitarMini; if (k) { imgs[k] = ""; pintarMinis(); } });
+  $("#aj-file-ban").onchange = async e => {
+    const files = [...e.target.files]; if (!files.length) return;
+    const lbl = $("#aj-file-ban").parentElement, txt = lbl.lastChild; txt.textContent = " Subiendo…";
+    for (const f of files) { const u = await subirArchivo(f, "banners", 2000); if (u) banners.push({ imagen: u, enlace: "" }); }
+    txt.textContent = "📷 Agregar banner"; e.target.value = ""; pintarBanners();
+    toast("Listo, ahora toca Guardar cambios");
+  };
+
+  const red = (v, base) => { v = v.trim(); if (!v) return ""; if (/^https?:\/\//.test(v)) return v; return base + v.replace(/^@/, ""); };
+  A.onsubmit = async e => {
+    e.preventDefault();
+    let wa = A.whatsapp.value.replace(/\D/g, "");
+    if (/^[67]\d{7}$/.test(wa)) wa = "591" + wa;
+    const datos = {
+      ...Object.fromEntries(LISTAS.map(k => [k, A[k].value.split("\n").map(x => x.trim()).filter(Boolean)])),
+      ...Object.fromEntries(TEXTOS.map(k => [k, A[k].value.trim()])),
+      whatsapp: wa || (window.TIENDA || {}).whatsapp || "",
+      instagram: red(A.instagram.value, "https://instagram.com/"),
+      tiktok: red(A.tiktok.value, "https://www.tiktok.com/@"),
+      banners: banners.map(b => ({ imagen: b.imagen, enlace: (b.enlace || "").trim() })),
+      gatoIzq: imgs.gatoIzq, gatoDer: imgs.gatoDer
+    };
+    const b = $("#aj-guardar"); b.disabled = true; b.textContent = "Guardando…";
+    const { error } = await db.from("ajustes").upsert({ id: "tienda", datos, editado: new Date().toISOString() });
+    b.disabled = false; b.textContent = "Guardar cambios";
+    if (error) return toast("No se pudo guardar: " + error.message, true);
+    AJ = { ...AJ, ...datos };
+    toast("¡Guardado! Recarga tu tienda para verlo 💕");
   };
 
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#editor").hidden) cerrar(); });
