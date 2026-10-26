@@ -159,6 +159,43 @@
     .lt select{width:100%;border:2px solid var(--borde);border-radius:10px;padding:7px 9px;background:#fff}
     .lt.ok-sub{opacity:.55}
 
+    /* Pedidos */
+    .badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;margin-left:5px;border-radius:999px;background:var(--rosa-tinta);color:#fff;font-size:.72rem}
+    .ped-card{background:#fff;border-radius:var(--radio);padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 14px;cursor:pointer;border:2px solid transparent}
+    .ped-card:hover{border-color:var(--rosa)}
+    .ped-card h3{font-size:1.05rem}
+    .ped-card .meta{color:var(--gris);font-size:.88rem;display:flex;flex-wrap:wrap;gap:4px 12px}
+    .ped-card .der{text-align:right}
+    .ped-card .der b{font-family:Fredoka;font-size:1.25rem;color:var(--rosa-tinta);display:block}
+    .est{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:800}
+    .est-nuevo{background:#e8f1ff;color:#2f62b3}.est-confirmado{background:#e8f8ef;color:#1d7a4c}.est-pagado{background:#fff4d6;color:#9a6a00}
+    .est-entregado{background:#eee;color:#555}.est-cancelado{background:#fdecee;color:var(--rojo)}
+    .falta{color:var(--rojo);font-weight:800;font-size:.85rem}
+    .editor-ancho{width:min(720px,100%)}
+    .estados{display:flex;flex-wrap:wrap;gap:6px}
+    .estados input{display:none}
+    .estados span{display:inline-block;border:2px solid var(--borde);border-radius:999px;padding:7px 12px;font-weight:800;font-size:.88rem;cursor:pointer;background:#fff}
+    .estados input:checked+span{border-color:var(--rosa-tinta);background:var(--rosa-claro);color:var(--rosa-osc)}
+    .ped-items{display:flex;flex-direction:column;gap:8px}
+    .pit{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px}
+    .pit.sin{border-color:#f5c6cb;background:#fdf6f7}
+    .pit h4{margin:0;font-size:.98rem}
+    .pit .st-info{font-size:.8rem;color:var(--gris);font-weight:700}
+    .pit.sin .st-info{color:var(--rojo)}
+    .pit .nums{grid-column:1/-1;display:grid;grid-template-columns:70px 110px 1fr 1.4fr;gap:6px}
+    .pit .nums label{font-size:.72rem;font-weight:800;color:var(--gris);display:flex;flex-direction:column;gap:3px}
+    .pit input,.pit select{border:2px solid var(--borde);border-radius:10px;padding:7px 9px;background:#fff;width:100%;min-width:0}
+    .pit .linea{font-weight:800;color:var(--rosa-tinta);white-space:nowrap}
+    .pit .q{border:0;background:#fdecee;color:var(--rojo);border-radius:10px;width:32px;height:32px;font-weight:800}
+    .agregar-prod input{width:100%;margin-top:10px;border:2px dashed var(--rosa-fuerte);border-radius:12px;padding:11px 13px;background:#fff}
+    .totales{display:flex;flex-direction:column;gap:6px;max-width:340px;margin-left:auto}
+    .totales>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 12px;border-radius:10px;background:var(--rosa-claro)}
+    .totales input{width:110px;border:2px solid var(--borde);border-radius:10px;padding:6px 9px;text-align:right;background:#fff}
+    .totales .pt-total{background:var(--rosa-tinta);color:#fff;font-family:Fredoka;font-size:1.25rem;padding:10px 12px}
+    .ped-pie .btn:first-child{flex:1}
+    .bloqueado .pit input,.bloqueado .pit select,.bloqueado .pit .q,.bloqueado .agregar-prod{pointer-events:none;opacity:.6}
+    @media (max-width:640px){ .pit .nums{grid-template-columns:1fr 1fr} .ped-card{grid-template-columns:1fr} .ped-card .der{text-align:left} }
+
     .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--tinta);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;transition:transform .3s;z-index:60;max-width:90vw;text-align:center}
     .toast.ver{transform:translate(-50%,0)}
     .toast.mal{background:var(--rojo)}
@@ -212,6 +249,7 @@
     <img src="logo.png" alt="" onerror="this.remove()">
     <nav class="tabs" id="tabs">
       <button class="on" data-tab="productos">🛍️ Productos</button>
+      <button data-tab="pedidos">🧾 Pedidos<span class="badge" id="badge-ped" hidden></span></button>
       <button data-tab="tienda">🎀 Mi tienda</button>
     </nav>
     <span class="esp"></span>
@@ -238,6 +276,27 @@
       <button class="filtro" data-f="sinfoto">📷 Sin foto</button>
     </div>
     <div class="lista" id="lista"></div>
+   </div>
+
+   <!-- ===== Pedidos ===== -->
+   <div id="t-pedidos" hidden>
+    <div class="barra">
+      <input id="ped-buscar" type="search" placeholder="Buscar por cliente, número o teléfono…">
+      <button class="btn" id="ped-nuevo">＋ Venta manual</button>
+    </div>
+    <div class="barra" id="ped-filtros">
+      <button class="filtro on" data-pf="activos">Por atender</button>
+      <button class="filtro" data-pf="nuevo">🆕 Nuevos</button>
+      <button class="filtro" data-pf="confirmado">✅ Confirmados</button>
+      <button class="filtro" data-pf="pagado">💰 Pagados</button>
+      <button class="filtro" data-pf="entregado">📦 Entregados</button>
+      <button class="filtro" data-pf="cancelado">✖ Cancelados</button>
+      <button class="filtro" data-pf="todos">Todos</button>
+    </div>
+    <div class="aviso-config" id="ped-falta" hidden style="margin-bottom:16px">
+      Para usar los pedidos falta un pasito: copia el archivo <b>supabase-pedidos.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
+    </div>
+    <div class="lista" id="ped-lista"></div>
    </div>
 
    <!-- ===== Mi tienda ===== -->
@@ -319,6 +378,60 @@
   </main>
 </div>
 
+<!-- ===== Editor de pedido ===== -->
+<div class="velo" id="ped-velo" hidden></div>
+<aside class="editor editor-ancho" id="ped" hidden>
+  <div class="ed-cab"><h2 id="ped-titulo">Pedido</h2><button class="x" id="ped-cerrar" aria-label="Cerrar">✕</button></div>
+  <form class="ed-cuerpo" id="f-ped" autocomplete="off">
+    <div class="campo"><label>Estado</label>
+      <div class="estados" id="ped-estados">
+        <label><input type="radio" name="estado" value="nuevo"><span>🆕 Nuevo</span></label>
+        <label><input type="radio" name="estado" value="confirmado"><span>✅ Confirmado</span></label>
+        <label><input type="radio" name="estado" value="pagado"><span>💰 Pagado</span></label>
+        <label><input type="radio" name="estado" value="entregado"><span>📦 Entregado</span></label>
+        <label><input type="radio" name="estado" value="cancelado"><span>✖ Cancelado</span></label>
+      </div>
+      <p class="ayuda" id="ped-stock-info"></p>
+    </div>
+
+    <div class="fila">
+      <div class="campo"><label>Cliente</label><input name="cliente"></div>
+      <div class="campo"><label>Teléfono</label><input name="telefono" inputmode="tel"></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label>Ciudad</label><input name="ciudad"></div>
+      <div class="campo"><label>Entrega</label><input name="entrega" list="ped-entregas"><datalist id="ped-entregas"></datalist></div>
+    </div>
+    <div class="campo"><label>Dirección</label><input name="direccion"></div>
+    <div class="campo"><label>Nota</label><textarea name="nota" rows="2"></textarea></div>
+
+    <div class="sep"></div>
+    <div class="campo"><label>Productos</label>
+      <div id="ped-items" class="ped-items"></div>
+      <div class="agregar-prod">
+        <input id="ped-add" list="ped-prods" placeholder="＋ Agregar producto (escribe para buscar)…">
+        <datalist id="ped-prods"></datalist>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="totales">
+      <div><span>Subtotal</span><b id="pt-sub"></b></div>
+      <div><span>Descuentos</span><b id="pt-desc"></b></div>
+      <div><span>Envío</span><input name="envio" type="number" min="0" step="0.5" value="0"></div>
+      <div class="pt-total"><span>TOTAL</span><b id="pt-total"></b></div>
+      <div><span>Pagado</span><input name="pagado" type="number" min="0" step="0.5" value="0"></div>
+      <div><span>Saldo</span><b id="pt-saldo"></b></div>
+    </div>
+  </form>
+  <div class="ed-pie ped-pie">
+    <button class="btn" id="ped-guardar">Guardar</button>
+    <button class="btn btn-sec" id="ped-nota">🧾 Nota de venta</button>
+    <button class="btn btn-sec" id="ped-wa" title="Escribir al cliente">💬</button>
+    <button class="btn btn-peligro" id="ped-borrar" title="Borrar pedido">🗑</button>
+  </div>
+</aside>
+
 <!-- ===== Fotos en lote ===== -->
 <div class="velo" id="lote-velo" hidden></div>
 <aside class="editor" id="lote" hidden>
@@ -393,7 +506,8 @@
   async function iniciar() {
     const { data: { session } } = await db.auth.getSession();
     if (!session) return vista("login");
-    vista("panel"); await cargarAjustes(); cargar();
+    vista("panel"); await cargarAjustes(); cargar(); cargarPedidos();
+    setInterval(() => cargarPedidos(true), 60000);   // revisa pedidos nuevos cada minuto
   }
   // Entrar / crear cuenta
   let registrando = false;
@@ -642,8 +756,8 @@
   $("#tabs").onclick = e => {
     const b = e.target.closest("[data-tab]"); if (!b) return;
     document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
-    $("#t-productos").hidden = b.dataset.tab !== "productos";
-    $("#t-tienda").hidden = b.dataset.tab !== "tienda";
+    ["productos", "tienda", "pedidos"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    if (b.dataset.tab === "pedidos") cargarPedidos();
     if (b.dataset.tab === "tienda" && !ajCargados) cargarAjustes();
     window.scrollTo(0, 0);
   };
@@ -822,6 +936,281 @@
     categorias = datos.categorias.map(c => ({ ...c })); CATS = datos.categorias;
     pintarCats(); pintarCatsEditor(); pintar(); $("#aj-sin-guardar").hidden = true;
     toast("¡Guardado! Recarga tu tienda para verlo 💕");
+  };
+
+  // ---------- Pedidos ----------
+  let PEDS = [], pfiltro = "activos", ED = null, nNuevosAntes = null;
+  const ACTIVOS = ["nuevo", "confirmado", "pagado"];
+  const DESCUENTAN = ["confirmado", "pagado", "entregado"];
+  const ESTADO_TXT = { nuevo: "🆕 Nuevo", confirmado: "✅ Confirmado", pagado: "💰 Pagado", entregado: "📦 Entregado", cancelado: "✖ Cancelado" };
+  const fecha = c => new Date(c).toLocaleString("es-BO", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const num = x => Math.max(0, parseFloat(x) || 0);
+  const linea = i => num(i.cant) * num(i.precio) - num(i.desc);
+  const cuentas = (items, envio, pagado) => {
+    const sub = items.reduce((a, i) => a + num(i.cant) * num(i.precio), 0);
+    const desc = items.reduce((a, i) => a + num(i.desc), 0);
+    const total = Math.max(0, sub - desc + num(envio));
+    return { sub, desc, total, saldo: Math.max(0, total - num(pagado)) };
+  };
+  const prodDe = i => PRODS.find(p => p.id === i.id);
+  const stockDe = i => {
+    const p = prodDe(i); if (!p) return null;
+    if (tieneVar(p)) { const v = p.variantes.find(v => v.nombre === i.variante); return v ? (+v.stock || 0) : 0; }
+    return +p.stock || 0;
+  };
+  const faltaEn = ped => !ped.stock_descontado && ped.estado !== "cancelado" && (ped.items || []).some(i => { const s = stockDe(i); return s !== null && s < num(i.cant); });
+
+  async function cargarPedidos(silencioso) {
+    const { data, error } = await db.from("pedidos").select("*").order("numero", { ascending: false }).limit(500);
+    if (error) { if (!silencioso) { $("#ped-falta").hidden = false; $("#ped-lista").innerHTML = ""; } return; }
+    $("#ped-falta").hidden = true;
+    PEDS = data || [];
+    const nuevos = PEDS.filter(p => p.estado === "nuevo").length;
+    $("#badge-ped").hidden = !nuevos; $("#badge-ped").textContent = nuevos;
+    if (silencioso && nNuevosAntes !== null && nuevos > nNuevosAntes) toast("🛍️ ¡Llegó un pedido nuevo!");
+    nNuevosAntes = nuevos;
+    if (!$("#t-pedidos").hidden) pintarPedidos();
+  }
+
+  function pintarPedidos() {
+    const q = $("#ped-buscar").value.trim().toLowerCase();
+    let l = PEDS.filter(p => pfiltro === "todos" ? true : pfiltro === "activos" ? ACTIVOS.includes(p.estado) : p.estado === pfiltro);
+    if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
+    if (!l.length) { $("#ped-lista").innerHTML = `<div class="vacio">${PEDS.length ? "No hay pedidos aquí." : "Todavía no llegan pedidos. Cuando alguien compre en tu tienda, aparece aquí 💕"}</div>`; return; }
+    $("#ped-lista").innerHTML = l.map(p => {
+      const c = cuentas(p.items || [], p.envio, p.pagado), n = (p.items || []).reduce((a, i) => a + num(i.cant), 0);
+      return `<div class="ped-card" data-ped="${p.numero}">
+        <div>
+          <h3>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</h3>
+          <div class="meta"><span>${fecha(p.creado)}</span><span>${n} producto${n === 1 ? "" : "s"}</span>
+            ${p.origen === "manual" ? `<span class="tag gris">Venta manual</span>` : ""}
+            ${p.entrega ? `<span>🚚 ${esc(p.entrega)}</span>` : ""}</div>
+          ${faltaEn(p) ? `<div class="falta">⚠️ Falta stock de algún producto: revísalo</div>` : ""}
+        </div>
+        <div class="der"><b>${bs(c.total)}</b><span class="est est-${p.estado}">${ESTADO_TXT[p.estado] || p.estado}</span></div>
+      </div>`;
+    }).join("");
+  }
+  $("#ped-buscar").oninput = pintarPedidos;
+  $("#ped-filtros").onclick = e => { const b = e.target.closest("[data-pf]"); if (!b) return; pfiltro = b.dataset.pf; document.querySelectorAll("#ped-filtros .filtro").forEach(x => x.classList.toggle("on", x === b)); pintarPedidos(); };
+  $("#ped-lista").onclick = e => { const c = e.target.closest("[data-ped]"); if (c) abrirPedido(PEDS.find(p => p.numero == c.dataset.ped)); };
+  $("#ped-nuevo").onclick = () => abrirPedido(null);
+
+  // Editor
+  const FP = $("#f-ped");
+  function abrirPedido(p) {
+    ED = p ? JSON.parse(JSON.stringify(p)) : { numero: null, estado: "nuevo", origen: "manual", items: [], envio: 0, pagado: 0, creado: new Date().toISOString(), stock_descontado: false,
+      cliente: "", telefono: "", ciudad: "", direccion: "", entrega: "", nota: "" };
+    $("#ped-titulo").textContent = ED.numero ? `Pedido #${ED.numero}` : "Nueva venta manual";
+    ["cliente", "telefono", "ciudad", "direccion", "entrega", "nota"].forEach(k => FP[k].value = ED[k] || "");
+    FP.envio.value = num(ED.envio); FP.pagado.value = num(ED.pagado);
+    FP.querySelectorAll("[name=estado]").forEach(r => r.checked = r.value === ED.estado);
+    $("#ped-entregas").innerHTML = (AJ.entregas || []).map(x => `<option value="${esc(x)}">`).join("");
+    $("#ped-prods").innerHTML = [...PRODS].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(p => `<option value="${esc(p.nombre)} · ${bs(p.precio)}">`).join("");
+    $("#ped-borrar").hidden = !ED.numero;
+    pintarItems();
+    $("#ped-velo").hidden = $("#ped").hidden = false;
+  }
+  function infoStock() {
+    FP.classList.toggle("bloqueado", !!ED.stock_descontado);
+    $("#ped-stock-info").innerHTML = ED.stock_descontado
+      ? "📦 <b>El stock de este pedido ya se descontó.</b> Para cambiar productos o cantidades, pásalo a <b>Nuevo</b> y guarda (el stock vuelve)."
+      : "El stock se descuenta solo al guardar como <b>Confirmado</b>, <b>Pagado</b> o <b>Entregado</b>. Si lo cancelas, vuelve.";
+  }
+  function pintarItems() {
+    infoStock();
+    $("#ped-items").innerHTML = ED.items.length ? ED.items.map((i, k) => {
+      const p = prodDe(i), s = stockDe(i), sin = !ED.stock_descontado && s !== null && s < num(i.cant);
+      const vars = p && tieneVar(p) ? `<select data-k="${k}" data-f="variante">${p.variantes.map(v => `<option ${v.nombre === i.variante ? "selected" : ""} value="${esc(v.nombre)}">${esc(v.nombre)} (${+v.stock || 0})</option>`).join("")}</select>` : (i.variante ? `<div class="st-info">${esc(i.variante)}</div>` : "");
+      return `<div class="pit ${sin ? "sin" : ""}" data-pit="${k}">
+        <div><h4>${esc(i.nombre)}</h4>${vars}
+          <div class="st-info" data-sti="${k}">${txtStock(i)}</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span class="linea" data-linea="${k}">${bs(linea(i))}</span><button type="button" class="q" data-quitar="${k}" aria-label="Quitar">✕</button></div>
+        <div class="nums">
+          <label>Cant.<input type="number" min="1" step="1" data-k="${k}" data-f="cant" value="${num(i.cant)}"></label>
+          <label>Precio unit.<input type="number" min="0" step="0.5" data-k="${k}" data-f="precio" value="${num(i.precio)}"></label>
+          <label>Descuento Bs<input type="number" min="0" step="0.5" data-k="${k}" data-f="desc" value="${num(i.desc) || ""}" placeholder="0"></label>
+          <label>Motivo<input data-k="${k}" data-f="desc_nota" value="${esc(i.desc_nota || "")}" placeholder="Ej: TikTok live"></label>
+        </div></div>`;
+    }).join("") : `<p class="ayuda" style="margin:0">Sin productos todavía.</p>`;
+    totalesPed();
+  }
+  function txtStock(i) {
+    const s = stockDe(i);
+    return s === null ? "Este producto ya no existe en tu catálogo" : ED.stock_descontado ? "Stock descontado ✔" : s < num(i.cant) ? `⚠️ Solo hay ${s} en stock` : `Stock: ${s}`;
+  }
+  function totalesPed() {
+    const c = cuentas(ED.items, FP.envio.value, FP.pagado.value);
+    $("#pt-sub").textContent = bs(c.sub); $("#pt-desc").textContent = c.desc ? "− " + bs(c.desc) : bs(0);
+    $("#pt-total").textContent = bs(c.total); $("#pt-saldo").textContent = bs(c.saldo);
+  }
+  $("#ped-items").addEventListener("input", e => {
+    const { k, f } = e.target.dataset; if (k === undefined) return;
+    ED.items[k][f] = ["cant", "precio", "desc"].includes(f) ? num(e.target.value) : e.target.value;
+    if (f === "cant" && ED.items[k].cant < 1) ED.items[k].cant = 1;
+    const l = document.querySelector(`[data-linea="${k}"]`); if (l) l.textContent = bs(linea(ED.items[k]));
+    if (f === "cant") {
+      const it = ED.items[k], s = stockDe(it);
+      document.querySelector(`[data-pit="${k}"]`).classList.toggle("sin", !ED.stock_descontado && s !== null && s < num(it.cant));
+      document.querySelector(`[data-sti="${k}"]`).textContent = txtStock(it);
+    }
+    totalesPed();
+  });
+  $("#ped-items").addEventListener("change", e => {
+    if (e.target.dataset.f === "variante") { ED.items[e.target.dataset.k].variante = e.target.value; pintarItems(); }
+  });
+  $("#ped-items").addEventListener("click", e => { const b = e.target.closest("[data-quitar]"); if (b) { ED.items.splice(+b.dataset.quitar, 1); pintarItems(); } });
+  FP.envio.oninput = FP.pagado.oninput = totalesPed;
+  $("#ped-add").addEventListener("change", e => {
+    const v = e.target.value, p = [...PRODS].find(p => `${p.nombre} · ${bs(p.precio)}` === v) || PRODS.find(p => p.nombre.toLowerCase() === v.toLowerCase());
+    if (!p) return;
+    const vari = tieneVar(p) ? (p.variantes.find(x => +x.stock > 0) || p.variantes[0]).nombre : null;
+    ED.items.push({ id: p.id, nombre: p.nombre, variante: vari, cant: 1, precio: num(p.precio), desc: 0, desc_nota: "" });
+    e.target.value = ""; pintarItems();
+  });
+  const cerrarPed = () => { $("#ped-velo").hidden = $("#ped").hidden = true; ED = null; };
+  $("#ped-cerrar").onclick = $("#ped-velo").onclick = cerrarPed;
+
+  const errMsg = er => (er && er.message || "").replace(/^.*?No alcanza/, "No alcanza");
+  $("#ped-guardar").onclick = async () => {
+    if (!ED) return;
+    if (!ED.items.length) return toast("Agrega al menos un producto", true);
+    const nuevoEstado = (FP.querySelector("[name=estado]:checked") || {}).value || "nuevo";
+    const antes = ED.estado;
+    const datos = { estado: nuevoEstado, origen: ED.origen || "manual",
+      ...Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega", "nota"].map(k => [k, FP[k].value.trim()])),
+      items: ED.items.map(i => ({ id: i.id, nombre: i.nombre, variante: i.variante || null, cant: Math.max(1, Math.round(num(i.cant))), precio: num(i.precio), desc: num(i.desc), desc_nota: (i.desc_nota || "").trim() })),
+      envio: num(FP.envio.value), pagado: num(FP.pagado.value) };
+    const b = $("#ped-guardar"); b.disabled = true; b.textContent = "Guardando…";
+    const fin = () => { b.disabled = false; b.textContent = "Guardar"; };
+    // 1) devolver stock si vuelve a Nuevo o se cancela
+    if (ED.stock_descontado && !DESCUENTAN.includes(nuevoEstado)) {
+      const { error } = await db.rpc("mover_stock", { num: ED.numero, signo: -1 });
+      if (error) { fin(); return toast("No se pudo devolver el stock: " + error.message, true); }
+      ED.stock_descontado = false;
+    }
+    if (ED.stock_descontado) delete datos.items;   // con stock descontado no se cambian los productos
+    // 2) guardar
+    let error, fila;
+    if (ED.numero) ({ error } = await db.from("pedidos").update(datos).eq("numero", ED.numero));
+    else { ({ data: fila, error } = await db.from("pedidos").insert(datos).select().single()); if (fila) ED.numero = fila.numero; }
+    if (error) { fin(); return toast("No se pudo guardar: " + error.message, true); }
+    // 3) descontar stock si pasa a Confirmado / Pagado / Entregado
+    let aviso = "Pedido guardado 💕";
+    if (!ED.stock_descontado && DESCUENTAN.includes(nuevoEstado)) {
+      const { error: e2 } = await db.rpc("mover_stock", { num: ED.numero, signo: 1 });
+      if (e2) {
+        const vuelve = DESCUENTAN.includes(antes) ? "nuevo" : antes;
+        await db.from("pedidos").update({ estado: vuelve }).eq("numero", ED.numero);
+        fin(); await Promise.all([cargarPedidos(), cargar()]);
+        abrirPedido(PEDS.find(p => p.numero === ED.numero));
+        return alert(errMsg(e2) + "\n\nEdita el pedido (cambia el modelo, la cantidad o quita el producto) y vuelve a confirmarlo.");
+      }
+      aviso = "¡Pedido confirmado y stock descontado! 📦";
+    }
+    fin();
+    await Promise.all([cargarPedidos(), cargar()]);
+    abrirPedido(PEDS.find(p => p.numero === ED.numero));
+    toast(aviso);
+  };
+
+  $("#ped-borrar").onclick = async () => {
+    if (!ED || !ED.numero || !confirm(`¿Borrar el pedido #${ED.numero}?` + (ED.stock_descontado ? "\nEl stock descontado se devolverá." : ""))) return;
+    if (ED.stock_descontado) { const { error } = await db.rpc("mover_stock", { num: ED.numero, signo: -1 }); if (error) return toast(error.message, true); }
+    const { error } = await db.from("pedidos").delete().eq("numero", ED.numero);
+    if (error) return toast("No se pudo borrar: " + error.message, true);
+    cerrarPed(); toast("Pedido borrado"); cargarPedidos(); cargar();
+  };
+
+  const telWa = t => { let d = (t || "").replace(/\D/g, ""); if (/^[67]\d{7}$/.test(d)) d = "591" + d; return d; };
+  $("#ped-wa").onclick = () => {
+    if (!ED) return;
+    const t = telWa(FP.telefono.value); if (!t) return toast("Este pedido no tiene teléfono", true);
+    const c = cuentas(ED.items, FP.envio.value, FP.pagado.value);
+    const msg = [`¡Hola ${FP.cliente.value.trim()}! 💕 Te escribimos de ${AJ.nombre || "Cani Shop"} por tu pedido${ED.numero ? ` #${ED.numero}` : ""}:`, "",
+      ...ED.items.map(i => `• ${num(i.cant)} x ${i.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(linea(i))}`), "",
+      num(FP.envio.value) ? `Envío: ${bs(FP.envio.value)}` : null, `Total: ${bs(c.total)}`, c.saldo && num(FP.pagado.value) ? `Saldo por pagar: ${bs(c.saldo)}` : null
+    ].filter(x => x !== null).join("\n");
+    window.open(`https://wa.me/${t}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  // ---------- Nota de venta ----------
+  $("#ped-nota").onclick = () => {
+    if (!ED) return;
+    if (!ED.items.length) return toast("Agrega productos primero", true);
+    const v = Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega"].map(k => [k, FP[k].value.trim()]));
+    const c = cuentas(ED.items, FP.envio.value, FP.pagado.value), pag = num(FP.pagado.value);
+    const T2 = AJ, logo = new URL("logo.png", location.href).href;
+    const ig = (T2.instagram || "").replace(/\/+$/, "").split("/").pop();
+    const tel = (T2.whatsapp || "").replace(/^591/, "");
+    const filas = ED.items.map(i => `<tr>
+        <td class="c">${num(i.cant)}</td>
+        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
+        <td class="r">${bs(i.precio)}</td><td class="r">${bs(linea(i))}</td></tr>`).join("");
+    const entrega = [v.entrega, v.ciudad, v.direccion].filter(Boolean).map(esc).join("<br>") || "—";
+    const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nota de venta ${ED.numero ? "#" + ED.numero : ""} · ${esc(T2.nombre || "Cani Shop")}</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page{size:A4;margin:12mm}
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{margin:0;background:#f8f3f5;font-family:Nunito,Arial,sans-serif;color:#3a2f34;font-size:13px}
+  .barra{position:sticky;top:0;display:flex;gap:8px;justify-content:center;padding:12px;background:#f8f3f5}
+  .barra button{border:0;border-radius:999px;padding:11px 22px;font:800 14px Nunito,sans-serif;cursor:pointer;background:#e8578a;color:#fff}
+  .barra button.sec{background:#fff;color:#3a2f34;border:2px solid #f3d3dd}
+  .hoja{position:relative;max-width:780px;margin:0 auto 30px;background:#fff;border:2px solid #f6c3d4;border-radius:28px;padding:34px 36px 30px;overflow:hidden}
+  .cab{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+  .cab img{height:84px}
+  .tab{background:#ee87a9;color:#fff;border-radius:0 0 0 30px;margin:-36px -38px 0 0;padding:22px 34px 20px;text-align:right;min-width:290px}
+  .tab h1{font-family:Fredoka,sans-serif;font-weight:600;font-size:30px;margin:0;letter-spacing:.5px}
+  .tab div{opacity:.95;font-weight:700;margin-top:4px}
+  .tienda{margin:14px 0 20px;line-height:1.5;color:#6b5a62}
+  .tienda b{color:#3a2f34;font-size:14px}
+  .datos{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:22px}
+  .dato span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.8px;color:#e8578a;text-transform:uppercase;margin-bottom:4px}
+  .dato div{background:#fdeef3;border:1.5px solid #f9dbe4;border-radius:12px;padding:9px 12px;min-height:38px}
+  table{width:100%;border-collapse:separate;border-spacing:0;border:1.5px solid #f6c3d4;border-radius:14px;overflow:hidden}
+  th{background:#ee87a9;color:#fff;font-size:11px;letter-spacing:.8px;text-transform:uppercase;padding:11px 12px;text-align:left}
+  td{padding:11px 12px;border-top:1.5px solid #fbe3eb;vertical-align:top}
+  tr:nth-child(even) td{background:#fffafb}
+  td small{display:block;color:#b98a9b;font-size:11.5px;margin-top:3px}
+  .c{text-align:center;width:56px}.r{text-align:right;white-space:nowrap}
+  .tot{margin:20px 0 0 auto;width:310px;display:flex;flex-direction:column;gap:5px}
+  .tot div{display:flex;justify-content:space-between;padding:8px 14px;background:#fdeef3;border-radius:10px}
+  .tot .big{background:#e8578a;color:#fff;font-family:Fredoka,sans-serif;font-size:21px;font-weight:600;padding:12px 14px;border-radius:12px}
+  .tot .saldo{background:#fff4d6;color:#8a5d00;font-weight:800}
+  .gracias{text-align:center;margin-top:26px;color:#e8578a;font-family:Fredoka,sans-serif;font-size:17px}
+  .gracias small{display:block;font-family:Nunito,sans-serif;color:#b98a9b;font-size:11.5px;margin-top:4px}
+  .estrella{position:absolute;color:#f9c7d8;font-size:18px}
+  @media print{body{background:#fff}.barra{display:none}.hoja{margin:0;max-width:none}}
+  @media (max-width:560px){.hoja{padding:24px 18px;border-radius:20px}.tab{margin:-24px -20px 0 0;min-width:0;padding:16px 18px}.tab h1{font-size:20px}.cab img{height:60px}.datos{grid-template-columns:1fr}.tot{width:100%}}
+</style></head><body>
+<div class="barra"><button onclick="print()">🖨️ Imprimir / Guardar PDF</button><button class="sec" onclick="close()">Cerrar</button></div>
+<div class="hoja">
+  <span class="estrella" style="left:22px;bottom:22px">✦</span><span class="estrella" style="right:30px;bottom:60px;font-size:13px">✦</span>
+  <div class="cab"><img src="${logo}" alt="${esc(T2.nombre || "Cani Shop")}">
+    <div class="tab"><h1>NOTA DE VENTA</h1><div>N.º ${ED.numero ? "#" + ED.numero : "—"}</div><div>${fecha(ED.creado || new Date()).split(",")[0]}</div></div></div>
+  <div class="tienda"><b>${esc(T2.nombre || "Cani Shop")}</b><br>${esc(T2.ubicacion || "")}${tel ? `<br>Tel.: ${esc(tel)}` : ""}${ig ? `<br>Instagram: @${esc(ig)}` : ""}</div>
+  <div class="datos">
+    <div class="dato"><span>Cliente</span><div>${esc(v.cliente) || "—"}</div></div>
+    <div class="dato"><span>Teléfono de contacto</span><div>${esc(v.telefono) || "—"}</div></div>
+    <div class="dato"><span>Fecha</span><div>${fecha(ED.creado || new Date())}</div></div>
+    <div class="dato"><span>Entrega</span><div>${entrega}</div></div>
+  </div>
+  <table><thead><tr><th class="c">Cant.</th><th>Producto</th><th class="r">Precio unit.</th><th class="r">Total</th></tr></thead><tbody>${filas}</tbody></table>
+  <div class="tot">
+    <div><span>Subtotal</span><span>${bs(c.sub)}</span></div>
+    ${c.desc ? `<div><span>Descuentos</span><span>− ${bs(c.desc)}</span></div>` : ""}
+    <div><span>Envío</span><span>${bs(FP.envio.value)}</span></div>
+    <div class="big"><span>TOTAL</span><span>${bs(c.total)}</span></div>
+    <div><span>Pagado</span><span>${bs(pag)}</span></div>
+    ${c.saldo > 0 ? `<div class="saldo"><span>Saldo</span><span>${bs(c.saldo)}</span></div>` : ""}
+  </div>
+  <div class="gracias">¡Gracias por tu compra! ♡<small>${ig ? "Síguenos en Instagram @" + esc(ig) + " · " : ""}${esc(T2.ubicacion || "")}</small></div>
+</div></body></html>`;
+    const w = window.open("", "_blank");
+    if (!w) return toast("Permite las ventanas emergentes para ver la nota", true);
+    w.document.open(); w.document.write(html); w.document.close();
   };
 
   // ---------- Fotos en lote ----------

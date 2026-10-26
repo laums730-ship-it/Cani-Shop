@@ -131,20 +131,46 @@
   $("#btn-carrito").onclick = () => abrir(true);
   $("#cerrar-carrito").onclick = $("#velo").onclick = () => abrir(false);
 
-  $("#form-pedido").addEventListener("submit", e => {
+  $("#form-pedido").addEventListener("submit", async e => {
     e.preventDefault();
-    const f = new FormData(e.target);
-    const lineas = carrito.map(i => {
-      const p = PRODS.find(x => x.id === i.id); if (!p) return "";
+    const f = new FormData(e.target), btn = e.target.querySelector("button[type=submit]");
+    const items = carrito.filter(i => PRODS.some(p => p.id === i.id));
+    if (!items.length) return;
+    // Abrir la ventana de WhatsApp ya (si no, el navegador la bloquea)
+    const ventana = window.open("", "_blank");
+    btn.disabled = true;
+    let numero = null;
+    if (SB.url && SB.key) {
+      try {
+        const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/rpc/crear_pedido`, {
+          method: "POST",
+          headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ p: {
+            cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: f.get("ciudad"),
+            direccion: f.get("direccion") || "", entrega: f.get("entrega") || "", nota: f.get("nota") || "",
+            items: items.map(i => ({ id: i.id, variante: i.variante || null, cant: i.cant }))
+          } })
+        });
+        if (r.ok) numero = await r.json();
+      } catch (err) { console.warn("No se pudo guardar el pedido", err); }
+    }
+    const lineas = items.map(i => {
+      const p = PRODS.find(x => x.id === i.id);
       return `• ${i.cant} x ${p.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(p.precio * i.cant)}`;
-    }).filter(Boolean);
-    const total = carrito.reduce((a, i) => a + (PRODS.find(p => p.id === i.id)?.precio || 0) * i.cant, 0);
-    const msg = [`¡Hola ${T.nombre}! Quiero hacer este pedido:`, "", ...lineas, "", `Subtotal: ${bs(total)}`, "",
-      `Nombre: ${f.get("nombre")}`, `Ciudad: ${f.get("ciudad")}`,
+    });
+    const total = items.reduce((a, i) => a + PRODS.find(p => p.id === i.id).precio * i.cant, 0);
+    const msg = [`¡Hola ${T.nombre}! Quiero hacer este pedido${numero ? ` (Pedido #${numero})` : ""}:`, "", ...lineas, "", `Subtotal: ${bs(total)}`, "",
+      `Nombre: ${f.get("nombre")}`, `Teléfono: ${f.get("telefono")}`, `Ciudad: ${f.get("ciudad")}`,
       f.get("entrega") ? `Entrega: ${f.get("entrega")}` : null,
       f.get("direccion") ? `Dirección: ${f.get("direccion")}` : null, f.get("nota") ? `Nota: ${f.get("nota")}` : null
     ].filter(x => x !== null).join("\n");
-    window.open(`https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+    const url = `https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`;
+    if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
+    btn.disabled = false;
+    if (numero) {
+      carrito = []; guardar(); e.target.reset(); abrir(false);
+      toast(`¡Pedido #${numero} enviado! 💕`);
+    }
   });
 
   let tt; function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("ver"), 1800); }
