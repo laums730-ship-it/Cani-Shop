@@ -72,6 +72,8 @@
     .st button{width:28px;height:28px;border-radius:50%;border:0;background:var(--rosa-claro);font-weight:800;font-size:1rem;line-height:1}
     .st button:hover{background:var(--rosa)}
     .st output{min-width:22px;text-align:center;font-weight:800}
+    .st.inf{padding:4px 12px;background:#f4f9ff;border-color:#d6e6fb}
+    .st.inf b{color:#4a7cc4}
     .acc{display:flex;flex-direction:column;gap:6px}
     .vacio{text-align:center;color:var(--gris);padding:40px;background:#fff;border-radius:var(--radio)}
 
@@ -148,6 +150,15 @@
       .ban img{width:100%;grid-column:1/-1}
     }
 
+    .lote-lista{display:flex;flex-direction:column;gap:8px}
+    .lt{display:grid;grid-template-columns:24px 64px 1fr;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:8px;border:2px solid var(--borde)}
+    .lt.mal{border-color:#f5c6cb;background:#fdf6f7}
+    .lt img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--rosa-claro)}
+    .lt input[type=checkbox]{width:18px;height:18px;accent-color:var(--rosa-tinta)}
+    .lt small{display:block;color:var(--gris);font-size:.75rem;word-break:break-all;margin-bottom:4px}
+    .lt select{width:100%;border:2px solid var(--borde);border-radius:10px;padding:7px 9px;background:#fff}
+    .lt.ok-sub{opacity:.55}
+
     .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--tinta);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;transition:transform .3s;z-index:60;max-width:90vw;text-align:center}
     .toast.ver{transform:translate(-50%,0)}
     .toast.mal{background:var(--rojo)}
@@ -217,12 +228,14 @@
     <div class="barra">
       <input id="buscar" type="search" placeholder="Buscar producto…">
       <button class="btn" id="b-nuevo">＋ Nuevo producto</button>
+      <label class="btn btn-sec" style="cursor:pointer">📷 Subir fotos en lote<input type="file" accept="image/*" multiple hidden id="lote-file"></label>
     </div>
     <div class="barra" id="filtros">
       <button class="filtro on" data-f="todos">Todos</button>
       <button class="filtro" data-f="agotados">Agotados</button>
       <button class="filtro" data-f="pocos">Pocas unidades</button>
       <button class="filtro" data-f="ocultos">Ocultos</button>
+      <button class="filtro" data-f="sinfoto">📷 Sin foto</button>
     </div>
     <div class="lista" id="lista"></div>
    </div>
@@ -306,6 +319,17 @@
   </main>
 </div>
 
+<!-- ===== Fotos en lote ===== -->
+<div class="velo" id="lote-velo" hidden></div>
+<aside class="editor" id="lote" hidden>
+  <div class="ed-cab"><h2>📷 Fotos en lote</h2><button class="x" id="lote-cerrar" aria-label="Cerrar">✕</button></div>
+  <div class="ed-cuerpo">
+    <p class="ayuda" style="margin:0 0 14px">Cada foto se asigna al producto según su <b>nombre de archivo</b>. Revisa y cambia el producto si hace falta. Las fotos se <b>agregan</b> a las que ya tiene el producto.</p>
+    <div id="lote-lista" class="lote-lista"></div>
+  </div>
+  <div class="ed-pie"><button class="btn" id="lote-subir">Subir fotos</button></div>
+</aside>
+
 <!-- ===== Editor ===== -->
 <div class="velo" id="velo" hidden></div>
 <aside class="editor" id="editor" hidden>
@@ -333,7 +357,7 @@
     <div class="campo"><label>Stock</label>
       <label class="check" style="align-self:flex-start"><input type="checkbox" id="ed-conmodelos"> Este producto tiene modelos (colores, personajes, tallas…)</label>
     </div>
-    <div id="ed-sinmodelos" class="campo"><label>Unidades disponibles</label><input name="stock" type="number" min="0" step="1" value="0"></div>
+    <div id="ed-sinmodelos" class="campo"><label>Unidades disponibles</label><input name="stock" type="number" min="0" step="1" value="0" placeholder="0" required></div>
     <div id="ed-modelos" hidden>
       <div class="var" style="font-weight:800;font-size:.85rem;color:var(--gris)"><span>Modelo</span><span>Unidades</span><span></span></div>
       <div class="vars" id="ed-vars"></div>
@@ -417,6 +441,9 @@
   // ---------- Lista ----------
   const tieneVar = p => Array.isArray(p.variantes) && p.variantes.length > 0;
   const total = p => tieneVar(p) ? p.variantes.reduce((a, v) => a + (+v.stock || 0), 0) : (+p.stock || 0);
+  const sinCtrl = x => x === null || x === undefined || x === "";
+  const agotado = p => tieneVar(p) ? p.variantes.every(v => !+v.stock) : !+p.stock;
+  const pocos = x => +x > 0 && +x <= 3;
 
   async function cargar() {
     $("#lista").innerHTML = `<div class="vacio">Cargando… 🐾</div>`;
@@ -429,14 +456,15 @@
     const q = $("#buscar").value.trim().toLowerCase();
     $("#r-total").textContent = PRODS.length;
     $("#r-unid").textContent = PRODS.reduce((a, p) => a + total(p), 0);
-    $("#r-agot").textContent = PRODS.filter(p => total(p) === 0).length;
+    $("#r-agot").textContent = PRODS.filter(agotado).length;
     let l = PRODS.filter(p => !q || (p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(q));
-    if (filtro === "agotados") l = l.filter(p => total(p) === 0 || (tieneVar(p) && p.variantes.some(v => !+v.stock)));
-    if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => +v.stock > 0 && +v.stock <= 3) : (total(p) > 0 && total(p) <= 3));
+    if (filtro === "agotados") l = l.filter(p => p.activo && (agotado(p) || (tieneVar(p) && p.variantes.some(v => !+v.stock))));
+    if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => pocos(v.stock)) : pocos(p.stock));
     if (filtro === "ocultos") l = l.filter(p => !p.activo);
+    if (filtro === "sinfoto") l = l.filter(p => p.activo && !(p.imagenes || []).length);
     if (!l.length) { $("#lista").innerHTML = `<div class="vacio">${PRODS.length ? "No hay productos con ese filtro." : "Todavía no tienes productos. ¡Agrega el primero! 💕"}</div>`; return; }
     $("#lista").innerHTML = l.map(p => {
-      const stocks = tieneVar(p) ? p.variantes.map((v, i) => chip(p.id, i, v.nombre, +v.stock || 0)).join("") : chip(p.id, -1, "Unidades", +p.stock || 0);
+      const stocks = tieneVar(p) ? p.variantes.map((v, i) => chip(p.id, i, v.nombre, v.stock)).join("") : chip(p.id, -1, "Unidades", p.stock);
       const cats = (p.categorias || []).map(c => (CATS.find(x => x.id === c) || {}).nombre || c);
       return `<div class="prod ${p.activo ? "" : "oculto"}">
         <img src="${esc((p.imagenes || [])[0] || "logo.png")}" alt="">
@@ -446,7 +474,8 @@
             ${cats.map(c => `<span class="tag">${esc(c)}</span>`).join("")}
             ${p.nuevo ? `<span class="tag">✨ Nuevo</span>` : ""}
             ${!p.activo ? `<span class="tag gris">Oculto</span>` : ""}
-            ${total(p) === 0 ? `<span class="tag rojo">Agotado</span>` : ""}</div>
+            ${agotado(p) ? `<span class="tag rojo">Agotado</span>` : ""}
+            ${(p.imagenes || []).length ? "" : `<span class="tag gris">📷 Sin foto</span>`}</div>
           <div class="stocks">${stocks}</div>
         </div>
         <div class="acc">
@@ -456,8 +485,8 @@
       </div>`;
     }).join("");
   }
-  const chip = (id, i, nombre, n) => `<span class="st ${n ? "" : "cero"}">${esc(nombre)}
-    <button data-st="${esc(id)}" data-i="${i}" data-d="-1" aria-label="Restar">−</button><output>${n}</output><button data-st="${esc(id)}" data-i="${i}" data-d="1" aria-label="Sumar">+</button></span>`;
+  const chip = (id, i, nombre, n) => `<span class="st ${+n ? "" : "cero"}">${esc(nombre)}
+    <button data-st="${esc(id)}" data-i="${i}" data-d="-1" aria-label="Restar">−</button><output>${+n || 0}</output><button data-st="${esc(id)}" data-i="${i}" data-d="1" aria-label="Sumar">+</button></span>`;
 
   $("#buscar").oninput = pintar;
   $("#filtros").onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; filtro = b.dataset.f; document.querySelectorAll(".filtro").forEach(x => x.classList.toggle("on", x === b)); pintar(); };
@@ -504,7 +533,7 @@
     F.descripcion.value = p?.descripcion || "";
     F.nuevo.checked = p ? !!p.nuevo : true;
     F.activo.checked = p ? !!p.activo : true;
-    F.stock.value = p?.stock ?? 0;
+    F.stock.value = p && !sinCtrl(p.stock) ? p.stock : 0;
     document.querySelectorAll("#ed-cats input").forEach(i => i.checked = (p?.categorias || []).includes(i.value));
     fotos = [...(p?.imagenes || [])]; pintarFotos();
     const conVar = p ? tieneVar(p) : false;
@@ -522,7 +551,7 @@
   $("#ed-conmodelos").onchange = modo;
   function addVar(v = { nombre: "", stock: 0 }) {
     const d = document.createElement("div"); d.className = "var";
-    d.innerHTML = `<input placeholder="Ej: Kuromi" value="${esc(v.nombre)}"><input type="number" min="0" step="1" value="${+v.stock || 0}"><button type="button" class="q" aria-label="Quitar modelo">✕</button>`;
+    d.innerHTML = `<input placeholder="Ej: Kuromi" value="${esc(v.nombre)}"><input type="number" min="0" step="1" placeholder="0" value="${sinCtrl(v.stock) ? 0 : +v.stock}"><button type="button" class="q" aria-label="Quitar modelo">✕</button>`;
     d.querySelector(".q").onclick = () => d.remove();
     $("#ed-vars").appendChild(d);
   }
@@ -663,7 +692,7 @@
     for (const k of Object.keys(DEF)) if (!AJ[k] || (Array.isArray(AJ[k]) && !AJ[k].length)) AJ[k] = DEF[k];
     if (data && data.datos) for (const [k, v] of Object.entries(data.datos)) if (v !== null && v !== undefined && v !== "") AJ[k] = v;
     categorias = (AJ.categorias || []).map(c => ({ ...c }));
-    if (data && Array.isArray(data.datos.categorias) && data.datos.categorias.length) { CATS = data.datos.categorias; pintarCatsEditor(); pintar && PRODS.length && pintar(); }
+    if (categorias.length) { CATS = categorias.map(c => ({ ...c })); pintarCatsEditor(); if (PRODS.length) pintar(); }
     $("#aj-sin-guardar").hidden = !!data;
     LISTAS.forEach(k => A[k].value = (AJ[k] || []).join("\n"));
     TEXTOS.forEach(k => A[k].value = AJ[k] || "");
@@ -793,6 +822,70 @@
     categorias = datos.categorias.map(c => ({ ...c })); CATS = datos.categorias;
     pintarCats(); pintarCatsEditor(); pintar(); $("#aj-sin-guardar").hidden = true;
     toast("¡Guardado! Recarga tu tienda para verlo 💕");
+  };
+
+  // ---------- Fotos en lote ----------
+  let LOTE = [];
+  const norm = s => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  function buscarProducto(archivo) {
+    let b = archivo.replace(/\.[^.]+$/, "");
+    b = norm(b).replace(/(-|_)?(foto|img|image|copia|copy)?-?\d{1,2}$/, "").replace(/-$/, "");   // quita "-2", "_3", "foto2"…
+    const exacto = PRODS.find(p => p.id === b || norm(p.nombre) === b);
+    if (exacto) return exacto.id;
+    const pal = b.split("-").filter(x => x.length > 2);
+    let mejor = null, pun = 0;
+    for (const p of PRODS) {
+      const n = norm(p.nombre), s = pal.filter(w => n.includes(w)).length / Math.max(pal.length, n.split("-").length);
+      if (s > pun) { pun = s; mejor = p; }
+    }
+    return pun >= 0.6 ? mejor.id : "";
+  }
+  $("#lote-file").onchange = e => {
+    const files = [...e.target.files]; e.target.value = ""; if (!files.length) return;
+    LOTE = files.map(f => ({ f, url: URL.createObjectURL(f), id: buscarProducto(f.name), on: true }));
+    const opts = [...PRODS].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    $("#lote-lista").innerHTML = LOTE.map((x, i) => `<div class="lt ${x.id ? "" : "mal"}" data-i="${i}">
+        <input type="checkbox" ${x.id ? "checked" : ""} data-lon="${i}" aria-label="Incluir">
+        <img src="${x.url}" alt="">
+        <div><small>${esc(x.f.name)}</small>
+          <select data-lsel="${i}"><option value="">— Elige el producto —</option>${opts.map(p => `<option value="${esc(p.id)}" ${p.id === x.id ? "selected" : ""}>${esc(p.nombre)}</option>`).join("")}</select></div>
+      </div>`).join("");
+    LOTE.forEach(x => x.on = !!x.id);
+    const n = LOTE.filter(x => x.id).length;
+    $("#lote-subir").textContent = `Subir ${n} foto${n === 1 ? "" : "s"}`;
+    $("#lote-velo").hidden = $("#lote").hidden = false;
+    if (n < LOTE.length) toast(`${LOTE.length - n} foto(s) no se reconocieron: elige su producto`, true);
+  };
+  const contarLote = () => { const n = LOTE.filter(x => x.on && x.id).length; $("#lote-subir").textContent = `Subir ${n} foto${n === 1 ? "" : "s"}`; };
+  $("#lote-lista").addEventListener("change", e => {
+    const d = e.target.dataset;
+    if (d.lsel !== undefined) { LOTE[d.lsel].id = e.target.value; LOTE[d.lsel].on = !!e.target.value; const fila = e.target.closest(".lt"); fila.classList.toggle("mal", !e.target.value); fila.querySelector("[data-lon]").checked = !!e.target.value; }
+    if (d.lon !== undefined) LOTE[d.lon].on = e.target.checked;
+    contarLote();
+  });
+  const cerrarLote = () => { $("#lote-velo").hidden = $("#lote").hidden = true; LOTE.forEach(x => URL.revokeObjectURL(x.url)); LOTE = []; };
+  $("#lote-cerrar").onclick = $("#lote-velo").onclick = cerrarLote;
+  $("#lote-subir").onclick = async () => {
+    const lista = LOTE.filter(x => x.on && x.id); if (!lista.length) return toast("No hay fotos para subir", true);
+    const b = $("#lote-subir"); b.disabled = true;
+    const nuevas = {};
+    let k = 0;
+    for (const x of lista) {
+      b.textContent = `Subiendo ${++k} de ${lista.length}…`;
+      const u = await subirArchivo(x.f, "productos");
+      if (u) { (nuevas[x.id] = nuevas[x.id] || []).push(u); document.querySelector(`.lt[data-i="${LOTE.indexOf(x)}"]`)?.classList.add("ok-sub"); }
+    }
+    b.textContent = "Guardando…";
+    let malos = 0;
+    for (const [id, urls] of Object.entries(nuevas)) {
+      const p = PRODS.find(q => q.id === id);
+      const imagenes = [...(p.imagenes || []), ...urls];
+      const { error } = await db.from("productos").update({ imagenes }).eq("id", id);
+      if (error) malos++; else p.imagenes = imagenes;
+    }
+    b.disabled = false;
+    cerrarLote(); pintar();
+    toast(malos ? `Algunas fotos no se guardaron (${malos})` : `¡Listo! ${k} foto(s) en ${Object.keys(nuevas).length} producto(s) 🎉`, !!malos);
   };
 
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#editor").hidden) cerrar(); });
