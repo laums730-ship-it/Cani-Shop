@@ -231,13 +231,15 @@
       return `<section class="seccion dest"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
     };
     app.innerHTML = `
-      ${bans.length ? `<section class="hero"><div class="car-pista" id="car-pista">${bans.map(b => b.enlace
-          ? `<a class="slide" href="${esc(b.enlace)}"${/^https?:/.test(b.enlace) ? ' target="_blank" rel="noopener"' : ""}><img src="${esc(b.imagen)}" alt=""></a>`
-          : `<div class="slide"><img src="${esc(b.imagen)}" alt=""></div>`).join("")}</div>
+      ${bans.length ? `<section class="hero ${bans.every(b => b.imagenMovil) ? "movil-ok" : ""}"><div class="car-pista" id="car-pista">${bans.map(b => {
+          const pic = `<picture>${b.imagenMovil ? `<source media="(max-width:820px)" srcset="${esc(b.imagenMovil)}">` : ""}<img src="${esc(b.imagen)}" alt=""></picture>`;
+          return b.enlace
+            ? `<a class="slide" href="${esc(b.enlace)}"${/^https?:/.test(b.enlace) ? ' target="_blank" rel="noopener"' : ""}>${pic}</a>`
+            : `<div class="slide">${pic}</div>`; }).join("")}</div>
         ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
       </section>` : ""}
 
-      ${pers.length ? `<section class="seccion pers-fila"><div class="marcas-fila">${pers.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div></section>` : ""}
+      ${pers.length ? `<section class="seccion pers-fila"><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
 
       <section class="seccion cat-pills">${categs.map(c => `<a class="pill" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</section>
 
@@ -483,7 +485,7 @@
           <h2>${esc(q.p)}</h2><div class="quiz-ops">${q.r.map(([t, k]) => `<button data-k="${k}">${esc(t)}</button>`).join("")}</div>`;
       } else {
         const gana = Object.entries(votos).sort((a, b) => b[1] - a[1])[0][0];
-        const [nom, emo, txt] = QUIZ.res[gana], c = CATS.find(x => x.id === gana);
+        const [nom, emo, txt] = QUIZ.res[gana], c = CATS.find(x => x.id === gana) || CATS.find(x => x.id === "sanrio");
         caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
           <div class="quiz-res">${c && c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-letra">${esc(inicial(nom))}</span>`}</div>
           <p class="quiz-eres">Tu personaje es…</p><h2>¡${esc(nom)}! ${emo}</h2><p>${esc(txt)}</p>
