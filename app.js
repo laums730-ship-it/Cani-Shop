@@ -3,6 +3,21 @@
   let CATS = window.CATEGORIAS || [];
   let PRODS = window.PRODUCTOS || [];
   const $ = s => document.querySelector(s);
+  // ---------- Sin emojis en toda la tienda ----------
+  const RX_EMO = /(?![©®™])\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu;
+  const limpiarTxt = t => t.replace(RX_EMO, "").replace(/ {2,}/g, " ").replace(/ +([!?.,:;)])/g, "$1");
+  const limpiarNodo = raiz => {
+    if (raiz.nodeType === 3) { const v = limpiarTxt(raiz.nodeValue); if (v !== raiz.nodeValue) raiz.nodeValue = v; return; }
+    if (raiz.nodeType !== 1 || raiz.closest("script,style,textarea")) return;
+    const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+    for (let n; (n = w.nextNode());) { if (n.parentElement && n.parentElement.closest("script,style,textarea")) continue; const v = limpiarTxt(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
+    raiz.querySelectorAll && raiz.querySelectorAll("[placeholder],[title],[aria-label]").forEach(el => ["placeholder", "title", "aria-label"].forEach(a => { const v = el.getAttribute(a); if (v) { const l = limpiarTxt(v); if (l !== v) el.setAttribute(a, l); } }));
+  };
+  limpiarNodo(document.body);
+  new MutationObserver(ms => ms.forEach(m => { if (m.type === "characterData") limpiarNodo(m.target); else m.addedNodes.forEach(limpiarNodo); }))
+    .observe(document.body, { childList: true, subtree: true, characterData: true });
+  const _ph = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "placeholder");
+  if (_ph && _ph.set) Object.defineProperty(HTMLInputElement.prototype, "placeholder", { get: _ph.get, set(v) { _ph.set.call(this, limpiarTxt(String(v))); }, configurable: true });
   const app = $("#app");
   const bs = n => `${T.moneda} ${Number(n).toFixed(2).replace(".", ",")}`;
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -39,7 +54,8 @@
   app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii…</p>`;
   await Promise.all([cargarAjustes(), cargarProductos()]);
   if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
-  const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji">${esc(c.emoji || (c.nombre || "?")[0])}</span>`;
+  const inicial = n => String(n || "?").replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+  const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji circ-letra">${esc(inicial(c.nombre))}</span>`;
 
   // ---------- Datos fijos ----------
   document.title = T.nombre;
@@ -231,7 +247,7 @@
       </div>
 
       ${T.quiz && T.quiz.activo !== false ? `<section class="seccion"><button class="quiz-promo" onclick="abrirQuiz(true)">
-        <span class="qp-emo">👻💖</span><span><b>${esc(T.quiz.titulo || "¿Qué personaje kawaii eres?")}</b><small>Haz el quiz y descubre tus productos ideales ✨</small></span><span class="btn">Hacer el quiz</span></button></section>` : ""}
+        ${T.logo ? `<img class="qp-emo" src="${esc(T.logo)}" alt="">` : ""}<span><b>${esc(T.quiz.titulo || "¿Qué personaje kawaii eres?")}</b><small>Haz el quiz y descubre tus productos ideales ✨</small></span><span class="btn">Hacer el quiz</span></button></section>` : ""}
 
       ${seccionTikTok()}
 
@@ -426,7 +442,7 @@
       const caja = cap.querySelector(".quiz-caja");
       if (paso < 0) {
         caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
-          <div class="quiz-emo">👻💖</div><h2>${esc((T.quiz && T.quiz.titulo) || "¿Qué personaje kawaii eres?")}</h2>
+          <div class="quiz-emo">${T.logo ? `<img src="${esc(T.logo)}" alt="" style="height:70px;margin:0 auto">` : ""}</div><h2>${esc((T.quiz && T.quiz.titulo) || "¿Qué personaje kawaii eres?")}</h2>
           <p>Responde 3 preguntitas y descubre tu personaje… ¡y sus productos! ✨</p>
           <button class="btn quiz-go">¡Vamos! 👀</button><button class="quiz-no">Ahora no</button>`;
       } else if (paso < QUIZ.preguntas.length) {
@@ -438,7 +454,7 @@
         const gana = Object.entries(votos).sort((a, b) => b[1] - a[1])[0][0];
         const [nom, emo, txt] = QUIZ.res[gana], c = CATS.find(x => x.id === gana);
         caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
-          <div class="quiz-res">${c && c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span>${emo}</span>`}</div>
+          <div class="quiz-res">${c && c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-letra">${esc(inicial(nom))}</span>`}</div>
           <p class="quiz-eres">Tu personaje es…</p><h2>¡${esc(nom)}! ${emo}</h2><p>${esc(txt)}</p>
           ${c ? `<a class="btn" href="#/catalogo/${c.id}" data-cerrar>Ver productos de ${esc(nom)}</a>` : `<a class="btn" href="#/catalogo" data-cerrar>Ver la tienda</a>`}
           <button class="quiz-no" data-otra>Hacerlo otra vez</button>`;
@@ -479,7 +495,7 @@
           <h2>Elige tu scoop</h2>
           <div class="sc-ops">${ops.map((o, i) => `<label class="sc-op">
             <input type="radio" name="op" value="${i}">
-            <span class="sc-op-in">${o.imagen ? `<img src="${esc(o.imagen)}" alt="">` : `<span class="sc-op-emoji">🍬</span>`}
+            <span class="sc-op-in">${o.imagen ? `<img src="${esc(o.imagen)}" alt="">` : `<span class="sc-op-emoji circ-letra">${esc(inicial(o.nombre))}</span>`}
               <b>${esc(o.nombre)}</b><em>${bs(+o.precio)}</em>${o.detalle ? `<small>${esc(o.detalle)}</small>` : ""}</span></label>`).join("")}</div>
           <div id="sc-contenido"></div>
         </div></section>
