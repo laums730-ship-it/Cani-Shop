@@ -70,8 +70,7 @@
     logo.onerror = () => logo.remove();
     logo.src = T.logo; logo.alt = T.nombre;
   }
-  const gato = (sel, src) => { const g = $(sel); if (src) { g.src = src; g.onerror = () => g.remove(); } else g.remove(); };
-  gato("#gato-izq", T.gatoIzq); gato("#gato-der", T.gatoDer);
+  document.querySelectorAll(".gato").forEach(g => g.remove());
 
   $("#wa-flotante").href = `https://wa.me/${T.whatsapp}`;
   { const pl = $("#pie-logo"); if (pl) { if (T.logo) { pl.src = T.logo; pl.alt = T.nombre; } else pl.remove(); } }
@@ -514,7 +513,9 @@
   function scoops() {
     if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
     const ops = (SC.opciones || []).filter(o => o.nombre && +o.precio > 0);
-    const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null };
+    const CAJAS = (Array.isArray(SC.cajas) && SC.cajas.filter(c => c && c.nombre).length ? SC.cajas.filter(c => c && c.nombre)
+      : [{ nombre: "Caja blanca", precio: 0, detalle: "Sin costo adicional", imagen: "" }, { nombre: "Caja especial", precio: 5, detalle: "", imagen: "" }]);
+    const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null, caja: 0 };
     const minC = +SC.minColores || 2, minP = +SC.minPersonajes || 2, pv = +SC.precioVideo || 0;
     const ENT = (T.entregas || []).filter(Boolean);
     app.innerHTML = `<div class="sc-wrap">
@@ -543,12 +544,20 @@
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">4</div><div class="sc-cont">
+          <h2>Escoge tu caja</h2>
+          <div class="sc-cajas">${CAJAS.map((c, i) => `<label class="sc-caja">
+            <input type="radio" name="caja" value="${i}" ${i === 0 ? "checked" : ""}>
+            <span class="sc-caja-in">${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="sc-caja-ph"><svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/></svg></span>`}
+              <b>${esc(c.nombre)}</b><em>${+c.precio > 0 ? `+${bs(+c.precio)}` : "Sin costo adicional"}</em>${c.detalle && +c.precio > 0 ? `<small>${esc(c.detalle)}</small>` : ""}</span></label>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">5</div><div class="sc-cont">
           <h2>🎥 Video de tu Scoop</h2>
           ${pv ? `<label class="sc-video"><input type="checkbox" id="sc-video"><span><b>¡Sí, quiero el video! +${bs(pv)}</b><small>Grabamos cómo armamos tu scoop y te etiquetamos en TikTok</small></span></label>` : ""}
           <div class="form"><input name="tiktok" placeholder="Tu usuario de TikTok (para etiquetarte) — ej: @tuusuario"></div>
         </div></section>
 
-        <section class="sc-paso"><div class="sc-num">5</div><div class="sc-cont">
+        <section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
           <h2>📝 Tus datos</h2>
           <div class="form sc-datos">
             <input name="nombre" placeholder="Tu nombre" required>
@@ -559,7 +568,7 @@
           </div>
         </div></section>
 
-        <section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
+        <section class="sc-paso"><div class="sc-num">7</div><div class="sc-cont">
           <h2>💳 Pago por QR</h2>
           <div class="sc-pago">
             ${SC.qr ? `<img class="sc-qr" src="${esc(SC.qr)}" alt="QR de pago">` : ""}
@@ -577,7 +586,7 @@
       </form></div>`;
 
     const F = $("#sc-form");
-    const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0);
+    const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0) + (+(CAJAS[st.caja] || {}).precio || 0);
     const pintarTotal = () => { const t = st.op === null ? "—" : bs(total()); $("#sc-total").textContent = $("#sc-total2").textContent = t; };
     F.addEventListener("change", e => {
       if (e.target.name === "op") {
@@ -585,6 +594,7 @@
         const o = ops[st.op];
         $("#sc-contenido").innerHTML = o.contenido ? `<div class="sc-incluye"><b>Incluye:</b><ul>${o.contenido.split("\n").filter(Boolean).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
       }
+      if (e.target.name === "caja") st.caja = +e.target.value;
       if (e.target.id === "sc-video") st.video = e.target.checked;
       if (e.target.id === "sc-comp") { st.archivo = e.target.files[0] || null; $("#sc-comp-txt").textContent = st.archivo ? "✅ " + st.archivo.name : "📎 Subir comprobante"; }
       pintarTotal();
@@ -616,7 +626,7 @@
           const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
             body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: f.get("ciudad"), direccion: f.get("direccion"),
               entrega: f.get("entrega") || "", comprobante: comp,
-              scoop: { opcion: ops[st.op].nombre, cant: 1, video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "" } } }) });
+              scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "" } } }) });
           if (r.ok) numero = await r.json();
         }
       } catch (err) { console.warn(err); }
@@ -624,6 +634,7 @@
       const msg = [`¡Hola ${T.nombre}! 💖 Quiero armar mi Scoop${numero ? ` (Pedido #${numero})` : ""}:`, "",
         `📝 Nombre: ${f.get("nombre")}`,
         `📦 Cantidad de scoops: ${o.nombre} — ${bs(+o.precio)}`,
+        `🎁 Caja: ${(CAJAS[st.caja] || {}).nombre || "Caja blanca"}${+(CAJAS[st.caja] || {}).precio > 0 ? ` (+${bs(+CAJAS[st.caja].precio)})` : " (sin costo)"}`,
         st.video ? `🎥 Video de mi Scoop: +${bs(pv)}` : null,
         `💳 Comprobante de pago por QR: ${comp ? "subido en la página ✅" : "te lo envío por aquí"}`,
         `🎨 Colores de preferencia: ${st.colores.join(", ")}`,
