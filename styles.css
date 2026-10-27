@@ -861,3 +861,4 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
   .cat-mosaico .cat-tile .cat-tile-nom{left:16px!important;bottom:16px!important;font-size:1rem!important;padding:8px 16px!important}
 }
 .marca-item:not(.con-foto) .marca-nom{font-size:.88rem;margin-top:8px}
+.estrellita{position:absolute;z-index:60;pointer-events:none;height:auto;opacity:0;filter:drop-shadow(0 3px 4px rgba(120,55,70,.18))}
