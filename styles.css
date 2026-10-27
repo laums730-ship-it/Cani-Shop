@@ -432,3 +432,137 @@ main{min-height:60vh}
 .quiz-res .circ-letra{font-size:2.6rem}
 .sc-op-emoji.circ-letra{display:grid;place-items:center;width:110px;aspect-ratio:1;border-radius:50%;background:var(--rosa-claro);margin:6px auto 8px}
 img.qp-emo{height:64px;width:auto}
+
+/* =====================================================
+   ESTILO MOMOHANA (estructura) con colores Cani Shop
+   ===================================================== */
+body{background:#fff}
+.aviso{height:44px}
+.aviso-texto{font-size:.88rem;font-weight:700;letter-spacing:.03em}
+.gato{height:40px}
+/* Encabezado: buscar | logo | carrito  +  menú centrado */
+.cabecera{display:block!important;padding:0!important;background:#fff!important;border-bottom:1px solid var(--borde);box-shadow:0 2px 14px rgba(232,87,138,.06)}
+.cab-fila{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;max-width:1280px;margin:0 auto;padding:12px clamp(16px,4vw,48px) 6px}
+.cab-izq{display:flex;gap:4px;align-items:center}
+.cabecera .marca{justify-self:center}
+.cabecera .marca img{height:78px!important;margin:0!important}
+.cabecera .acciones{justify-self:end;margin:0}
+.cabecera .menu{justify-content:center;gap:clamp(18px,3vw,38px);padding:4px 16px 14px;font-weight:600;font-size:.98rem;letter-spacing:.01em}
+.cabecera .menu a,.cabecera .menu-tienda{padding:6px 0;border-bottom:2px solid transparent;text-decoration:none!important}
+.cabecera .menu a:hover,.cabecera .menu a.activo,.menu-tienda:hover{border-color:var(--rosa-tinta);color:var(--rosa-osc)}
+.icono svg{width:23px;height:23px}
+.solo-pc{display:grid}
+.barra-busqueda{display:none}
+/* Búsqueda en ventana */
+.buscar-capa{position:fixed;inset:0;z-index:70;background:rgba(43,34,56,.35);opacity:0;transition:opacity .2s}
+.buscar-capa.ver{opacity:1}
+.buscar-caja{background:#fff;padding:22px clamp(16px,4vw,48px) 26px;box-shadow:0 20px 40px rgba(0,0,0,.08);transform:translateY(-12px);transition:transform .2s}
+.buscar-capa.ver .buscar-caja{transform:none}
+.buscar-caja .buscador{display:flex;align-items:center;gap:12px;max-width:760px;margin:0 auto;border-bottom:2px solid var(--rosa-tinta);padding:6px 4px}
+.buscar-caja .buscador svg{position:static;transform:none;color:var(--rosa-tinta)}
+.buscar-caja input{flex:1;border:0;background:none;font:inherit;font-size:1.25rem;padding:8px 0;outline:none}
+.buscar-pop{max-width:760px;margin:16px auto 0}
+.pop-tit{font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gris);margin:0 0 10px}
+.pop-chips{display:flex;flex-wrap:wrap;gap:8px}
+.pop-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.pop-res a{display:flex;gap:10px;align-items:center;padding:6px;border-radius:14px}
+.pop-res a:hover{background:var(--rosa-claro)}
+.pop-res img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--rosa-claro)}
+.pop-res span{display:flex;flex-direction:column;font-size:.92rem;line-height:1.25}
+.pop-res b{color:var(--rosa-tinta);margin-top:2px}
+.pop-todo{display:inline-block;margin-top:12px}
+/* Hero a todo el ancho */
+.hero{position:relative}
+.hero .car-pista{border-radius:0;box-shadow:none}
+.hero .slide img{aspect-ratio:16/6;width:100%;object-fit:cover}
+.hero .car-puntos{position:absolute;left:0;right:0;bottom:14px;margin:0}
+.hero .car-puntos button{background:rgba(255,255,255,.7)}
+.hero .car-puntos button.on{background:#fff}
+/* Personajes y categorías */
+.pers-fila{padding-top:34px;padding-bottom:6px}
+.pers-fila .marcas-fila{max-width:none}
+.marca-item{font-weight:700!important}
+.marca-item .circ{box-shadow:none!important;border:2px solid var(--rosa)}
+.cat-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding-top:14px;padding-bottom:30px}
+.pill{display:inline-block;border:1.5px solid var(--tinta);border-radius:999px;padding:9px 20px;font-weight:600;font-size:.95rem;transition:all .15s;background:#fff}
+.pill:hover{background:var(--tinta);color:#fff}
+/* Valores */
+.valores{background:var(--rosa-claro);padding:30px 16px}
+.valores-in{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;text-align:center}
+.valor svg{width:46px;height:46px;stroke:var(--rosa-tinta);stroke-width:2.2;fill:none;margin-bottom:8px}
+.valor p{margin:0;font-weight:600;line-height:1.4;max-width:260px;margin-inline:auto}
+/* Secciones destacadas */
+.seccion h2{letter-spacing:.01em}
+.titulo{align-items:baseline;border-bottom:1px solid var(--borde);padding-bottom:12px}
+.ver-todo{text-decoration:underline;text-underline-offset:4px;color:var(--tinta)!important;font-weight:600}
+.ver-todo:hover{color:var(--rosa-tinta)!important}
+.grilla{grid-template-columns:repeat(4,1fr)!important;gap:26px 20px!important}
+/* Tarjetas limpias */
+.tarjeta{background:transparent!important;box-shadow:none!important;border-radius:0!important;overflow:visible!important}
+.tarjeta:hover{transform:none!important}
+.tarjeta .foto{border-radius:18px;overflow:hidden;background:#f7f3f4!important}
+.tarjeta .info{padding:12px 2px 0!important;gap:4px!important}
+.tarjeta h3{font-size:1rem!important;font-weight:500!important;color:var(--tinta)}
+.tarjeta:hover h3{text-decoration:underline;text-underline-offset:3px}
+.tarjeta .precio{color:var(--tinta)!important;font-size:1rem!important}
+.tarjeta .ver-mas{display:none}
+.etiqueta{border-radius:999px;font-size:.72rem;letter-spacing:.04em}
+.etiqueta.agotado{background:#fff!important;color:var(--tinta)!important;border:1px solid var(--tinta)}
+/* Catálogo */
+.cat-titulo{font-size:clamp(1.8rem,4vw,2.6rem);margin:0 0 18px;text-align:center}
+.orden-barra{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-block:1px solid var(--borde);padding:12px 0;margin:6px 0 24px;color:var(--gris);font-weight:600}
+.orden-barra #cuenta{margin-right:auto}
+.orden-barra select{border:1.5px solid var(--borde);border-radius:999px;padding:8px 14px;font:inherit;background:#fff}
+.solo-stock{display:flex;align-items:center;gap:6px;cursor:pointer}
+.solo-stock input{accent-color:var(--rosa-tinta);width:17px;height:17px}
+/* Historia */
+.historia{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(24px,5vw,60px);align-items:center}
+.hist-imgs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:end}
+.hist-imgs div{background:var(--rosa-claro);border-radius:22px;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;padding:12px}
+.hist-imgs div:nth-child(2){aspect-ratio:3/4.6}
+.hist-imgs img{width:100%;height:100%;object-fit:contain}
+.hist-txt h2{font-size:clamp(1.6rem,3vw,2.2rem);margin:0 0 12px}
+.hist-txt p{color:var(--gris);line-height:1.75;margin:0 0 22px;white-space:pre-line}
+.btn-sec{background:#fff!important;color:var(--tinta)!important;border:1.5px solid var(--tinta);box-shadow:none!important}
+.btn-sec:hover{background:var(--tinta)!important;color:#fff!important}
+/* Opiniones */
+.op-fila{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(260px,1fr);gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
+.op{margin:0;background:var(--rosa-claro);border-radius:22px;padding:20px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px}
+.op-estrellas{display:flex;gap:2px}
+.op-estrellas svg{width:17px;height:17px;fill:var(--rosa-tinta);stroke:none}
+.op blockquote{margin:0;line-height:1.6}
+.op figcaption{font-weight:800;font-size:.9rem;margin-top:auto}
+/* Pie de página */
+.pie{background:var(--rosa-claro)!important;margin-top:0!important;padding:46px clamp(16px,6vw,80px) 20px!important}
+.pie .ola{display:none}
+.pie-in{grid-template-columns:1.6fr 1fr 1fr 1fr!important;max-width:1200px}
+.pie-marca img{height:74px;margin-bottom:10px}
+.pie-marca p{max-width:340px;line-height:1.6}
+.pie-dato{font-size:.92rem}
+.pie-col h4{font-size:.8rem!important;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa-tinta)}
+.pie-base{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;max-width:1200px;margin:34px auto 0;padding-top:16px;border-top:1px solid var(--borde);color:var(--gris);font-size:.88rem}
+.pie-copy{margin:0!important;text-align:left!important}
+.cinta-osc{margin-top:50px}
+@media (max-width:980px){.grilla{grid-template-columns:repeat(3,1fr)!important}}
+@media (max-width:820px){
+  .solo-pc{display:none!important}
+  .cab-fila{padding:8px 12px 8px}
+  .cabecera .marca img{height:56px!important}
+  .cabecera .menu{display:none;position:static;padding:0 0 10px;border-top:1px solid var(--borde);background:#fff;box-shadow:none}
+  .cabecera .menu.abierto{display:flex}
+  .cabecera .menu a,.cabecera .menu-tienda{border-bottom:0;padding:13px 20px}
+  .grilla{grid-template-columns:repeat(2,1fr)!important;gap:20px 12px!important}
+  .hero .slide img{aspect-ratio:4/3}
+  .valores-in{grid-template-columns:1fr;gap:16px}
+  .valor{display:flex;align-items:center;gap:14px;text-align:left}
+  .valor svg{width:38px;height:38px;margin:0;flex:none}
+  .valor p{margin:0;max-width:none}
+  .historia{grid-template-columns:1fr}
+  .pie-in{grid-template-columns:1fr 1fr!important}
+  .pie-marca{grid-column:1/-1}
+  .cat-pills{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .pill{white-space:nowrap}
+  .orden-barra{gap:10px}
+}
+.tarjeta .foto img.sin-foto{object-fit:contain!important;padding:22%;opacity:.55}
+@media (max-width:820px){.aviso{height:40px;padding:0 50px}.aviso-texto{font-size:.76rem;line-height:1.2}.gato{height:32px}}

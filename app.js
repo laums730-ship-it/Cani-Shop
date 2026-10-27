@@ -74,8 +74,12 @@
   gato("#gato-izq", T.gatoIzq); gato("#gato-der", T.gatoDer);
 
   $("#wa-flotante").href = `https://wa.me/${T.whatsapp}`;
-  if (T.ubicacion) $(".pie-marca").insertAdjacentHTML("beforeend", `<p>📍 ${esc(T.ubicacion)}</p>`);
-  if (T.whatsapp && !/^5917000000/.test(T.whatsapp)) $(".pie-marca").insertAdjacentHTML("beforeend", `<p>📞 +${esc(T.whatsapp)}</p>`);
+  { const pl = $("#pie-logo"); if (pl) { if (T.logo) { pl.src = T.logo; pl.alt = T.nombre; } else pl.remove(); } }
+  { const pm = $(".pie-marca"); if (pm) {
+    if (T.pieTexto && $("#pie-texto")) $("#pie-texto").textContent = T.pieTexto;
+    if (T.ubicacion) pm.insertAdjacentHTML("beforeend", `<p class="pie-dato">${esc(T.ubicacion)}</p>`);
+    if (T.whatsapp && !/^5917000000/.test(T.whatsapp)) pm.insertAdjacentHTML("beforeend", `<p class="pie-dato">WhatsApp: +${esc(T.whatsapp)}</p>`);
+  } }
   // Formas de entrega en el carrito
   const ENT = (T.entregas || []).filter(Boolean);
   if (!$("#sel-entrega")) {} else if (ENT.length) $("#sel-entrega").innerHTML = `<option value="" disabled selected>¿Cómo quieres recibirlo?</option>` + ENT.map(x => `<option>${esc(x)}</option>`).join("");
@@ -195,7 +199,7 @@
   // ---------- Vistas ----------
   const tarjeta = p => { const img2 = (p.imagenes || [])[1], per = personajeDe(p); return `
     <a class="tarjeta ${img2 ? "doble" : ""}" href="#/producto/${p.id}">
-      <div class="foto"><img class="f1" loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" src="${esc(img2)}" alt="">` : ""}
+      <div class="foto"><img class="f1 ${(p.imagenes || []).length ? "" : "sin-foto"}" loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" src="${esc(img2)}" alt="">` : ""}
         ${!hayStock(p) ? `<span class="etiqueta agotado">Agotado</span>` : p.nuevo ? `<span class="etiqueta">Nuevo</span>` : ""}</div>
       <div class="info">${per ? `<span class="t-per">${esc(per.nombre)}</span>` : ""}<h3>${esc(sinEmoji(p.nombre))}</h3><div class="precio">${bs(p.precio)}</div>
         <span class="ver-mas">${hayStock(p) ? "Ver opciones →" : "Ver detalles →"}</span></div>
@@ -203,64 +207,69 @@
   const grilla = lista => lista.length ? `<div class="grilla">${lista.map(tarjeta).join("")}</div>` : `<p class="vacio">No encontramos productos 😿</p>`;
 
   function inicio() {
-    const nuevos = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)).slice(0, 8);
-    const marcas = PERS(), categs = CATEG().length ? CATEG() : CATS;
     const bans = (T.banners || []).filter(b => b && b.imagen);
+    const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
+    const DEST = (Array.isArray(T.destacadas) && T.destacadas.filter(d => d && d.cat).length ? T.destacadas.filter(d => d && d.cat)
+      : [{ titulo: "Novedades", cat: "__nuevos" }, { titulo: "Sanrio", cat: "sanrio" }]).slice(0, 3);
+    const VAL = (Array.isArray(T.valores) && T.valores.filter(Boolean).length ? T.valores.filter(Boolean)
+      : ["Productos kawaii originales, elegidos uno por uno", "Envíos a toda Bolivia", "Empaque seguro (¡y tierno!) para tus cositas"]).slice(0, 3);
+    const HIST = T.historia || {};
+    const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : [T.gatoIzq, T.logo, T.gatoDer].filter(Boolean);
+    const OPS = (T.opiniones || []).filter(o => o && o.texto);
+    const ICON_VAL = [
+      `<svg viewBox="0 0 48 48"><path d="M24 6l4.6 10.4L40 18l-8.4 7.6L34 37l-10-5.8L14 37l2.4-11.4L8 18l11.4-1.6z"/><path d="M38 6v6M35 9h6"/></svg>`,
+      `<svg viewBox="0 0 48 48"><path d="M4 12h24v20H4z"/><path d="M28 18h9l7 7v7H28z"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>`,
+      `<svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/><path d="M24 13c-3-7-12-8-12-2s12 2 12 2c3-7 12-8 12-2s-12 2-12 2"/></svg>`
+    ];
+    const ESTRELLAS = `<span class="op-estrellas">${Array(5).fill(`<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7z"/></svg>`).join("")}</span>`;
+    const listaDe = d => {
+      const l = d.cat === "__nuevos" ? PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)) : PRODS.filter(p => (p.categorias || []).includes(d.cat));
+      return l.filter(hayStock).concat(l.filter(p => !hayStock(p))).slice(0, 8);
+    };
+    const destacada = d => {
+      const l = listaDe(d); if (!l.length) return "";
+      const href = d.cat === "__nuevos" ? "#/novedades" : `#/catalogo/${d.cat}`;
+      return `<section class="seccion dest"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
+    };
     app.innerHTML = `
-      ${bans.length ? `<section class="carrusel-wrap"><div class="carrusel">
-        <div class="car-pista" id="car-pista">${bans.map(b => b.enlace
+      ${bans.length ? `<section class="hero"><div class="car-pista" id="car-pista">${bans.map(b => b.enlace
           ? `<a class="slide" href="${esc(b.enlace)}"${/^https?:/.test(b.enlace) ? ' target="_blank" rel="noopener"' : ""}><img src="${esc(b.imagen)}" alt=""></a>`
           : `<div class="slide"><img src="${esc(b.imagen)}" alt=""></div>`).join("")}</div>
         ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
-      </div></section>` : ""}
-      ${marcas.length ? `<section class="marcas"><h2 class="marcas-tit">Compra por personaje</h2>
-        <div class="marcas-fila">${marcas.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
       </section>` : ""}
-      <div class="franja-wrap">${sticker("lapiz", "st-lapiz")}${cinta()}${sticker("estrella", "st-estrella")}</div>
 
-      ${SC ? `<section class="seccion sc-promo-wrap"><a class="sc-promo" href="#/scoops">
-        <div><span class="sc-tag">✨ ${esc(SC.titulo || "Arma tu Scoop")}</span>
-          <h2>Lucky Scoops 🍬</h2><p>${esc(SC.intro || "Elige tus colores y personajes favoritos y armamos tu scoop.")}</p>
+      ${pers.length ? `<section class="seccion pers-fila"><div class="marcas-fila">${pers.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div></section>` : ""}
+
+      <section class="seccion cat-pills">${categs.map(c => `<a class="pill" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</section>
+
+      ${cinta()}
+
+      <section class="valores"><div class="valores-in">${VAL.map((v, i) => `<div class="valor">${ICON_VAL[i] || ICON_VAL[0]}<p>${esc(v)}</p></div>`).join("")}</div></section>
+
+      ${destacada(DEST[0])}
+
+      ${SC ? `<section class="seccion"><a class="sc-promo" href="#/scoops">
+        <div><span class="sc-tag">${esc(SC.titulo || "Arma tu Scoop")}</span>
+          <h2>Lucky Scoops</h2><p>${esc(SC.intro || "Elige tus colores y personajes favoritos y armamos tu scoop.")}</p>
           <span class="btn">Armar mi scoop</span></div>
         <div class="sc-promo-imgs">${(SC.opciones || []).filter(o => o.imagen).slice(0, 3).map(o => `<img src="${esc(o.imagen)}" alt="">`).join("")}</div>
       </a></section>` : ""}
 
-      <div class="fondo-gris">
-        <section class="seccion"><h2>Compra por categorías</h2>
-          <div class="cats">${categs.map(c => `<a class="cat" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
-        </section>
-      </div>
+      ${DEST.slice(1).map(destacada).join("")}
 
-      <section class="seccion">
-        <div class="titulo"><h2>Novedades ✨</h2><a class="ver-todo" href="#/catalogo">Ver todo →</a></div>
-        ${grilla(nuevos)}
+      <section class="seccion historia">
+        <div class="hist-imgs">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
+        <div class="hist-txt">
+          <h2>${esc(HIST.titulo || `Hola, somos ${T.nombre}`)}</h2>
+          <p>${esc(HIST.texto || T.nosotros || "")}</p>
+          <a class="btn btn-sec" href="#/nosotros">Conoce ${esc(T.nombre)}</a>
+        </div>
       </section>
 
-      <div class="fondo-gris">
-        <section class="seccion"><h2>¿Cómo comprar?</h2>
-          <div class="pasos">
-            <div class="paso"><div class="num">1</div><h3>Elige tus cositas</h3><p>Agrega al carrito los productos y modelos que más te gusten.</p></div>
-            <div class="paso"><div class="num">2</div><h3>Envía tu pedido</h3><p>Con un toque nos llega tu pedido completo por WhatsApp.</p></div>
-            <div class="paso"><div class="num">3</div><h3>Paga y recibe</h3><p>Te pasamos el QR, pagas y te lo enviamos a cualquier ciudad de Bolivia.</p></div>
-          </div>
-        </section>
-      </div>
+      ${OPS.length ? `<section class="seccion opiniones"><div class="titulo"><h2>Lo que dicen nuestros clientes</h2></div>
+        <div class="op-fila">${OPS.map(o => `<figure class="op">${ESTRELLAS}<blockquote>${esc(o.texto)}</blockquote><figcaption>${esc(o.nombre || "")}</figcaption></figure>`).join("")}</div></section>` : ""}
 
-      ${T.quiz && T.quiz.activo !== false ? `<section class="seccion"><button class="quiz-promo" onclick="abrirQuiz(true)">
-        ${T.logo ? `<img class="qp-emo" src="${esc(T.logo)}" alt="">` : ""}<span><b>${esc(T.quiz.titulo || "¿Qué personaje kawaii eres?")}</b><small>Haz el quiz y descubre tus productos ideales ✨</small></span><span class="btn">Hacer el quiz</span></button></section>` : ""}
-
-      ${seccionTikTok()}
-
-      <section class="seccion">
-        <div class="banner">
-          ${sticker("corazon", "st-corazon", "top:18px;left:24px;transform:rotate(-14deg)")}
-          ${sticker("corazon", "st-corazon", "bottom:20px;right:30px;transform:rotate(12deg)")}
-          ${sticker("estrella", "", "top:16px;right:16%;width:40px;height:40px")}
-          <h2>${esc(T.bannerTitulo || "¿Buscas algo especial?")}</h2>
-          <p>${esc(T.bannerTexto || "Escríbenos y te ayudamos a encontrarlo 💕")}</p>
-          <a class="btn" href="https://wa.me/${T.whatsapp}" target="_blank" rel="noopener">${esc(T.bannerBoton || "Hablar por WhatsApp")}</a>
-        </div>
-      </section>`;
+      ${seccionTikTok()}`;
     if (bans.length > 1) carrusel(bans.length);
     if (ttUser) cargarTikTok();
   }
@@ -281,16 +290,36 @@
     auto();
   }
 
-  function catalogo(cat, q) {
+  let ORDEN = "destacados", SOLO_STOCK = false;
+  function catalogo(cat, q, modo) {
     let lista = PRODS;
+    if (modo === "nuevos") lista = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo));
     if (cat) lista = lista.filter(p => p.categorias?.includes(cat));
     if (q) { const t = q.toLowerCase(); lista = lista.filter(p => (p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t)); }
+    const base = lista;
+    const ordenar = () => {
+      let l = SOLO_STOCK ? base.filter(hayStock) : base.slice();
+      if (ORDEN === "menor") l.sort((a, b) => a.precio - b.precio);
+      else if (ORDEN === "mayor") l.sort((a, b) => b.precio - a.precio);
+      else if (ORDEN === "az") l.sort((a, b) => sinEmoji(a.nombre).localeCompare(sinEmoji(b.nombre)));
+      else l = l.filter(hayStock).concat(l.filter(p => !hayStock(p)));
+      return l;
+    };
+    lista = ordenar();
+    const titulo = q ? `Resultados para “${esc(q)}”` : modo === "nuevos" ? "Novedades" : cat ? esc(CATS.find(c => c.id === cat)?.nombre || "Catálogo") : "Todos los productos";
     app.innerHTML = `<section class="seccion">
-      <h2>${q ? `Resultados para “${esc(q)}”` : cat ? esc(CATS.find(c => c.id === cat)?.nombre || "Catálogo") : "Catálogo"}</h2>
+      <h1 class="cat-titulo">${titulo}</h1>
       <div class="filtros"><a class="chip ${!cat ? "activo" : ""}" href="#/catalogo">Todo</a>
         ${PERS().length ? `<span class="filtro-tit">Personajes</span>${PERS().map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}` : ""}</div>
       <div class="filtros"><span class="filtro-tit">Categorías</span>${(CATEG().length ? CATEG() : CATS).map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>
-      ${grilla(lista)}</section>`;
+      <div class="orden-barra"><span id="cuenta">${lista.length} productos</span>
+        <label class="solo-stock"><input type="checkbox" id="solo-stock" ${SOLO_STOCK ? "checked" : ""}> Solo disponibles</label>
+        <select id="orden"><option value="destacados">Destacados</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option><option value="az">Nombre: A-Z</option></select></div>
+      <div id="grilla-cat">${grilla(lista)}</div></section>`;
+    $("#orden").value = ORDEN;
+    const repintar = () => { const l = ordenar(); $("#grilla-cat").innerHTML = grilla(l); $("#cuenta").textContent = `${l.length} productos`; };
+    $("#orden").onchange = e => { ORDEN = e.target.value; repintar(); };
+    $("#solo-stock").onchange = e => { SOLO_STOCK = e.target.checked; repintar(); };
   }
 
   function producto(id) {
@@ -415,6 +444,9 @@
         : `<div class="tk-perfil"><blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${esc(ttUser)}" data-unique-id="${esc(ttUser)}" data-embed-type="creator" style="max-width:780px;min-width:288px;margin:0 auto"><section><a target="_blank" href="https://www.tiktok.com/@${esc(ttUser)}">@${esc(ttUser)}</a></section></blockquote></div>`}
       <div style="text-align:center;margin-top:20px"><a class="btn btn-tk" href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener">Seguir a @${esc(ttUser)} en TikTok</a></div>
     </section>`;
+  { const bt = $("#btn-tiktok"); if (bt && ttUser) { bt.href = `https://www.tiktok.com/@${ttUser}`; bt.hidden = false; }
+    const bi = $("#btn-insta"); if (bi && T.instagram) { bi.href = T.instagram; bi.hidden = false; }
+    const ps = document.querySelector(".pie-scoops"); if (ps && SC) ps.hidden = false; }
   const cargarTikTok = () => { if (!ttVideos.length && ttUser && !document.querySelector('script[src*="tiktok.com/embed.js"]')) { const s = document.createElement("script"); s.async = true; s.src = "https://www.tiktok.com/embed.js"; document.body.appendChild(s); } else if (window.tiktokEmbed && window.tiktokEmbed.lib) { try { window.tiktokEmbed.lib.render(document.querySelectorAll(".tiktok-embed")); } catch (e) {} } };
 
   // ---------- Quiz "¿Qué personaje eres?" ----------
@@ -637,7 +669,8 @@
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), producto: () => producto(arg), nosotros, contacto, scoops }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops }[sec] || inicio)();
+    cerrarBuscar();
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", ruta);
@@ -664,11 +697,30 @@
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(paso, 800);
   })();
 
-  $("#input-buscar").addEventListener("input", e => {
-    const q = e.target.value.trim();
-    app.onclick = null;
-    q ? catalogo(null, q) : ruta();
-  });
+  // Búsqueda en ventana (como Momohana)
+  const capa = $("#buscar-capa"), inpB = $("#input-buscar");
+  function abrirBuscar() { if (!capa) return; capa.hidden = false; requestAnimationFrame(() => capa.classList.add("ver")); setTimeout(() => inpB.focus(), 60); pintarPop(""); }
+  function cerrarBuscar() { if (!capa || capa.hidden) return; capa.classList.remove("ver"); setTimeout(() => { capa.hidden = true; }, 200); }
+  function pintarPop(q) {
+    const pop = $("#buscar-pop"); if (!pop) return;
+    if (!q) {
+      const pops = PERS().slice(0, 6);
+      pop.innerHTML = pops.length ? `<p class="pop-tit">Búsquedas populares</p><div class="pop-chips">${pops.map(c => `<a class="pill" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>` : "";
+      return;
+    }
+    const t = q.toLowerCase();
+    const res = PRODS.filter(p => (p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t));
+    pop.innerHTML = res.length ? `<p class="pop-tit">Productos</p><div class="pop-res">${res.slice(0, 6).map(p => `<a href="#/producto/${p.id}"><img src="${foto(p)}" alt=""><span>${esc(sinEmoji(p.nombre))}<b>${bs(p.precio)}</b></span></a>`).join("")}</div>
+      <a class="ver-todo pop-todo" href="#/buscar/${encodeURIComponent(q)}">Ver los ${res.length} resultados</a>` : `<p class="pop-tit">No encontramos “${esc(q)}”</p>`;
+  }
+  if (capa) {
+    $("#btn-buscar").onclick = abrirBuscar;
+    $("#buscar-cerrar").onclick = cerrarBuscar;
+    capa.addEventListener("click", e => { if (e.target === capa) cerrarBuscar(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") cerrarBuscar(); });
+    inpB.addEventListener("input", e => pintarPop(e.target.value.trim()));
+    inpB.addEventListener("keydown", e => { if (e.key === "Enter" && inpB.value.trim()) location.hash = "#/buscar/" + encodeURIComponent(inpB.value.trim()); });
+  }
 
   { const pie = document.querySelector(".pie"); if (pie && CINTA.length) pie.insertAdjacentHTML("beforebegin", cinta("cinta-osc")); }
   pintarCarrito(); ruta();

@@ -134,6 +134,12 @@
     .catf .bt{display:flex;gap:4px}
     .catf .bt button{min-width:32px;height:32px;border-radius:10px;border:0;background:#fff;font-weight:800;font-size:.8rem}
     .catf .bt button.q{background:#fdecee;color:var(--rojo)}
+    .dest-ed{display:flex;flex-direction:column;gap:8px}
+    .dest-fila{display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;align-items:center}
+    .dest-fila b{color:var(--rosa-tinta)}
+    .dest-fila select,.dest-fila input{border:2px solid var(--borde);border-radius:10px;padding:9px 10px;background:#fff;font:inherit;min-width:0}
+    .fila3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .fila3 .mini{flex-direction:column;align-items:flex-start}
     .tipo-sel{border:2px solid var(--borde);border-radius:10px;padding:7px 8px;background:#fff;font:inherit;font-size:.85rem;font-weight:700}
     .fuentes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
     .fuente{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:3px solid var(--borde);background:#fff;border-radius:16px;padding:12px 14px;color:var(--tinta)}
@@ -353,6 +359,24 @@
     <div class="aviso-config" id="aj-sin-guardar" hidden style="margin-bottom:16px">
       ✨ Ya llené todo con los datos de tu tienda de Kyte (categorías, WhatsApp, entregas y banner). Revísalo y toca <b>Guardar cambios</b> abajo para que aparezca en tu tienda.
     </div>
+
+    <section class="caja">
+      <h2>🏠 Página de inicio</h2>
+      <p class="ayuda">El orden es como Momohana: banner, personajes, categorías, beneficios, colecciones destacadas, historia, opiniones y TikTok.</p>
+      <div class="campo"><label>Colecciones destacadas (grillas de 8 productos)</label>
+        <div class="dest-ed" id="aj-dest"></div></div>
+      <div class="campo"><label>Beneficios (3, uno por línea)</label><textarea name="valores" rows="3" placeholder="Productos kawaii originales, elegidos uno por uno&#10;Envíos a toda Bolivia&#10;Empaque seguro (¡y tierno!) para tus cositas"></textarea></div>
+      <div class="sep"></div>
+      <div class="campo"><label>Historia: título</label><input name="hist_titulo" placeholder="Hola, somos Cani Shop"></div>
+      <div class="campo"><label>Historia: texto</label><textarea name="hist_texto" rows="4" placeholder="Cuenta cómo nació Cani Shop…"></textarea></div>
+      <div class="campo"><label>Historia: 3 imágenes</label>
+        <div class="fila3"><div class="mini" data-img="hist1"></div><div class="mini" data-img="hist2"></div><div class="mini" data-img="hist3"></div></div></div>
+      <div class="sep"></div>
+      <div class="campo"><label>Opiniones de clientes (una por línea: <b>Nombre | opinión</b>)</label>
+        <textarea name="opiniones" rows="4" placeholder="Ana | Me llegó todo hermoso y súper bien empaquetado&#10;Mía | El scoop de Kuromi es lo más lindo"></textarea>
+        <p class="ayuda">Si lo dejas vacío, la sección no aparece.</p></div>
+      <div class="campo"><label>Texto del pie de página</label><input name="pieTexto" placeholder="Productos kawaii, stationery y scoops sorpresa con envíos a toda Bolivia."></div>
+    </section>
 
     <section class="caja">
       <h2>✨ Estilo de tu tienda</h2>
@@ -892,10 +916,19 @@
   // ---------- Mi tienda ----------
   const A = $("#t-tienda");
   let AJ = {}, banners = [], imgs = {};
-  const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos"];
+  const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos", "valores"];
   const tipoC = c => c.tipo || (c.marca ? "personaje" : "categoria");
-  const TEXTOS = ["franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
-  let categorias = [], scops = [], fuenteSel = "clasica", cursorSel = "";
+  const TEXTOS = ["pieTexto", "franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
+  let categorias = [], scops = [], fuenteSel = "clasica", cursorSel = "", dests = [];
+  function pintarDest() {
+    const ops = [["__nuevos", "Novedades"], ...categorias.filter(c => c.nombre).map(c => [c.id || "", c.nombre])];
+    while (dests.length < 3) dests.push({ titulo: "", cat: "" });
+    $("#aj-dest").innerHTML = dests.slice(0, 3).map((d, i) => `<div class="dest-fila"><b>${i + 1}</b>
+      <select data-dcat="${i}"><option value="">— Ninguna —</option>${ops.map(([id, n]) => `<option value="${esc(id)}" ${id === d.cat ? "selected" : ""}>${esc(n)}</option>`).join("")}</select>
+      <input data-dtit="${i}" value="${esc(d.titulo || "")}" placeholder="Título (opcional)"></div>`).join("");
+  }
+  document.addEventListener("input", e => { const d = e.target.dataset; if (d.dtit !== undefined) dests[d.dtit].titulo = e.target.value; });
+  document.addEventListener("change", e => { const d = e.target.dataset; if (d.dcat !== undefined) dests[d.dcat].cat = e.target.value; });
   const FUENTES_AD = [
     ["clasica", "Clásica", "Fredoka", "Nunito", "family=Fredoka:wght@500;600&family=Nunito:wght@400;700"],
     ["burbuja", "Burbuja", "Baloo 2", "Quicksand", "family=Baloo+2:wght@600;700&family=Quicksand:wght@400;600"],
@@ -1004,6 +1037,12 @@
     const S0 = { ...DEF.scoops, ...(AJ.scoops || {}) };
     A.sc_activo.checked = !!S0.activo;
     fuenteSel = AJ.fuente || "clasica"; cursorSel = AJ.cursor || "";
+    dests = (Array.isArray(AJ.destacadas) && AJ.destacadas.length ? AJ.destacadas : [{ titulo: "Novedades", cat: "__nuevos" }, { titulo: "Sanrio", cat: "sanrio" }]).map(d => ({ ...d }));
+    const H0 = AJ.historia || {};
+    A.hist_titulo.value = H0.titulo || ""; A.hist_texto.value = H0.texto || AJ.nosotros || "";
+    ["hist1", "hist2", "hist3"].forEach((k, i) => imgs[k] = (H0.imagenes || [])[i] || "");
+    A.opiniones.value = (AJ.opiniones || []).map(o => `${o.nombre || ""} | ${o.texto || ""}`).join("\n");
+    pintarDest(); pintarMinis();
     const Q0 = AJ.quiz || { activo: true, titulo: "¿Qué personaje kawaii eres?" };
     A.quiz_activo.checked = Q0.activo !== false; A.quiz_titulo.value = Q0.titulo || "";
     if (!(AJ.cinta || []).length) A.cinta.value = String(AJ.franja || "").split("·").map(x => x.trim()).filter(Boolean).join("\n");
@@ -1084,7 +1123,7 @@
   A.addEventListener("change", async e => {
     const k = e.target.dataset.mini; if (!k || !e.target.files[0]) return;
     toast("Subiendo…");
-    const u = await subirArchivo(e.target.files[0], "tienda", k === "scQr" ? 1000 : 400);
+    const u = await subirArchivo(e.target.files[0], "tienda", k === "scQr" ? 1000 : /^hist/.test(k) ? 900 : 400);
     if (u) { imgs[k] = u; pintarMinis(); toast("Listo, ahora toca Guardar cambios"); }
   });
 
@@ -1138,6 +1177,9 @@
         qr: imgs.scQr || ""
       },
       fuente: fuenteSel, cursor: cursorSel,
+      destacadas: dests.filter(d => d.cat).map(d => ({ titulo: (d.titulo || "").trim() || (d.cat === "__nuevos" ? "Novedades" : (categorias.find(c => c.id === d.cat) || {}).nombre || ""), cat: d.cat })),
+      historia: { titulo: A.hist_titulo.value.trim(), texto: A.hist_texto.value.trim(), imagenes: ["hist1", "hist2", "hist3"].map(k => imgs[k]).filter(Boolean) },
+      opiniones: A.opiniones.value.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const k = l.indexOf("|"); return k < 0 ? { nombre: "", texto: l } : { nombre: l.slice(0, k).trim(), texto: l.slice(k + 1).trim() }; }).filter(o => o.texto),
       quiz: { activo: A.quiz_activo.checked, titulo: A.quiz_titulo.value.trim() },
       categorias: (() => {
         const usados = new Set();
