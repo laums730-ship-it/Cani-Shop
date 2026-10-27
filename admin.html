@@ -134,6 +134,18 @@
     .catf .bt{display:flex;gap:4px}
     .catf .bt button{min-width:32px;height:32px;border-radius:10px;border:0;background:#fff;font-weight:800;font-size:.8rem}
     .catf .bt button.q{background:#fdecee;color:var(--rojo)}
+    .tipo-sel{border:2px solid var(--borde);border-radius:10px;padding:7px 8px;background:#fff;font:inherit;font-size:.85rem;font-weight:700}
+    .fuentes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+    .fuente{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:3px solid var(--borde);background:#fff;border-radius:16px;padding:12px 14px;color:var(--tinta)}
+    .fuente b{font-size:1.5rem;color:var(--rosa-tinta);font-weight:600;line-height:1.1}
+    .fuente small{color:var(--gris)}
+    .fuente .f-nom{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gris)}
+    .fuente.on{border-color:var(--rosa-tinta);background:var(--rosa-claro)}
+    .fuente.on .f-nom::after{content:" ✓ elegida";color:var(--rosa-tinta)}
+    .cursores{display:flex;flex-wrap:wrap;gap:8px}
+    .cursor-op{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--borde);background:#fff;border-radius:999px;padding:8px 14px;font-weight:700}
+    .cursor-op span{font-size:1.2rem}
+    .cursor-op.on{border-color:var(--rosa-tinta);background:var(--rosa-claro);color:var(--rosa-osc)}
     .scopf{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:start;background:var(--rosa-claro);border-radius:14px;padding:8px}
     .scopf .cat-img{width:70px;height:70px}
     .scopf-campos{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -343,6 +355,35 @@
     </div>
 
     <section class="caja">
+      <h2>✨ Estilo de tu tienda</h2>
+      <div class="campo"><label>Tipografía</label>
+        <div class="fuentes" id="aj-fuentes"></div>
+      </div>
+      <div class="campo"><label>Cursor del mouse (solo se ve en computadora)</label>
+        <div class="cursores" id="aj-cursores"></div>
+      </div>
+    </section>
+
+    <section class="caja">
+      <h2>🎞️ Cintas que se mueven</h2>
+      <p class="ayuda">Frases que pasan corriendo debajo de los personajes y antes del pie de página. <b>Una por línea.</b></p>
+      <div class="campo"><textarea name="cinta" rows="4" placeholder="Envíos a toda Bolivia&#10;Scoops personalizados&#10;Pago con QR"></textarea></div>
+    </section>
+
+    <section class="caja">
+      <h2>💖 Quiz “¿Qué personaje eres?”</h2>
+      <p class="ayuda">Aparece una vez al entrar a la tienda (y como botón en el inicio). Al final lleva a los productos de ese personaje.</p>
+      <label class="check" style="margin-bottom:10px"><input type="checkbox" name="quiz_activo"> Mostrar el quiz</label>
+      <div class="campo"><label>Título</label><input name="quiz_titulo" placeholder="¿Qué personaje kawaii eres?"></div>
+    </section>
+
+    <section class="caja">
+      <h2>🎥 Sección de TikTok</h2>
+      <p class="ayuda">Usa tu usuario de TikTok (abajo, en Contacto y redes). Si pegas links de videos aquí, se muestran esos; si no, se muestra tu perfil. <b>Un link por línea.</b></p>
+      <div class="campo"><textarea name="tiktokVideos" rows="3" placeholder="https://www.tiktok.com/@canishopbo/video/1234567890"></textarea></div>
+    </section>
+
+    <section class="caja">
       <h2>🍬 Scoops (Arma tu Scoop)</h2>
       <p class="ayuda">La página donde tus clientes arman su scoop. Ya la llené con tu catálogo; revisa y toca <b>Guardar cambios</b>.</p>
       <label class="check" style="margin-bottom:12px"><input type="checkbox" name="sc_activo"> Mostrar “Arma tu Scoop” en mi tienda</label>
@@ -368,7 +409,7 @@
 
     <section class="caja">
       <h2>🏷️ Categorías</h2>
-      <p class="ayuda">Toca el círculo para ponerle foto (si no, se muestra el emoji). <b>“Arriba”</b> = aparece en los círculos de arriba del inicio.</p>
+      <p class="ayuda">Toca el círculo para ponerle foto (si no, se muestra el emoji). <b>✨ Personaje</b> = va en “Por personaje” (menú y círculos del inicio). <b>🎀 Categoría</b> = va en “Por categoría”. Un producto puede estar en ambos (ej: un lapicero de Kuromi).</p>
       <div id="aj-cats" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="aj-addcat" style="margin:10px 0 14px">＋ Agregar categoría</button>
     </section>
@@ -851,9 +892,31 @@
   // ---------- Mi tienda ----------
   const A = $("#t-tienda");
   let AJ = {}, banners = [], imgs = {};
-  const LISTAS = ["avisos", "busquedas", "entregas"];
+  const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos"];
+  const tipoC = c => c.tipo || (c.marca ? "personaje" : "categoria");
   const TEXTOS = ["franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
-  let categorias = [], scops = [];
+  let categorias = [], scops = [], fuenteSel = "clasica", cursorSel = "";
+  const FUENTES_AD = [
+    ["clasica", "Clásica", "Fredoka", "Nunito", "family=Fredoka:wght@500;600&family=Nunito:wght@400;700"],
+    ["burbuja", "Burbuja", "Baloo 2", "Quicksand", "family=Baloo+2:wght@600;700&family=Quicksand:wght@400;600"],
+    ["japonesa", "Japonesa kawaii", "Mochiy Pop One", "M PLUS Rounded 1c", "family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;700"],
+    ["dulce", "Dulce", "DynaPuff", "Nunito", "family=DynaPuff:wght@500;600&family=Nunito:wght@400;700"],
+    ["chicle", "Chicle", "Chewy", "Quicksand", "family=Chewy&family=Quicksand:wght@400;600"],
+    ["retro", "Retro", "Grandstander", "Nunito", "family=Grandstander:wght@600;700&family=Nunito:wght@400;700"],
+    ["moderna", "Moderna", "Poppins", "Poppins", "family=Poppins:wght@400;600"]
+  ];
+  (() => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?" + FUENTES_AD.map(f => f[4]).join("&") + "&display=swap"; document.head.appendChild(l); })();
+  const CURS_AD = [["", "Normal", "🖱️"], ["patita", "Patita", "🐾"], ["corazon", "Corazón", "💗"], ["estrella", "Estrella", "⭐"], ["fantasma", "Fantasmita", "👻"], ["murcielago", "Murciélago (Halloween)", "🦇"]];
+  function pintarEstilo() {
+    $("#aj-fuentes").innerHTML = FUENTES_AD.map(([id, nom, t, x]) => `<button type="button" class="fuente ${id === fuenteSel ? "on" : ""}" data-fuente="${id}">
+        <span class="f-nom">${nom}</span>
+        <b style="font-family:'${t}'">Cani Shop ✨</b>
+        <span style="font-family:'${t}';font-size:1.05rem">Armable Acrílico Sanrio</span>
+        <small style="font-family:'${x}'">Bs 12,00 · Envíos a toda Bolivia</small></button>`).join("");
+    $("#aj-cursores").innerHTML = CURS_AD.map(([id, nom, e]) => `<button type="button" class="cursor-op ${id === cursorSel ? "on" : ""}" data-cursor="${id}"><span>${e}</span>${nom}</button>`).join("");
+  }
+  $("#aj-fuentes").addEventListener("click", e => { const b = e.target.closest("[data-fuente]"); if (b) { fuenteSel = b.dataset.fuente; pintarEstilo(); } });
+  $("#aj-cursores").addEventListener("click", e => { const b = e.target.closest("[data-cursor]"); if (b) { cursorSel = b.dataset.cursor; pintarEstilo(); } });
   function pintarScops() {
     $("#aj-scops").innerHTML = scops.map((o, i) => `<div class="scopf">
         <label class="cat-img" title="Cambiar imagen" style="border-radius:16px">${o.imagen ? `<img src="${esc(o.imagen)}" alt="" style="object-fit:contain">` : `<span>🍬</span>`}<input type="file" accept="image/*" hidden data-scimg="${i}"></label>
@@ -887,21 +950,28 @@
       personajes: ["My Melody", "Pochacco", "Kuromi", "Cinnamoroll", "Pompompurin", "Snoopy", "Hello Kitty", "Gatitos", "BTS", "Stitch"],
       qr: "", nota: "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad. 💖"
     },
-    whatsapp: "59177885309", instagram: "https://instagram.com/canishopbo", ubicacion: "Santa Cruz de la Sierra, Bolivia",
+    whatsapp: "59177885309", instagram: "https://instagram.com/canishopbo", tiktok: "https://www.tiktok.com/@canishopbo", ubicacion: "Santa Cruz de la Sierra, Bolivia",
     entregas: ["Envío por Yango (Santa Cruz)", "Recojo en Santa Cruz (coordinamos por WhatsApp)", "Envío a otra ciudad de Bolivia"],
     banners: [{ imagen: "https://firebasestorage.googleapis.com/v0/b/kyte-7c484.appspot.com/o/mR1noP057GhQAC%2FTz20crYCRofZFtA7m0wyjQ%3D%3D.jpg?alt=media&token=72439174-71f2-4cc4-88ed-373c2b8d6529", enlace: "#/catalogo" }],
     categorias: [
-      { id: "sanrio", nombre: "Sanrio", marca: true, imagen: SH + "files/Circulo_kawaii_de_personajes_Sanrio.png?v=1792954593&width=800" },
-      { id: "gatitos", nombre: "Gatitos", emoji: "🐱" },
-      { id: "hello-kitty", nombre: "Hello Kitty", marca: true, emoji: "🎀" },
-      { id: "snoopy", nombre: "Snoopy", marca: true, imagen: SH + "files/Snoopy_abrazando_un_corazon_rojo.png?v=1792955473&width=800" },
-      { id: "bts", nombre: "BTS", marca: true, emoji: "💜" },
-      { id: "juegos-kawaii", nombre: "Juegos/Kawaii", emoji: "🎮" },
-      { id: "papeleria", nombre: "Papelería", imagen: SH + "collections/Papeleria_kawaii_en_circulo_pastel.png?v=1792963793&width=800" },
-      { id: "obakenu", nombre: "Obakenu", emoji: "👻" },
-      { id: "lapiceros", nombre: "Lapiceros", emoji: "🖊️" },
-      { id: "beauty", nombre: "Beauty", emoji: "💄" },
-      { id: "happy-box", nombre: "Happy Box", emoji: "🎁" }
+      { id: "sanrio", nombre: "Sanrio", tipo: "personaje", marca: true, imagen: SH + "files/Circulo_kawaii_de_personajes_Sanrio.png?v=1792954593&width=800" },
+      { id: "hello-kitty", nombre: "Hello Kitty", tipo: "personaje", marca: true, emoji: "🎀" },
+      { id: "kuromi", nombre: "Kuromi", tipo: "personaje", marca: true, emoji: "🖤" },
+      { id: "my-melody", nombre: "My Melody", tipo: "personaje", marca: true, emoji: "🐰" },
+      { id: "cinnamoroll", nombre: "Cinnamoroll", tipo: "personaje", marca: true, emoji: "☁️" },
+      { id: "pochacco", nombre: "Pochacco", tipo: "personaje", marca: true, emoji: "🐶" },
+      { id: "pompompurin", nombre: "Pompompurin", tipo: "personaje", marca: true, emoji: "🍮" },
+      { id: "snoopy", nombre: "Snoopy", tipo: "personaje", marca: true, imagen: SH + "files/Snoopy_abrazando_un_corazon_rojo.png?v=1792955473&width=800" },
+      { id: "stitch", nombre: "Stitch", tipo: "personaje", marca: true, emoji: "💙" },
+      { id: "obakenu", nombre: "Obakenu", tipo: "personaje", marca: true, emoji: "👻" },
+      { id: "bts", nombre: "BTS", tipo: "personaje", marca: true, emoji: "💜" },
+      { id: "gatitos", nombre: "Gatitos", tipo: "personaje", marca: true, emoji: "🐱" },
+      { id: "papeleria", nombre: "Papelería", tipo: "categoria", imagen: SH + "collections/Papeleria_kawaii_en_circulo_pastel.png?v=1792963793&width=800" },
+      { id: "lapiceros", nombre: "Lapiceros", tipo: "categoria", emoji: "🖊️" },
+      { id: "beauty", nombre: "Beauty", tipo: "categoria", emoji: "💄" },
+      { id: "accesorios", nombre: "Accesorios", tipo: "categoria", emoji: "👛" },
+      { id: "juegos-kawaii", nombre: "Juegos/Kawaii", tipo: "categoria", emoji: "🎮" },
+      { id: "happy-box", nombre: "Happy Box", tipo: "categoria", emoji: "🎁" }
     ]
   };
 
@@ -933,6 +1003,11 @@
     imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "", scQr: (AJ.scoops || {}).qr || "" };
     const S0 = { ...DEF.scoops, ...(AJ.scoops || {}) };
     A.sc_activo.checked = !!S0.activo;
+    fuenteSel = AJ.fuente || "clasica"; cursorSel = AJ.cursor || "";
+    const Q0 = AJ.quiz || { activo: true, titulo: "¿Qué personaje kawaii eres?" };
+    A.quiz_activo.checked = Q0.activo !== false; A.quiz_titulo.value = Q0.titulo || "";
+    if (!(AJ.cinta || []).length) A.cinta.value = String(AJ.franja || "").split("·").map(x => x.trim()).filter(Boolean).join("\n");
+    pintarEstilo();
     ["titulo", "intro", "nota", "precioVideo", "minColores", "minPersonajes"].forEach(k => A["sc_" + k].value = S0[k] ?? "");
     A.sc_colores.value = (S0.colores || []).join("\n"); A.sc_personajes.value = (S0.personajes || []).join("\n");
     scops = (S0.opciones || []).map(o => ({ ...o }));
@@ -945,7 +1020,7 @@
         <label class="cat-img" title="Cambiar foto">${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span>${esc(c.emoji || "🏷️")}</span>`}<input type="file" accept="image/*" hidden data-catimg="${i}"></label>
         <input data-catnom="${i}" value="${esc(c.nombre)}" placeholder="Nombre">
         <input data-catemo="${i}" value="${esc(c.emoji || "")}" placeholder="Emoji" class="emo" title="Emoji (si no tiene foto)">
-        <label class="check mini-check"><input type="checkbox" data-catmar="${i}" ${c.marca ? "checked" : ""}> Arriba</label>
+        <select class="tipo-sel" data-cattipo="${i}"><option value="personaje" ${tipoC(c) === "personaje" ? "selected" : ""}>✨ Personaje</option><option value="categoria" ${tipoC(c) === "categoria" ? "selected" : ""}>🎀 Categoría</option></select>
         <div class="bt">
           ${c.imagen ? `<button type="button" data-catsinimg="${i}" title="Quitar foto">🖼️✕</button>` : ""}
           <button type="button" data-catsube="${i}" ${i ? "" : "disabled"} aria-label="Subir">↑</button>
@@ -957,7 +1032,7 @@
     const d = e.target.dataset;
     if (d.catnom !== undefined) categorias[d.catnom].nombre = e.target.value;
     if (d.catemo !== undefined) { categorias[d.catemo].emoji = e.target.value.trim(); const s = e.target.parentElement.querySelector(".cat-img span"); if (s) s.textContent = e.target.value.trim() || "🏷️"; }
-    if (d.catmar !== undefined) categorias[d.catmar].marca = e.target.checked;
+    if (d.cattipo !== undefined) { categorias[d.cattipo].tipo = e.target.value; categorias[d.cattipo].marca = e.target.value === "personaje"; }
   });
   $("#aj-cats").addEventListener("change", async e => {
     const i = e.target.dataset.catimg; if (i === undefined || !e.target.files[0]) return;
@@ -1062,13 +1137,16 @@
         opciones: scops.filter(o => o.nombre.trim() && num(o.precio) > 0).map(o => ({ nombre: o.nombre.trim(), precio: num(o.precio), detalle: (o.detalle || "").trim(), imagen: o.imagen || "", contenido: (o.contenido || "").trim() })),
         qr: imgs.scQr || ""
       },
+      fuente: fuenteSel, cursor: cursorSel,
+      quiz: { activo: A.quiz_activo.checked, titulo: A.quiz_titulo.value.trim() },
       categorias: (() => {
         const usados = new Set();
         return categorias.filter(c => c.nombre.trim()).map(c => {
           let id = c.id || slug(c.nombre), base = id, n = 1;
           while (usados.has(id)) id = `${base}-${++n}`;
           usados.add(id);
-          return { id, nombre: c.nombre.trim(), marca: !!c.marca, imagen: c.imagen || "", emoji: c.emoji || "" };
+          const tipo = tipoC(c);
+          return { id, nombre: c.nombre.trim(), tipo, marca: tipo === "personaje", imagen: c.imagen || "", emoji: c.emoji || "" };
         });
       })()
     };

@@ -176,18 +176,18 @@
   let tt; function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("ver"), 1800); }
 
   // ---------- Vistas ----------
-  const tarjeta = p => `
-    <a class="tarjeta" href="#/producto/${p.id}">
-      <div class="foto"><img loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">
+  const tarjeta = p => { const img2 = (p.imagenes || [])[1], per = personajeDe(p); return `
+    <a class="tarjeta ${img2 ? "doble" : ""}" href="#/producto/${p.id}">
+      <div class="foto"><img class="f1" loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" src="${esc(img2)}" alt="">` : ""}
         ${!hayStock(p) ? `<span class="etiqueta agotado">Agotado</span>` : p.nuevo ? `<span class="etiqueta">Nuevo</span>` : ""}</div>
-      <div class="info"><h3>${esc(p.nombre)}</h3><div class="precio">${bs(p.precio)}</div>
+      <div class="info">${per ? `<span class="t-per">${esc(per.nombre)}</span>` : ""}<h3>${esc(p.nombre)}</h3><div class="precio">${bs(p.precio)}</div>
         <span class="ver-mas">${hayStock(p) ? "Ver opciones →" : "Ver detalles →"}</span></div>
-    </a>`;
+    </a>`; };
   const grilla = lista => lista.length ? `<div class="grilla">${lista.map(tarjeta).join("")}</div>` : `<p class="vacio">No encontramos productos 😿</p>`;
 
   function inicio() {
     const nuevos = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)).slice(0, 8);
-    const marcas = CATS.filter(c => c.marca);
+    const marcas = PERS(), categs = CATEG().length ? CATEG() : CATS;
     const bans = (T.banners || []).filter(b => b && b.imagen);
     app.innerHTML = `
       ${bans.length ? `<section class="carrusel-wrap"><div class="carrusel">
@@ -196,10 +196,10 @@
           : `<div class="slide"><img src="${esc(b.imagen)}" alt=""></div>`).join("")}</div>
         ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
       </div></section>` : ""}
-      ${marcas.length ? `<section class="marcas">
+      ${marcas.length ? `<section class="marcas"><h2 class="marcas-tit">Compra por personaje</h2>
         <div class="marcas-fila">${marcas.map(c => `<a class="marca-item" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
       </section>` : ""}
-      <div class="franja">${sticker("lapiz", "st-lapiz")}${esc(T.franja || "")}${sticker("estrella", "st-estrella")}</div>
+      <div class="franja-wrap">${sticker("lapiz", "st-lapiz")}${cinta()}${sticker("estrella", "st-estrella")}</div>
 
       ${SC ? `<section class="seccion sc-promo-wrap"><a class="sc-promo" href="#/scoops">
         <div><span class="sc-tag">✨ ${esc(SC.titulo || "Arma tu Scoop")}</span>
@@ -210,7 +210,7 @@
 
       <div class="fondo-gris">
         <section class="seccion"><h2>Compra por categorías</h2>
-          <div class="cats">${CATS.map(c => `<a class="cat" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
+          <div class="cats">${categs.map(c => `<a class="cat" href="#/catalogo/${c.id}"><div class="circ">${circ(c)}</div>${esc(c.nombre)}</a>`).join("")}</div>
         </section>
       </div>
 
@@ -229,6 +229,11 @@
         </section>
       </div>
 
+      ${T.quiz && T.quiz.activo !== false ? `<section class="seccion"><button class="quiz-promo" onclick="abrirQuiz(true)">
+        <span class="qp-emo">👻💖</span><span><b>${esc(T.quiz.titulo || "¿Qué personaje kawaii eres?")}</b><small>Haz el quiz y descubre tus productos ideales ✨</small></span><span class="btn">Hacer el quiz</span></button></section>` : ""}
+
+      ${seccionTikTok()}
+
       <section class="seccion">
         <div class="banner">
           ${sticker("corazon", "st-corazon", "top:18px;left:24px;transform:rotate(-14deg)")}
@@ -240,6 +245,7 @@
         </div>
       </section>`;
     if (bans.length > 1) carrusel(bans.length);
+    if (ttUser) cargarTikTok();
   }
 
   let carReloj;
@@ -265,7 +271,8 @@
     app.innerHTML = `<section class="seccion">
       <h2>${q ? `Resultados para “${esc(q)}”` : cat ? esc(CATS.find(c => c.id === cat)?.nombre || "Catálogo") : "Catálogo"}</h2>
       <div class="filtros"><a class="chip ${!cat ? "activo" : ""}" href="#/catalogo">Todo</a>
-        ${CATS.map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>
+        ${PERS().length ? `<span class="filtro-tit">Personajes</span>${PERS().map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}` : ""}</div>
+      <div class="filtros"><span class="filtro-tit">Categorías</span>${(CATEG().length ? CATEG() : CATS).map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>
       ${grilla(lista)}</section>`;
   }
 
@@ -315,6 +322,142 @@
     if (!m) { m = document.createElement("a"); m.id = "menu-scoops"; m.href = "#/scoops"; m.textContent = "🍬 Arma tu Scoop"; const cat = document.querySelector('.menu a[href="#/catalogo"]'); cat ? cat.after(m) : $("#menu").appendChild(m); }
     m.hidden = false;
   }
+  // ---------- Personajes / categorías ----------
+  const tipoDe = c => c.tipo || (c.marca ? "personaje" : "categoria");
+  const PERS = () => CATS.filter(c => tipoDe(c) === "personaje");
+  const CATEG = () => CATS.filter(c => tipoDe(c) === "categoria");
+  const personajeDe = p => {
+    const ps = (p.categorias || []).map(id => CATS.find(c => c.id === id)).filter(c => c && tipoDe(c) === "personaje");
+    return ps.find(c => c.id !== "sanrio") || ps[0];
+  };
+
+  // ---------- Tipografía ----------
+  const FUENTES = {
+    clasica:  { t: "'Fredoka'", x: "'Nunito'", url: "family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800" },
+    burbuja:  { t: "'Baloo 2'", x: "'Quicksand'", url: "family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700" },
+    japonesa: { t: "'Mochiy Pop One'", x: "'M PLUS Rounded 1c'", url: "family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;500;700;800" },
+    dulce:    { t: "'DynaPuff'", x: "'Nunito'", url: "family=DynaPuff:wght@400;500;600;700&family=Nunito:wght@400;600;700;800" },
+    chicle:   { t: "'Chewy'", x: "'Quicksand'", url: "family=Chewy&family=Quicksand:wght@400;500;600;700" },
+    retro:    { t: "'Grandstander'", x: "'Nunito'", url: "family=Grandstander:wght@500;600;700;800&family=Nunito:wght@400;600;700;800" },
+    moderna:  { t: "'Poppins'", x: "'Poppins'", url: "family=Poppins:wght@400;500;600;700" }
+  };
+  const FU = FUENTES[T.fuente] || FUENTES.clasica;
+  if (T.fuente && FUENTES[T.fuente] && T.fuente !== "clasica") {
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.href = `https://fonts.googleapis.com/css2?${FU.url}&display=swap`; document.head.appendChild(l);
+  }
+  document.documentElement.style.setProperty("--f-tit", `${FU.t}, Fredoka, Nunito, sans-serif`);
+  document.documentElement.style.setProperty("--f-txt", `${FU.x}, Nunito, system-ui, sans-serif`);
+  if (T.fuente === "moderna" || T.fuente === "japonesa") document.documentElement.classList.add("fuente-compacta");
+
+  // ---------- Cursor de temporada ----------
+  const CURSORES = {
+    murcielago: `<svg xmlns='http://www.w3.org/2000/svg' width='34' height='26' viewBox='0 0 34 26'><path d='M17 7c1.3-3 2.4-4 3-6 .6 2 0 3.2.6 4.4 2.5-1.6 7-2 12.4-.4-3 1.5-4 4-3.6 7-2-1.2-4.4-1.2-6 .6-1.2-1.4-3-1.4-4 0-.8 2-1.4 4-2.4 6-1-2-1.6-4-2.4-6-1-1.4-2.8-1.4-4 0-1.6-1.8-4-1.8-6-.6.4-3-.6-5.5-3.6-7C6 3 10.5 3.4 13 5c.6-1.2 0-2.4.6-4.4.6 2 1.7 3 3 6z' fill='%232b2238' stroke='%23fff' stroke-width='1.2'/><circle cx='15.4' cy='9' r='.9' fill='%23ff8fbf'/><circle cx='18.6' cy='9' r='.9' fill='%23ff8fbf'/></svg>`,
+    fantasma: `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'><path d='M14 2C7.4 2 3 7 3 13.5V29l3.6-2.6L10 29l4-2.6L18 29l3.4-2.6L25 29V13.5C25 7 20.6 2 14 2z' fill='%23fff' stroke='%23e8578a' stroke-width='2'/><circle cx='10.5' cy='13' r='1.8' fill='%232b2238'/><circle cx='17.5' cy='13' r='1.8' fill='%232b2238'/><ellipse cx='8' cy='17' rx='2' ry='1.2' fill='%23ffb3cf'/><ellipse cx='20' cy='17' rx='2' ry='1.2' fill='%23ffb3cf'/></svg>`,
+    corazon:  `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='26' viewBox='0 0 28 26'><path d='M14 24S2 16.5 2 8.5A6 6 0 0 1 14 6a6 6 0 0 1 12 2.5C26 16.5 14 24 14 24z' fill='%23f78db0' stroke='%23fff' stroke-width='2'/></svg>`,
+    patita:   `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><g fill='%23e8578a' stroke='%23fff' stroke-width='1.4'><ellipse cx='14' cy='19' rx='7' ry='6'/><circle cx='6' cy='11' r='3'/><circle cx='11' cy='6' r='3'/><circle cx='17' cy='6' r='3'/><circle cx='22' cy='11' r='3'/></g></svg>`,
+    estrella: `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><path d='M14 2l3.6 7.4 8.1 1.2-5.9 5.7 1.4 8.1L14 20.6l-7.2 3.8 1.4-8.1-5.9-5.7 8.1-1.2z' fill='%23ffd84d' stroke='%23e8578a' stroke-width='1.6' stroke-linejoin='round'/></svg>`
+  };
+  if (CURSORES[T.cursor] && matchMedia("(pointer:fine)").matches) {
+    const u = `url("data:image/svg+xml,${CURSORES[T.cursor].replace(/"/g, "'").replace(/#/g, "%23").replace(/\n/g, "")}") 4 4`;
+    const st = document.createElement("style");
+    st.textContent = `html,body,*{cursor:${u}, auto} a,button,label,select,.tarjeta,.sc-op-in,.chip,.sc-chip{cursor:${u}, pointer}`;
+    document.head.appendChild(st);
+  }
+
+  // ---------- Menú "Tienda" con personajes y categorías ----------
+  (() => {
+    const nav = $("#menu"), cat = nav && nav.querySelector('a[href="#/catalogo"]');
+    if (!cat || nav.querySelector(".menu-drop")) return;
+    const pers = PERS(), categ = CATEG();
+    const d = document.createElement("div"); d.className = "menu-drop";
+    d.innerHTML = `<button type="button" class="menu-tienda" aria-expanded="false">Tienda <span>▾</span></button>
+      <div class="mega">
+        ${pers.length ? `<div class="mega-col"><h4>✨ Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}"><i>${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : esc(c.emoji || "🎀")}</i>${esc(c.nombre)}</a>`).join("")}</div>` : ""}
+        <div class="mega-col"><h4>🎀 Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}"><i>${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : esc(c.emoji || "🏷️")}</i>${esc(c.nombre)}</a>`).join("")}
+          <a href="#/catalogo" class="mega-todo">Ver todo →</a></div>
+        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : "<b>🍬</b>"}<span>Arma tu Scoop</span></a>` : ""}
+      </div>`;
+    cat.replaceWith(d);
+    const b = d.querySelector(".menu-tienda");
+    b.onclick = e => { e.stopPropagation(); const a = d.classList.toggle("abierto"); b.setAttribute("aria-expanded", a); };
+    d.querySelector(".mega").addEventListener("click", e => { if (e.target.closest("a")) d.classList.remove("abierto"); });
+    document.addEventListener("click", e => { if (!d.contains(e.target)) d.classList.remove("abierto"); });
+  })();
+
+  // ---------- Cintas de texto en movimiento ----------
+  const CINTA = (Array.isArray(T.cinta) && T.cinta.filter(Boolean).length ? T.cinta : String(T.franja || "").split("·")).map(x => x.trim()).filter(Boolean);
+  const cinta = (clase = "") => CINTA.length ? `<div class="cinta ${clase}" aria-label="${esc(CINTA.join(" · "))}"><div class="cinta-pista">${
+    Array(2).fill(`<span class="cinta-grupo">${Array(3).fill(CINTA.map(x => `<span>${esc(x)}</span><i>✦</i>`).join("")).join("")}</span>`).join("")}</div></div>` : "";
+
+  // ---------- TikTok ----------
+  const ttUser = (T.tiktok || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+  const ttVideos = (T.tiktokVideos || []).map(u => (String(u).match(/video\/(\d+)/) || String(u).match(/^(\d{10,})$/) || [])[1]).filter(Boolean).slice(0, 6);
+  const seccionTikTok = () => !ttUser ? "" : `<section class="seccion tiktok">
+      <div class="tk-cab"><h2>¡Míranos en TikTok! 🎥</h2><p>Unboxings, scoops y novedades todas las semanas</p></div>
+      ${ttVideos.length ? `<div class="tk-videos">${ttVideos.map(id => `<div class="tk-video"><iframe src="https://www.tiktok.com/embed/v2/${id}" loading="lazy" allow="encrypted-media; fullscreen" allowfullscreen title="Video de TikTok"></iframe></div>`).join("")}</div>`
+        : `<div class="tk-perfil"><blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${esc(ttUser)}" data-unique-id="${esc(ttUser)}" data-embed-type="creator" style="max-width:780px;min-width:288px;margin:0 auto"><section><a target="_blank" href="https://www.tiktok.com/@${esc(ttUser)}">@${esc(ttUser)}</a></section></blockquote></div>`}
+      <div style="text-align:center;margin-top:20px"><a class="btn btn-tk" href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener">Seguir a @${esc(ttUser)} en TikTok</a></div>
+    </section>`;
+  const cargarTikTok = () => { if (!ttVideos.length && ttUser && !document.querySelector('script[src*="tiktok.com/embed.js"]')) { const s = document.createElement("script"); s.async = true; s.src = "https://www.tiktok.com/embed.js"; document.body.appendChild(s); } else if (window.tiktokEmbed && window.tiktokEmbed.lib) { try { window.tiktokEmbed.lib.render(document.querySelectorAll(".tiktok-embed")); } catch (e) {} } };
+
+  // ---------- Quiz "¿Qué personaje eres?" ----------
+  const QUIZ = {
+    preguntas: [
+      { p: "¿Cuál es tu plan ideal de fin de semana?", r: [["Pijamada con mis amigas 💕", "my-melody"], ["Algo misterioso y un poco rebelde 🖤", "kuromi"], ["Dormir hasta tarde y comer postrecitos 🍮", "pompompurin"], ["Salir a pasear y jugar al aire libre ⚽", "pochacco"], ["Un cafecito tranquilo mirando las nubes ☁️", "cinnamoroll"], ["Organizar una fiesta de té perfecta 🎀", "hello-kitty"]] },
+      { p: "Elige un snack:", r: [["Pastel de fresa 🍓", "my-melody"], ["Chocolate amargo 🍫", "kuromi"], ["Flan con caramelo 🍮", "pompompurin"], ["Helado de banana 🍌", "pochacco"], ["Rollo de canela 🥐", "cinnamoroll"], ["Galletas de mantequilla 🍪", "hello-kitty"]] },
+      { p: "¿Qué no puede faltar en tu mochila?", r: [["Un labial rosadito 💄", "my-melody"], ["Stickers de calaveritas 💀", "kuromi"], ["Una almohadita para siestas 😴", "pompompurin"], ["Mis audífonos para bailar 🎧", "pochacco"], ["Una libreta para soñar ✨", "cinnamoroll"], ["Mi agenda súper organizada 📒", "hello-kitty"]] }
+    ],
+    res: {
+      "my-melody": ["My Melody", "🐰", "Dulce, amable y siempre con una sonrisa. Tus amigas saben que pueden contar contigo para todo. 💗"],
+      "kuromi": ["Kuromi", "🖤", "Un poquito traviesa, súper auténtica y con un corazón enorme escondido bajo tu estilo único. 💜"],
+      "pompompurin": ["Pompompurin", "🍮", "Relajada, tierna y amante de las cosas simples (y de los snacks). ¡La mejor compañía! 💛"],
+      "pochacco": ["Pochacco", "⚽", "Llena de energía, curiosa y siempre lista para una aventura nueva. 🖤🤍"],
+      "cinnamoroll": ["Cinnamoroll", "☁️", "Soñadora, tranquila y un poquito tímida, pero todos aman tu buena vibra. 💙"],
+      "hello-kitty": ["Hello Kitty", "🎀", "Clásica, cariñosa y la amiga que siempre recuerda los cumpleaños. ¡Un ícono! ❤️"]
+    }
+  };
+  function abrirQuiz(forzar) {
+    if (!T.quiz || T.quiz.activo === false) { if (!forzar) return; }
+    let paso = 0; const votos = {};
+    const cap = document.createElement("div"); cap.className = "quiz-velo";
+    const cerrar = () => { cap.classList.remove("ver"); setTimeout(() => cap.remove(), 250); try { localStorage.setItem("quiz-visto", "1"); } catch (e) {} };
+    const pintar = () => {
+      const caja = cap.querySelector(".quiz-caja");
+      if (paso < 0) {
+        caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
+          <div class="quiz-emo">👻💖</div><h2>${esc((T.quiz && T.quiz.titulo) || "¿Qué personaje kawaii eres?")}</h2>
+          <p>Responde 3 preguntitas y descubre tu personaje… ¡y sus productos! ✨</p>
+          <button class="btn quiz-go">¡Vamos! 👀</button><button class="quiz-no">Ahora no</button>`;
+      } else if (paso < QUIZ.preguntas.length) {
+        const q = QUIZ.preguntas[paso];
+        caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
+          <div class="quiz-prog">${QUIZ.preguntas.map((_, i) => `<i class="${i <= paso ? "on" : ""}"></i>`).join("")}</div>
+          <h2>${esc(q.p)}</h2><div class="quiz-ops">${q.r.map(([t, k]) => `<button data-k="${k}">${esc(t)}</button>`).join("")}</div>`;
+      } else {
+        const gana = Object.entries(votos).sort((a, b) => b[1] - a[1])[0][0];
+        const [nom, emo, txt] = QUIZ.res[gana], c = CATS.find(x => x.id === gana);
+        caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
+          <div class="quiz-res">${c && c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span>${emo}</span>`}</div>
+          <p class="quiz-eres">Tu personaje es…</p><h2>¡${esc(nom)}! ${emo}</h2><p>${esc(txt)}</p>
+          ${c ? `<a class="btn" href="#/catalogo/${c.id}" data-cerrar>Ver productos de ${esc(nom)}</a>` : `<a class="btn" href="#/catalogo" data-cerrar>Ver la tienda</a>`}
+          <button class="quiz-no" data-otra>Hacerlo otra vez</button>`;
+      }
+    };
+    cap.innerHTML = `<div class="quiz-caja" role="dialog" aria-modal="true"></div>`;
+    document.body.appendChild(cap); paso = -1; pintar(); requestAnimationFrame(() => cap.classList.add("ver"));
+    cap.addEventListener("click", e => {
+      const b = e.target.closest("button,a");
+      if (e.target === cap || (b && (b.classList.contains("quiz-x") || (b.classList.contains("quiz-no") && !b.dataset.otra)))) return cerrar();
+      if (!b) return;
+      if (b.classList.contains("quiz-go")) { paso = 0; pintar(); }
+      else if (b.dataset.k) { votos[b.dataset.k] = (votos[b.dataset.k] || 0) + 1 + (paso === 0 ? 0.1 : 0); paso++; pintar(); }
+      else if (b.dataset.otra) { paso = 0; for (const k in votos) delete votos[k]; pintar(); }
+      else if (b.dataset.cerrar !== undefined) cerrar();
+    });
+  }
+  window.abrirQuiz = abrirQuiz;
+  try { if (T.quiz && T.quiz.activo && !localStorage.getItem("quiz-visto")) setTimeout(() => { if (!document.querySelector(".quiz-velo") && !location.hash.includes("scoops")) abrirQuiz(); }, 2500); } catch (e) {}
+
   const COLOR_HEX = { rosa: "#f7a1c4", lila: "#c9a7f0", celeste: "#9fd4f5", verde: "#9fe0b4", "verde menta": "#a8ecd0", amarillo: "#ffe27a",
     blanco: "#ffffff", negro: "#2b2b2b", naranja: "#ffb27a", rojo: "#f26b6b", morado: "#a77bdb", azul: "#7fa8f0",
     pastel: "linear-gradient(135deg,#f7a1c4,#c9a7f0,#9fd4f5)", multicolor: "linear-gradient(135deg,#f26b6b,#ffe27a,#9fe0b4,#9fd4f5,#c9a7f0)" };
@@ -510,5 +653,6 @@
     q ? catalogo(null, q) : ruta();
   });
 
+  { const pie = document.querySelector(".pie"); if (pie && CINTA.length) pie.insertAdjacentHTML("beforebegin", cinta("cinta-osc")); }
   pintarCarrito(); ruta();
 })();

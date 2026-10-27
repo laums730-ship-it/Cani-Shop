@@ -1,5 +1,5 @@
 -- ================================================================
---  CANI SHOP — TODO EN UNO (base de datos + Mi tienda + productos de Kyte + pedidos + scoops + clientes)
+--  CANI SHOP — TODO EN UNO (base de datos + Mi tienda + productos de Kyte + pedidos + scoops + clientes + orden por personaje)
 --  Copia TODO, pégalo en Supabase → SQL Editor → Run.
 --  Se puede correr aunque ya hayas corrido otras partes: no duplica ni borra lo tuyo.
 -- ================================================================
@@ -449,3 +449,100 @@ from public.pedidos
 where length(public.tel_norm(telefono)) >= 6
 order by public.tel_norm(telefono), creado desc
 on conflict (tel_norm) do nothing;
+
+
+-- =====================================================
+--  CANI SHOP — ordenar productos por PERSONAJE y CATEGORÍA
+--  Mira el nombre (y los modelos) de cada producto y le AGREGA sus
+--  personajes y categorías. Nunca quita las que ya tiene.
+--  (Se puede correr más de una vez sin problema.)
+-- =====================================================
+
+-- 1) Personajes y categorías del menú (agrega las que falten, no borra las tuyas)
+do $$
+declare
+  def jsonb := '[
+    {"id":"sanrio","nombre":"Sanrio","tipo":"personaje","emoji":"🎀"},
+    {"id":"hello-kitty","nombre":"Hello Kitty","tipo":"personaje","emoji":"🎀"},
+    {"id":"kuromi","nombre":"Kuromi","tipo":"personaje","emoji":"🖤"},
+    {"id":"my-melody","nombre":"My Melody","tipo":"personaje","emoji":"🐰"},
+    {"id":"cinnamoroll","nombre":"Cinnamoroll","tipo":"personaje","emoji":"☁️"},
+    {"id":"pochacco","nombre":"Pochacco","tipo":"personaje","emoji":"🐶"},
+    {"id":"pompompurin","nombre":"Pompompurin","tipo":"personaje","emoji":"🍮"},
+    {"id":"snoopy","nombre":"Snoopy","tipo":"personaje","emoji":"🐶"},
+    {"id":"stitch","nombre":"Stitch","tipo":"personaje","emoji":"💙"},
+    {"id":"obakenu","nombre":"Obakenu","tipo":"personaje","emoji":"👻"},
+    {"id":"bts","nombre":"BTS","tipo":"personaje","emoji":"💜"},
+    {"id":"gatitos","nombre":"Gatitos","tipo":"personaje","emoji":"🐱"},
+    {"id":"papeleria","nombre":"Papelería","tipo":"categoria","emoji":"📒"},
+    {"id":"lapiceros","nombre":"Lapiceros","tipo":"categoria","emoji":"🖊️"},
+    {"id":"beauty","nombre":"Beauty","tipo":"categoria","emoji":"💄"},
+    {"id":"accesorios","nombre":"Accesorios","tipo":"categoria","emoji":"👛"},
+    {"id":"juegos-kawaii","nombre":"Juegos/Kawaii","tipo":"categoria","emoji":"🎮"},
+    {"id":"happy-box","nombre":"Happy Box","tipo":"categoria","emoji":"🎁"}
+  ]';
+  cats jsonb; c jsonb; d jsonb; sal jsonb := '[]'; t text;
+begin
+  select coalesce(datos->'categorias', '[]') into cats from public.ajustes where id = 'tienda';
+  cats := coalesce(cats, '[]');
+  for c in select * from jsonb_array_elements(cats) loop
+    select x into d from jsonb_array_elements(def) x where x->>'id' = c->>'id';
+    t := coalesce(c->>'tipo', d->>'tipo', case when coalesce((c->>'marca')::boolean, false) then 'personaje' else 'categoria' end);
+    sal := sal || (c || jsonb_build_object('tipo', t, 'marca', t = 'personaje'));
+  end loop;
+  for d in select * from jsonb_array_elements(def) loop
+    if not exists (select 1 from jsonb_array_elements(sal) x where x->>'id' = d->>'id') then
+      sal := sal || (d || jsonb_build_object('marca', d->>'tipo' = 'personaje', 'imagen', ''));
+    end if;
+  end loop;
+  -- personajes primero, luego categorías (respetando tu orden)
+  select jsonb_agg(x order by (x->>'tipo') <> 'personaje', o) into sal from jsonb_array_elements(sal) with ordinality q(x, o);
+  insert into public.ajustes (id, datos) values ('tienda', jsonb_build_object('categorias', sal))
+  on conflict (id) do update set datos = public.ajustes.datos || jsonb_build_object('categorias', sal);
+end $$;
+
+-- 2) Reglas: palabra en el nombre o en los modelos → personaje / categoría
+create temp table if not exists reglas_cani (cat text, patron text);
+truncate reglas_cani;
+insert into reglas_cani values
+  ('hello-kitty', 'hello ?kitty|\mkitty\M'),
+  ('kuromi',      'kuromi'),
+  ('my-melody',   'my ?melody|\mmelody\M'),
+  ('cinnamoroll', 'cinn?amoroll|cinnamon'),
+  ('pochacco',    'pochacc?o'),
+  ('pompompurin', 'pom ?pom ?purin|\mpurin\M'),
+  ('sanrio',      'sanrio|san rio|kuromi|my ?melody|cinn?amoroll|pochacc?o|pom ?pom ?purin|hello ?kitty|keroppi|badtz|tuxedo ?sam|hangyodon|little twin stars|kiki|lala'),
+  ('snoopy',      'snoopy|peanuts|charlie brown|woodstock'),
+  ('stitch',      'stitch'),
+  ('obakenu',     'obakenu'),
+  ('bts',         '\mbts\M|bt21'),
+  ('gatitos',     '\mgat(o|os|ito|itos|ita|itas)\M|\mmichi|\mneko\M|lucky cat|huella'),
+  ('lapiceros',   'lapicer|boligraf|\mplumas?\M|\mpens?\M|gel pen|portaminas'),
+  ('papeleria',   'libreta|cuaderno|sticker|washi|resaltador|marcador|estuche|separador|post.?it|notas adhesivas|\mbloc\M|agenda|planner|\mregla|borrador|tajador|corrector|cuter|\mclips?\M|binder|\mlapi(z|ces)\M|tijera|carpeta|calendario|plumon|crayon|\msellos?\M|diurex|folder|archivador|stationery|lapicer|boligraf|\mplumas?\M|circulos adhesivos|escenario|papeleria|journal|memo'),
+  ('beauty',      'mascarilla|balsamo|labial|\mlip|crema|skincare|vincha|espejo|cepillo|\mpeine|gloss|maquillaje|brocha|esponja|serum|tonico|facial|parches|perfume|\munas\M|\mgrasa\M|cosmetic'),
+  ('accesorios',  'llavero|bolso|bolsito|billetera|monedero|cartera|mochila|pinza|scrunchie|colita|\mligas?\M|vincha|collar|pulsera|arete|anillo|\mlentes\M|gorro|bufanda|funda|\mcase\M|charm|peluche|plush|cosmetiquera|neceser|\mtazas?\M|botella|termo|lonchera|pechera'),
+  ('juegos-kawaii','\mdiy\M|mini brands|blind ?box|capsula|puzzle|rompecabezas|juego|squishy|antiestr|figura|sorpresa|miniatura|lampara|ventilador|bricks|bloques|lego|armable');
+
+-- 3) Agregar las categorías a cada producto
+update public.productos p
+set categorias = (
+  select array_agg(distinct x order by x) from unnest(
+    p.categorias || coalesce(array(
+      select r.cat from reglas_cani r
+      where translate(lower(p.nombre || ' ' || coalesce((select string_agg(v->>'nombre', ' ') from jsonb_array_elements(p.variantes) v), '')),
+                      'áéíóúüñ', 'aeiouun') ~ r.patron
+    ), '{}')
+  ) x
+)
+where exists (
+  select 1 from reglas_cani r
+  where translate(lower(p.nombre || ' ' || coalesce((select string_agg(v->>'nombre', ' ') from jsonb_array_elements(p.variantes) v), '')),
+                  'áéíóúüñ', 'aeiouun') ~ r.patron
+    and not (r.cat = any(p.categorias))
+);
+
+-- Listo 🎉 cuántos productos quedaron en cada personaje / categoría:
+select c as categoria, count(*) as productos
+from public.productos, unnest(categorias) c
+where activo
+group by c order by count(*) desc;
