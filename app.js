@@ -205,23 +205,31 @@
     </a>`; };
   const grilla = lista => lista.length ? `<div class="grilla">${lista.map(tarjeta).join("")}</div>` : `<p class="vacio">No encontramos productos 😿</p>`;
 
+  const ESTRELLA_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z" fill="#fff275" stroke="#fd95c8" stroke-width="1.2" stroke-linejoin="round"/></svg>');
+  let estrellaSrc = "estrella.webp";
+  { const pre = new Image(); pre.onerror = () => { estrellaSrc = ESTRELLA_SVG; }; pre.src = estrellaSrc; }
   function estrellitas(el) {
     const r = el.getBoundingClientRect(), N = 16;
+    const vis = Math.max(r.top, 0), visFin = Math.min(r.bottom, innerHeight);
     for (let i = 0; i < N; i++) {
       const st = document.createElement("img");
-      st.src = "estrella.webp"; st.alt = ""; st.className = "estrellita";
-      const x0 = r.left + scrollX + r.width * (.2 + Math.random() * .6), y0 = r.top + scrollY + r.height * (.3 + Math.random() * .4);
-      const ang = (i / N) * Math.PI * 2 + Math.random() * .4, dist = 90 + Math.random() * 120, tam = 20 + Math.random() * 24;
-      Object.assign(st.style, { left: x0 + "px", top: y0 + "px", width: tam + "px" });
+      st.src = estrellaSrc; st.alt = ""; st.className = "estrellita";
+      const tam = Math.round(20 + Math.random() * 24);
+      const x0 = r.left + scrollX + r.width * (.2 + Math.random() * .6) - tam / 2;
+      const y0 = scrollY + vis + (visFin - vis) * (.3 + Math.random() * .4) - tam / 2;
+      const ang = (i / N) * Math.PI * 2 + Math.random() * .4, dist = 90 + Math.random() * 120;
+      Object.assign(st.style, { left: x0 + "px", top: y0 + "px", width: tam + "px", height: tam + "px" });
       document.body.appendChild(st);
-      const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist, rot = (Math.random() * 2 - 1) * 200;
+      const dx = Math.round(Math.cos(ang) * dist), dy = Math.round(Math.sin(ang) * dist), rot = Math.round((Math.random() * 2 - 1) * 200);
+      if (!st.animate) { st.remove(); continue; }
       const an = st.animate([
-        { transform: "translate(-50%,-50%) scale(.2) rotate(0deg)", opacity: 0 },
-        { transform: `translate(calc(-50% + ${dx * .35}px), calc(-50% + ${dy * .35}px)) scale(1.15) rotate(${rot * .3}deg)`, opacity: 1, offset: .2 },
-        { transform: `translate(calc(-50% + ${dx * .85}px), calc(-50% + ${dy * .85 + 12}px)) scale(1) rotate(${rot * .8}deg)`, opacity: 1, offset: .7 },
-        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy + 40}px)) scale(.6) rotate(${rot}deg)`, opacity: 0 }
+        { transform: "translate(0px,0px) scale(.2) rotate(0deg)", opacity: 0 },
+        { transform: `translate(${Math.round(dx * .35)}px,${Math.round(dy * .35)}px) scale(1.15) rotate(${Math.round(rot * .3)}deg)`, opacity: 1, offset: .2 },
+        { transform: `translate(${Math.round(dx * .85)}px,${Math.round(dy * .85 + 12)}px) scale(1) rotate(${Math.round(rot * .8)}deg)`, opacity: 1, offset: .7 },
+        { transform: `translate(${dx}px,${dy + 40}px) scale(.6) rotate(${rot}deg)`, opacity: 0 }
       ], { duration: 1300 + Math.random() * 500, delay: Math.random() * 120, easing: "ease-out", fill: "forwards" });
       an.onfinish = () => st.remove();
+      setTimeout(() => st.remove(), 2500);
     }
   }
 
@@ -298,9 +306,14 @@
     if (ttUser) cargarTikTok();
     // Lucky Scoops: explotan estrellitas al llegar (solo celular)
     { const promo = document.querySelector(".sc-promo");
-      if (promo && "IntersectionObserver" in window && matchMedia("(max-width:820px)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); estrellitas(promo); } }, { threshold: .7 });
-        io.observe(promo);
+      if (promo && matchMedia("(max-width:820px)").matches) {
+        let hecho = false;
+        const mirar = () => {
+          if (hecho || !promo.isConnected) return window.removeEventListener("scroll", mirar);
+          const r = promo.getBoundingClientRect();
+          if (r.top < innerHeight * .7 && r.bottom > innerHeight * .2) { hecho = true; window.removeEventListener("scroll", mirar); estrellitas(promo); }
+        };
+        window.addEventListener("scroll", mirar, { passive: true }); setTimeout(mirar, 400);
       } }
   }
 

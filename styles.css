@@ -862,3 +862,21 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
 }
 .marca-item:not(.con-foto) .marca-nom{font-size:.88rem;margin-top:8px}
 .estrellita{position:absolute;z-index:60;pointer-events:none;height:auto;opacity:0;filter:drop-shadow(0 3px 4px rgba(120,55,70,.18))}
+
+/* =====================================================
+   Barra superior más fina y limpia en celular + sin desborde lateral
+   ===================================================== */
+html,body{overflow-x:hidden}
+@supports (overflow:clip){html,body{overflow-x:clip}}
+.aviso{width:100%;box-sizing:border-box}
+@media (max-width:820px){
+  .aviso{height:30px!important;padding:0 12px!important;gap:0!important}
+  .aviso-flecha{display:none!important}
+  .aviso-texto{font-size:.68rem!important;letter-spacing:.06em!important;font-weight:600!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .cabecera{border-bottom:0!important;box-shadow:0 4px 14px rgba(120,55,70,.06)!important}
+}
+/* Barra superior: rosa claro + café, Comfortaa normal (opción A) */
+.aviso{background:var(--rosa)!important;height:38px!important}
+.aviso-texto{color:var(--cafe)!important;font-family:var(--f-txt)!important;text-transform:none!important;font-weight:700!important;font-size:.88rem!important;letter-spacing:.02em!important;text-shadow:none!important}
+.aviso-flecha{color:var(--cafe)!important}
+@media (max-width:820px){.aviso{height:38px!important}.aviso-texto{font-size:.85rem!important;letter-spacing:.02em!important;font-weight:700!important}}
