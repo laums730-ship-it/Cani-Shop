@@ -117,6 +117,7 @@
     .mini{display:flex;align-items:center;gap:10px}
     .mini .ft{width:76px;flex:none}
     .mini .ft img{object-fit:contain}
+    .mini-logo .ft{width:180px;background:#fce3ee;border-radius:14px;padding:8px}
     .banners{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
     .ban-imgs{display:flex;gap:6px;align-items:center;position:relative}
     .ban-movil{width:56px;height:56px;border-radius:10px;border:2px dashed var(--rosa-fuerte);display:grid;place-items:center;text-align:center;font-size:.55rem;font-weight:800;line-height:1.15;cursor:pointer;background:#fff;overflow:hidden;flex:none}
@@ -449,13 +450,15 @@
     </section>
 
     <section class="caja">
+      <h2>🌸 Logo del encabezado</h2>
+      <p class="ayuda">El logo que sale arriba al centro de tu tienda (y abajo en el pie de página). Mejor en <b>PNG con fondo transparente</b>. Si lo quitas, vuelve tu logo de siempre. Después de subirlo toca <b>Guardar cambios</b>.</p>
+      <div class="campo"><div class="mini mini-logo" data-img="logo"></div></div>
+    </section>
+
+    <section class="caja">
       <h2>📣 Barra de avisos</h2>
       <p class="ayuda">La barra rosada de arriba. Escribe <b>un aviso por línea</b>; se van pasando solos.</p>
       <div class="campo"><textarea name="avisos" rows="4" placeholder="Envíos a toda Bolivia&#10;Scoops y ventas unitarias"></textarea></div>
-      <div class="fila">
-        <div class="campo"><label>Gatito izquierdo</label><div class="mini" data-img="gatoIzq"></div></div>
-        <div class="campo"><label>Gatito derecho</label><div class="mini" data-img="gatoDer"></div></div>
-      </div>
     </section>
 
     <section class="caja">
@@ -1048,11 +1051,11 @@
     if (/^5917\d{7}$|^5916\d{7}$/.test(A.whatsapp.value)) A.whatsapp.value = A.whatsapp.value.slice(3);
     if (A.whatsapp.value === "70000000") A.whatsapp.value = "";
     banners = (AJ.banners || []).map(b => ({ ...b }));
-    imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "", scQr: (AJ.scoops || {}).qr || "" };
+    imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "", scQr: (AJ.scoops || {}).qr || "", logo: AJ.logo || "" };
     const S0 = { ...DEF.scoops, ...(AJ.scoops || {}) };
     A.sc_activo.checked = !!S0.activo;
     fuenteSel = AJ.fuente || "clasica"; cursorSel = AJ.cursor || "";
-    dests = (Array.isArray(AJ.destacadas) && AJ.destacadas.length ? AJ.destacadas : [{ titulo: "Novedades", cat: "__nuevos" }, { titulo: "Sanrio", cat: "sanrio" }]).map(d => ({ ...d }));
+    dests = (Array.isArray(AJ.destacadas) && AJ.destacadas.length ? AJ.destacadas : [{ titulo: "Novedades", cat: "__nuevos" }]).map(d => ({ ...d }));
     const H0 = AJ.historia || {};
     A.hist_titulo.value = H0.titulo || ""; A.hist_texto.value = H0.texto || AJ.nosotros || "";
     ["hist1", "hist2", "hist3"].forEach((k, i) => imgs[k] = (H0.imagenes || [])[i] || "");
@@ -1147,7 +1150,7 @@
   A.addEventListener("change", async e => {
     const k = e.target.dataset.mini; if (!k || !e.target.files[0]) return;
     toast("Subiendo…");
-    const u = await subirArchivo(e.target.files[0], "tienda", k === "scQr" ? 1000 : /^hist/.test(k) ? 900 : 400);
+    const u = await subirArchivo(e.target.files[0], "tienda", k === "scQr" ? 1000 : /^hist/.test(k) ? 900 : k === "logo" ? 700 : 400);
     if (u) { imgs[k] = u; pintarMinis(); toast("Listo, ahora toca Guardar cambios"); }
   });
 
@@ -1200,6 +1203,7 @@
       tiktok: red(A.tiktok.value, "https://www.tiktok.com/@"),
       banners: banners.map(b => ({ imagen: b.imagen, enlace: (b.enlace || "").trim(), ...(b.imagenMovil ? { imagenMovil: b.imagenMovil } : {}) })),
       gatoIzq: imgs.gatoIzq, gatoDer: imgs.gatoDer,
+      logo: imgs.logo || (window.TIENDA || {}).logo || "logo.png",
       scoops: {
         activo: A.sc_activo.checked, titulo: A.sc_titulo.value.trim(), intro: A.sc_intro.value.trim(), nota: A.sc_nota.value.trim(),
         precioVideo: num(A.sc_precioVideo.value), minColores: Math.round(num(A.sc_minColores.value)), minPersonajes: Math.round(num(A.sc_minPersonajes.value)),
@@ -1588,7 +1592,7 @@
     if (!ED.items.length) return toast("Agrega productos primero", true);
     const v = Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega"].map(k => [k, FP[k].value.trim()]));
     const c = cuentas(ED.items, FP.envio.value, FP.pagado.value), pag = num(FP.pagado.value);
-    const T2 = AJ, logo = new URL("logo.png", location.href).href;
+    const T2 = AJ, logo = new URL(imgs.logo || "logo.png", location.href).href;
     const ig = (T2.instagram || "").replace(/\/+$/, "").split("/").pop();
     const tel = (T2.whatsapp || "").replace(/^591/, "");
     const filas = ED.items.map(i => `<tr>
