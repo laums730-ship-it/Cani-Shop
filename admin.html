@@ -444,7 +444,7 @@
 
     <section class="caja">
       <h2>🏷️ Categorías</h2>
-      <p class="ayuda">Toca el círculo para ponerle foto (si no, se muestra el emoji). <b>✨ Personaje</b> = va en “Por personaje” (menú y círculos del inicio). <b>🎀 Categoría</b> = va en “Por categoría”. Un producto puede estar en ambos (ej: un lapicero de Kuromi).</p>
+      <p class="ayuda">Toca el círculo para ponerle foto. En los <b>personajes</b> usa un PNG transparente; en las <b>categorías</b> la foto sale grande en los cuadros del inicio (mejor horizontal, tipo 1200×800, con el producto al centro). Si una categoría no tiene foto, se usa la de su primer producto. <b>✨ Personaje</b> = va en “Por personaje” (menú y círculos del inicio). <b>🎀 Categoría</b> = va en “Por categoría”. Un producto puede estar en ambos (ej: un lapicero de Kuromi).</p>
       <div id="aj-cats" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="aj-addcat" style="margin:10px 0 14px">＋ Agregar categoría</button>
     </section>
@@ -1095,7 +1095,7 @@
   $("#aj-cats").addEventListener("change", async e => {
     const i = e.target.dataset.catimg; if (i === undefined || !e.target.files[0]) return;
     toast("Subiendo…");
-    const u = await subirArchivo(e.target.files[0], "categorias", 600);
+    const u = await subirArchivo(e.target.files[0], "categorias", categorias[i].tipo === "personaje" ? 600 : 1200);
     if (u) { categorias[i].imagen = u; pintarCats(); toast("Listo, ahora toca Guardar cambios"); }
   });
   $("#aj-cats").addEventListener("click", e => {
