@@ -739,3 +739,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
 .pers-fila .fila-tit{margin-bottom:22px}
 .fila-tit + .cat-pills{padding-top:0!important;margin-top:0!important}
 .pers-fila + .fila-tit{margin-top:18px}
+/* Novedades con 2 productos + historia con una sola foto */
+.dest-dos .grilla{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:620px;margin-left:auto;margin-right:auto}
+.hist-imgs.una{grid-template-columns:1fr!important;max-width:460px;width:100%;margin:0 auto}
+.hist-imgs.una div{aspect-ratio:1!important;border-radius:32px;padding:6%}

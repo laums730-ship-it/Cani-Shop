@@ -209,11 +209,11 @@
     const bans = (T.banners || []).filter(b => b && b.imagen);
     const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
     const DEST = (Array.isArray(T.destacadas) && T.destacadas.filter(d => d && d.cat).length ? T.destacadas.filter(d => d && d.cat)
-      : [{ titulo: "Novedades", cat: "__nuevos" }, { titulo: "Sanrio", cat: "sanrio" }]).slice(0, 3);
+      : [{ titulo: "Novedades", cat: "__nuevos" }]).filter(d => d.cat !== "sanrio").slice(0, 3);
     const VAL = (Array.isArray(T.valores) && T.valores.filter(Boolean).length ? T.valores.filter(Boolean)
       : ["Productos kawaii originales, elegidos uno por uno", "Envíos a toda Bolivia", "Empaque seguro (¡y tierno!) para tus cositas"]).slice(0, 3);
     const HIST = T.historia || {};
-    const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : [T.gatoIzq, T.logo, T.gatoDer].filter(Boolean);
+    const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : ["historia.webp"];
     const OPS = (T.opiniones || []).filter(o => o && o.texto);
     const ICON_VAL = [
       `<svg viewBox="0 0 48 48"><path d="M24 6l4.6 10.4L40 18l-8.4 7.6L34 37l-10-5.8L14 37l2.4-11.4L8 18l11.4-1.6z"/><path d="M38 6v6M35 9h6"/></svg>`,
@@ -223,12 +223,12 @@
     const ESTRELLAS = `<span class="op-estrellas">${Array(5).fill(`<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7z"/></svg>`).join("")}</span>`;
     const listaDe = d => {
       const l = d.cat === "__nuevos" ? PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)) : PRODS.filter(p => (p.categorias || []).includes(d.cat));
-      return l.filter(hayStock).concat(l.filter(p => !hayStock(p))).slice(0, 8);
+      return l.filter(hayStock).concat(l.filter(p => !hayStock(p))).slice(0, d.cat === "__nuevos" ? 2 : 8);
     };
     const destacada = d => {
       const l = listaDe(d); if (!l.length) return "";
       const href = d.cat === "__nuevos" ? "#/novedades" : `#/catalogo/${d.cat}`;
-      return `<section class="seccion dest"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
+      return `<section class="seccion dest ${l.length <= 2 ? "dest-dos" : ""}"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
     };
     app.innerHTML = `
       ${bans.length ? `<section class="hero ${bans.every(b => b.imagenMovil) ? "movil-ok" : ""}"><div class="car-pista" id="car-pista">${bans.map(b => {
@@ -260,7 +260,7 @@
       ${DEST.slice(1).map(destacada).join("")}
 
       <section class="seccion historia">
-        <div class="hist-imgs">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
+        <div class="hist-imgs ${histImgs.length === 1 ? "una" : ""}">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
         <div class="hist-txt">
           <h2>${esc(HIST.titulo || `Hola, somos ${T.nombre}`)}</h2>
           <p>${esc(HIST.texto || T.nosotros || "")}</p>
