@@ -127,7 +127,7 @@
     const items = carrito.map((i, k) => ({ ...i, k, p: PRODS.find(p => p.id === i.id) })).filter(i => i.p);
     $("#carrito-items").innerHTML = items.length ? items.map(i => `
       <div class="item">
-        <img src="${foto(i.p)}" alt="">
+        <img src="${esc(((i.p.variantes || []).find(v => v.nombre === i.variante) || {}).imagen || foto(i.p))}" alt="">
         <div>
           <h4>${esc(sinEmoji(i.p.nombre))}</h4>
           ${i.variante ? `<small>${esc(i.variante)}</small><br>` : ""}
@@ -370,7 +370,9 @@
     const p = PRODS.find(x => x.id === id);
     if (!p) return catalogo();
     let img = 0, cant = 1, vari = tieneVar(p) ? (p.variantes.find(v => disp(v.stock)) || {}).nombre : null;
-    const imgs = p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)];
+    const imgs = (p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)]).slice();
+    (p.variantes || []).forEach(v => { if (v.imagen && !imgs.includes(v.imagen)) imgs.push(v.imagen); });
+    const imgDeVar = n => { const v = (p.variantes || []).find(x => x.nombre === n); return v && v.imagen ? imgs.indexOf(v.imagen) : -1; };
     const pintar = () => {
       const dispo = tieneVar(p) ? !!vari : hayStock(p);
       const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
@@ -386,7 +388,7 @@
             <h1>${esc(sinEmoji(p.nombre))}</h1>
             <div class="precio">${bs(p.precio)}</div>
             <p class="desc">${esc(sinEmoji(p.descripcion)).replace(/\n/g, "<br>")}</p>
-            ${tieneVar(p) ? `<div class="etiq">Modelo</div><div class="opciones">${p.variantes.map(v => `<button class="opcion ${v.nombre === vari ? "activo" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${esc(v.nombre)}</button>`).join("")}</div>` : ""}
+            ${tieneVar(p) ? `<div class="etiq">Modelo</div><div class="opciones">${p.variantes.map(v => `<button class="opcion ${v.imagen ? "con-foto" : ""} ${v.nombre === vari ? "activo" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
             <div class="etiq">Cantidad</div>
             <div class="cantidad"><button data-c="-1">−</button><span>${cant}</span><button data-c="1">+</button></div><br>
             ${pocos}<button class="btn" id="agregar" ${dispo ? "" : "disabled"}>${dispo ? "Agregar al carrito" : "Agotado"}</button>
@@ -398,7 +400,7 @@
     app.onclick = e => {
       const b = e.target.closest("button"); if (!b) return;
       if (b.dataset.img) { img = +b.dataset.img; pintar(); }
-      else if (b.dataset.var) { vari = b.dataset.var; pintar(); }
+      else if (b.dataset.var) { vari = b.dataset.var; const k = imgDeVar(vari); if (k >= 0) img = k; pintar(); }
       else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintar(); }
       else if (b.id === "agregar") agregar(p.id, vari, cant);
     };

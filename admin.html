@@ -101,7 +101,12 @@
     .subir:hover{background:var(--rosa-claro)}
     .subir input{display:none}
     .vars{display:flex;flex-direction:column;gap:8px}
-    .var{display:grid;grid-template-columns:1fr 110px 38px;gap:8px}
+    .var{display:grid;grid-template-columns:46px 1fr 110px 38px;gap:8px;align-items:center}
+    .var-foto{position:relative;width:46px;height:46px;border-radius:12px;border:2px dashed var(--rosa-fuerte);background:#fff;display:grid;place-items:center;cursor:pointer;overflow:visible}
+    .var-foto img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+    .var-foto span{font-size:1.1rem}
+    .var-foto .vf-q{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:0;background:#fff;color:var(--rojo);font-size:.7rem;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer}
+    .ft-tag{position:absolute;left:6px;bottom:6px;background:var(--rosa-fuerte);color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:999px}
     .var input{border:2px solid var(--borde);border-radius:12px;padding:10px 12px;background:#fff;width:100%}
     .var .q{border:0;background:#fdecee;color:var(--rojo);border-radius:12px;font-weight:800}
     .ayuda{color:var(--gris);font-size:.83rem;margin:4px 0 0}
@@ -252,7 +257,7 @@
       .acc{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
       .acc .btn{flex:1}
       .fila{grid-template-columns:1fr}
-      .var{grid-template-columns:1fr 90px 38px}
+      .var{grid-template-columns:46px 1fr 80px 38px}
     }
   </style>
 </head>
@@ -626,7 +631,7 @@
     <div class="sep"></div>
     <div class="campo"><label>Fotos</label>
       <div class="fotos" id="ed-fotos"></div>
-      <p class="ayuda">La primera foto es la principal. Las fotos se achican solas para que la tienda cargue rápido.</p>
+      <p class="ayuda">Puedes poner hasta 3 fotos (y más si quieres). La primera es la principal; con <b>★ Principal</b> cambias cuál va primero. Las fotos se achican solas para que la tienda cargue rápido.</p>
     </div>
 
     <div class="sep"></div>
@@ -635,7 +640,7 @@
     </div>
     <div id="ed-sinmodelos" class="campo"><label>Unidades disponibles</label><input name="stock" type="number" min="0" step="1" value="0" placeholder="0" required></div>
     <div id="ed-modelos" hidden>
-      <div class="var" style="font-weight:800;font-size:.85rem;color:var(--gris)"><span>Modelo</span><span>Unidades</span><span></span></div>
+      <div class="var" style="font-weight:800;font-size:.85rem;color:var(--gris)"><span>Foto</span><span>Modelo</span><span>Unidades</span><span></span></div>
       <div class="vars" id="ed-vars"></div>
       <button type="button" class="btn btn-sec btn-sm" id="ed-addvar" style="margin-top:10px">＋ Agregar modelo</button>
     </div>
@@ -828,7 +833,26 @@
   $("#ed-conmodelos").onchange = modo;
   function addVar(v = { nombre: "", stock: 0 }) {
     const d = document.createElement("div"); d.className = "var";
-    d.innerHTML = `<input placeholder="Ej: Kuromi" value="${esc(v.nombre)}"><input type="number" min="0" step="1" placeholder="0" value="${sinCtrl(v.stock) ? 0 : +v.stock}"><button type="button" class="q" aria-label="Quitar modelo">✕</button>`;
+    d.dataset.img = v.imagen || "";
+    d.innerHTML = `<label class="var-foto" title="Foto de este modelo"><input type="file" accept="image/*" hidden></label><input placeholder="Ej: Kuromi" value="${esc(v.nombre)}"><input type="number" min="0" step="1" placeholder="0" value="${sinCtrl(v.stock) ? 0 : +v.stock}"><button type="button" class="q" aria-label="Quitar modelo">✕</button>`;
+    const vf = d.querySelector(".var-foto");
+    const pintarVF = () => {
+      const u = d.dataset.img;
+      vf.querySelectorAll("img,span,button").forEach(x => x.remove());
+      vf.insertAdjacentHTML("afterbegin", u ? `<img src="${esc(u)}" alt=""><button type="button" class="vf-q" aria-label="Quitar foto del modelo">✕</button>` : `<span>📷</span>`);
+      const qb = vf.querySelector(".vf-q"); if (qb) qb.onclick = e => { e.preventDefault(); e.stopPropagation(); if (d.dataset.img.includes("/storage/v1/object/public/fotos/")) borrarFotos.push(d.dataset.img); d.dataset.img = ""; pintarVF(); };
+    };
+    vf.querySelector("input").onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      vf.querySelector("span,img") && (vf.querySelector("span,img").outerHTML = "<span>…</span>");
+      const { blob, ext, tipo } = await achicar(f, 1000);
+      const ruta = `productos/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const { error } = await db.storage.from("fotos").upload(ruta, blob, { contentType: tipo, cacheControl: "31536000" });
+      if (error) toast("No se pudo subir la foto: " + error.message, true);
+      else d.dataset.img = db.storage.from("fotos").getPublicUrl(ruta).data.publicUrl;
+      e.target.value = ""; pintarVF();
+    };
+    pintarVF();
     d.querySelector(".q").onclick = () => d.remove();
     $("#ed-vars").appendChild(d);
   }
@@ -836,11 +860,14 @@
 
   // Fotos
   function pintarFotos() {
+    const NOMBRES = ["Foto principal", "Foto 2", "Foto 3"];
+    const vacios = Math.max(0, 3 - fotos.length);
     $("#ed-fotos").innerHTML = fotos.map((u, i) => `<div class="ft ${i === 0 ? "principal" : ""}">
         <img src="${esc(u)}" alt=""><button type="button" class="q" data-q="${i}" aria-label="Quitar foto">✕</button>
-        ${i > 0 ? `<button type="button" class="p" data-p="${i}">★ Principal</button>` : ""}</div>`).join("")
-      + `<label class="subir"><input type="file" accept="image/*" multiple id="ed-file">📷<br>Agregar fotos</label>`;
-    $("#ed-file").onchange = e => subir([...e.target.files]);
+        ${i > 0 ? `<button type="button" class="p" data-p="${i}">★ Principal</button>` : `<span class="ft-tag">Principal</span>`}</div>`).join("")
+      + Array.from({ length: vacios }, (_, k) => `<label class="subir"><input type="file" accept="image/*" multiple class="ed-file">📷<br>${NOMBRES[fotos.length + k]}</label>`).join("")
+      + (vacios ? "" : `<label class="subir subir-mas"><input type="file" accept="image/*" multiple class="ed-file">＋<br>Más fotos</label>`);
+    document.querySelectorAll("#ed-fotos .ed-file").forEach(inp => inp.onchange = e => subir([...e.target.files], e.target.closest("label")));
   }
   $("#ed-fotos").onclick = e => {
     const b = e.target.closest("button"); if (!b) return;
@@ -858,9 +885,9 @@
       return blob && blob.type === "image/webp" ? { blob, ext: "webp", tipo: "image/webp" } : { blob: file, ext: (file.name.split(".").pop() || "jpg").toLowerCase(), tipo: file.type };
     } catch { return { blob: file, ext: (file.name.split(".").pop() || "jpg").toLowerCase(), tipo: file.type }; }
   }
-  async function subir(files) {
+  async function subir(files, lbl) {
     if (!files.length) return;
-    const lbl = document.querySelector(".subir"); lbl.innerHTML = "Subiendo…";
+    lbl = lbl || document.querySelector("#ed-fotos .subir"); if (lbl) lbl.innerHTML = "Subiendo…";
     for (const f of files) {
       const { blob, ext, tipo } = await achicar(f);
       const ruta = `productos/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
@@ -878,7 +905,7 @@
     if (!F.reportValidity()) return;
     const conVar = $("#ed-conmodelos").checked;
     const variantes = conVar ? [...document.querySelectorAll("#ed-vars .var")].map(d => {
-      const [n, s] = d.querySelectorAll("input"); return { nombre: n.value.trim(), stock: Math.max(0, parseInt(s.value) || 0) };
+      const [, n, s] = d.querySelectorAll("input"); return { nombre: n.value.trim(), stock: Math.max(0, parseInt(s.value) || 0), ...(d.dataset.img ? { imagen: d.dataset.img } : {}) };
     }).filter(v => v.nombre) : [];
     if (conVar && !variantes.length) return toast("Agrega al menos un modelo con nombre", true);
     const datos = {
