@@ -734,3 +734,8 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
 .marca-item .circ-letra{font-size:clamp(1.3rem,2.6vw,1.8rem)}
 @media (max-width:820px){.pers-fila .marcas-fila{justify-content:flex-start!important}.marca-item .circ{width:84px!important}}
 .marca-item .circ .circ-emoji,.marca-item .circ .circ-letra{background:none!important;width:auto!important;height:auto!important;box-shadow:none!important;color:var(--cafe)}
+/* Títulos Personajes / Categorías */
+.fila-tit{font-family:var(--f-tit);color:var(--cafe);text-align:center;font-weight:600;font-size:clamp(1.4rem,2.6vw,1.9rem);margin:0 auto 18px;padding:0 16px;letter-spacing:.01em}
+.pers-fila .fila-tit{margin-bottom:22px}
+.fila-tit + .cat-pills{padding-top:0!important;margin-top:0!important}
+.pers-fila + .fila-tit{margin-top:18px}

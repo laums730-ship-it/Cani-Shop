@@ -239,8 +239,9 @@
         ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
       </section>` : ""}
 
-      ${pers.length ? `<section class="seccion pers-fila"><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
+      ${pers.length ? `<section class="seccion pers-fila"><h2 class="fila-tit">Personajes</h2><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
 
+      <h2 class="fila-tit">Categorías</h2>
       <section class="seccion cat-pills">${categs.map(c => `<a class="pill" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</section>
 
       ${cinta()}
