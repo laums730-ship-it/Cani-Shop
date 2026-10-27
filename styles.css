@@ -712,3 +712,10 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
 .hero .car-puntos button.on{background:var(--amarillo)!important}
 .valor svg path:first-child{stroke:var(--cafe)!important;fill:var(--amarillo)!important}
 .t-per{color:#a07ac0!important}
+/* Banner: completo en celular (sin recortar). Si hay versión celular 1080×1080, se usa esa */
+.hero picture{display:block}
+@media (max-width:820px){
+  .hero .slide img{aspect-ratio:8/3!important;object-fit:cover}
+  .hero.movil-ok .slide img{aspect-ratio:4/3!important}
+  .hero .car-puntos{bottom:8px}
+}

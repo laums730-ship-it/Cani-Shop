@@ -118,8 +118,12 @@
     .mini .ft{width:76px;flex:none}
     .mini .ft img{object-fit:contain}
     .banners{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
-    .ban{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;background:var(--rosa-claro);border-radius:14px;padding:8px}
-    .ban img{width:150px;aspect-ratio:8/3;object-fit:cover;border-radius:10px;background:#fff}
+    .ban-imgs{display:flex;gap:6px;align-items:center;position:relative}
+    .ban-movil{width:56px;height:56px;border-radius:10px;border:2px dashed var(--rosa-fuerte);display:grid;place-items:center;text-align:center;font-size:.55rem;font-weight:800;line-height:1.15;cursor:pointer;background:#fff;overflow:hidden;flex:none}
+    .ban-movil img{width:100%!important;height:100%;aspect-ratio:1!important;object-fit:cover;border-radius:0!important}
+    .ban-qmovil{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;border:0;background:#d94452;color:#fff;font-size:.6rem}
+    .ban{display:grid;grid-template-columns:216px 1fr auto;gap:10px;align-items:center;background:var(--rosa-claro);border-radius:14px;padding:8px}
+    .ban .ban-pc{width:150px;aspect-ratio:8/3;object-fit:cover;border-radius:10px;background:#fff}
     .ban input{border:2px solid var(--borde);border-radius:10px;padding:9px 11px;background:#fff;width:100%;min-width:0}
     .ban .bt{display:flex;gap:4px}
     .ban .bt button{width:34px;height:34px;border-radius:10px;border:0;background:#fff;font-weight:800}
@@ -174,7 +178,8 @@
       .catf .mini-check{grid-column:1/3;justify-self:start}
       .catf .bt{grid-column:1/-1;justify-content:flex-end;margin-top:-42px}
       .catf .mini-check{grid-column:1/-1}
-      .ban img{width:100%;grid-column:1/-1}
+      .ban-imgs{grid-column:1/-1}
+      .ban .ban-pc{flex:1;width:auto}
     }
 
     .lote-lista{display:flex;flex-direction:column;gap:8px}
@@ -455,7 +460,7 @@
 
     <section class="caja">
       <h2>🖼️ Banners del inicio</h2>
-      <p class="ayuda">Fotos grandes arriba de tu tienda que se pasan solas. Tamaño ideal: <b>1600 × 600</b> (horizontal). Puedes ponerle un link a cada una, por ejemplo a una categoría.</p>
+      <p class="ayuda">Fotos grandes arriba de tu tienda que se pasan solas. Tamaño ideal: <b>1600 × 600</b> (horizontal, para compu). Opcional: toca <b>📱 Celular</b> para subir una versión de <b>1200 × 900</b> que se ve en el teléfono. Puedes ponerle un link a cada una, por ejemplo a una categoría.</p>
       <div class="banners" id="aj-banners"></div>
       <label class="subir subir-ancho"><input type="file" accept="image/*" multiple id="aj-file-ban">📷 Agregar banner</label>
     </section>
@@ -1153,7 +1158,9 @@
 
   function pintarBanners() {
     $("#aj-banners").innerHTML = banners.length ? banners.map((b, i) => `<div class="ban">
-        <img src="${esc(b.imagen)}" alt="">
+        <div class="ban-imgs"><img class="ban-pc" src="${esc(b.imagen)}" alt="" title="Compu (1600×600)">
+          <label class="ban-movil" title="Versión para celular (1200×900)">${b.imagenMovil ? `<img src="${esc(b.imagenMovil)}" alt="">` : `<span>📱<br>Celular<br>1200×900</span>`}<input type="file" accept="image/*" hidden data-banmovil="${i}"></label>
+          ${b.imagenMovil ? `<button type="button" class="ban-qmovil" data-qmovil="${i}" title="Quitar versión celular">✕</button>` : ""}</div>
         <input data-enlace="${i}" value="${esc(b.enlace || "")}" placeholder="Link (opcional)">
         <div class="bt">
           <button type="button" data-sube="${i}" aria-label="Subir" ${i ? "" : "disabled"}>↑</button>
@@ -1162,12 +1169,18 @@
         </div></div>`).join("") : `<p class="ayuda" style="margin:0">Todavía no tienes banners.</p>`;
   }
   $("#aj-banners").addEventListener("input", e => { const i = e.target.dataset.enlace; if (i !== undefined) banners[i].enlace = e.target.value.trim(); });
+  $("#aj-banners").addEventListener("change", async e => {
+    const i = e.target.dataset.banmovil; if (i === undefined || !e.target.files[0]) return;
+    toast("Subiendo versión celular…"); const u = await subirArchivo(e.target.files[0], "banners", 1200);
+    if (u) { banners[i].imagenMovil = u; pintarBanners(); toast("Listo, ahora toca Guardar cambios"); }
+  });
   $("#aj-banners").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
     const mover = (i, j) => { [banners[i], banners[j]] = [banners[j], banners[i]]; };
     if (b.dataset.sube) mover(+b.dataset.sube, +b.dataset.sube - 1);
     if (b.dataset.baja) mover(+b.dataset.baja, +b.dataset.baja + 1);
     if (b.dataset.borra) banners.splice(+b.dataset.borra, 1);
+    if (b.dataset.qmovil) delete banners[+b.dataset.qmovil].imagenMovil;
     pintarBanners();
   });
   A.addEventListener("click", e => { const k = e.target.dataset.quitarMini; if (k) { imgs[k] = ""; pintarMinis(); } });
@@ -1190,7 +1203,7 @@
       whatsapp: wa || (window.TIENDA || {}).whatsapp || "",
       instagram: red(A.instagram.value, "https://instagram.com/"),
       tiktok: red(A.tiktok.value, "https://www.tiktok.com/@"),
-      banners: banners.map(b => ({ imagen: b.imagen, enlace: (b.enlace || "").trim() })),
+      banners: banners.map(b => ({ imagen: b.imagen, enlace: (b.enlace || "").trim(), ...(b.imagenMovil ? { imagenMovil: b.imagenMovil } : {}) })),
       gatoIzq: imgs.gatoIzq, gatoDer: imgs.gatoDer,
       scoops: {
         activo: A.sc_activo.checked, titulo: A.sc_titulo.value.trim(), intro: A.sc_intro.value.trim(), nota: A.sc_nota.value.trim(),
