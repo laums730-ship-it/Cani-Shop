@@ -825,3 +825,28 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
   .orden-barra select{padding:6px 10px!important;font-size:.8rem;max-width:118px}
 }
 @media (max-width:820px){.seccion:has(> .cat-titulo){padding-top:18px!important}}
+
+/* =====================================================
+   Buscador: barra tipo píldora bordeada + cerrar en círculo
+   ===================================================== */
+.buscar-caja{border-radius:0 0 28px 28px;padding:18px clamp(16px,4vw,48px) 22px!important}
+.buscar-caja .buscador{border:0!important;padding:0!important;gap:10px!important;max-width:760px}
+.buscar-caja .buscador > svg{display:none}
+.buscar-caja input,.buscar-caja input[type=search]{flex:1;min-width:0;height:48px;border:1.5px solid var(--cafe)!important;border-radius:999px!important;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23783746' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 16px center/19px!important;padding:0 18px 0 44px!important;font-family:var(--f-txt);font-size:16px!important;color:var(--cafe);outline:none!important;box-shadow:none!important;-webkit-appearance:none;appearance:none}
+.buscar-caja input:focus{border-color:var(--rosa-fuerte)!important;box-shadow:0 0 0 3px var(--rosa)!important}
+.buscar-caja input::placeholder{color:#b08a93}
+.buscar-caja input::-webkit-search-cancel-button{-webkit-appearance:none}
+#buscar-cerrar{flex:none;width:44px;height:44px;border:1.5px solid var(--cafe)!important;border-radius:50%;background:#fff;font-size:1rem;color:var(--cafe)}
+#buscar-cerrar:hover{background:var(--rosa)}
+.buscar-pop{margin-top:16px!important}
+.pop-tit{font-size:.68rem!important;margin-bottom:8px!important}
+.pop-chips .pill{padding:7px 15px!important;font-size:.88rem!important;border-width:1.5px!important}
+@media (max-width:820px){
+  .buscar-caja{padding:14px 14px 18px!important;border-radius:0 0 22px 22px}
+  .buscar-caja input{height:44px}
+  #buscar-cerrar{width:42px;height:42px}
+  .pop-chips{gap:7px!important}
+  .pop-chips .pill{padding:6px 13px!important;font-size:.85rem!important}
+  .pop-res{grid-template-columns:1fr!important;gap:4px!important}
+  .pop-res img{width:48px;height:48px}
+}
