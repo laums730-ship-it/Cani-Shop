@@ -242,7 +242,7 @@
       ${pers.length ? `<section class="seccion pers-fila"><h2 class="fila-tit">Personajes</h2><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
 
       <h2 class="fila-tit">Categorías</h2>
-      <section class="seccion cat-mosaico">${categs.map((c, i) => { const f = c.imagen || ((PRODS.find(p => (p.categorias || []).includes(c.id) && (p.imagenes || []).length) || {}).imagenes || [])[0];
+      <section class="seccion cat-mosaico ${categs.length <= 6 || categs.length === 9 ? "c3" : "c4"}">${categs.map((c, i) => { const f = c.imagen || ((PRODS.find(p => (p.categorias || []).includes(c.id) && (p.imagenes || []).length) || {}).imagenes || [])[0];
         const n = categs.length, resto = n % 3, final = i >= n - resto;
         return `<a class="cat-tile ${i % 3 === 2 ? "grande" : ""} ${final && resto === 1 ? "grande sola" : ""} ${final && resto === 2 ? "par-final" : ""} ${n % 2 && i === n - 1 ? "impar-final" : ""}" href="#/catalogo/${c.id}">${f ? `<img loading="lazy" src="${esc(f)}" alt="">` : `<span class="cat-tile-ini">${esc(inicial(c.nombre))}</span>`}<span class="cat-tile-nom">${esc(c.nombre)}</span></a>`; }).join("")}</section>
 

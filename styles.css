@@ -850,3 +850,14 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
   .pop-res{grid-template-columns:1fr!important;gap:4px!important}
   .pop-res img{width:48px;height:48px}
 }
+/* Personajes: nombre siempre visible */
+.marca-item.con-foto .marca-nom{position:static!important;width:auto!important;height:auto!important;overflow:visible!important;clip:auto!important}
+.marca-item .marca-nom{display:block;margin-top:8px;font-family:var(--f-txt);font-size:.88rem;font-weight:700;color:var(--cafe);text-align:center;white-space:nowrap}
+/* Computadora: cuadros de categorías todos iguales y centrados */
+@media (min-width:821px){
+  .cat-mosaico{display:flex!important;flex-wrap:wrap;justify-content:center;gap:20px!important;grid-auto-rows:auto}
+  .cat-mosaico .cat-tile,.cat-mosaico .cat-tile.grande,.cat-mosaico .cat-tile.sola,.cat-mosaico .cat-tile.par-final{grid-column:auto!important;flex:0 0 calc((100% - 40px)/3);aspect-ratio:4/3!important}
+  .cat-mosaico.c4 .cat-tile{flex-basis:calc((100% - 60px)/4)!important}
+  .cat-mosaico .cat-tile .cat-tile-nom{left:16px!important;bottom:16px!important;font-size:1rem!important;padding:8px 16px!important}
+}
+.marca-item:not(.con-foto) .marca-nom{font-size:.88rem;margin-top:8px}
