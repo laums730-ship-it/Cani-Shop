@@ -35,7 +35,7 @@
 
   // 1) Archivos de la página
   const idx = await txt("index.html"), app = await txt("app.js"), adm = await txt("admin.html");
-  idx && /app\.js\?v=20261026d/.test(idx) ? ok("index.html actualizado") : mal("index.html es una versión vieja", "Sube el index.html del último zip a GitHub.");
+  idx && /app\.js\?v=20261026e/.test(idx) ? ok("index.html actualizado") : mal("index.html es una versión vieja", "Sube el index.html del último zip a GitHub.");
   app && app.includes("function scoops()") && app.includes('cat.after(m)') ? ok("app.js actualizado (con Scoops)") : mal("app.js es una versión vieja", "Sube el app.js del último zip a GitHub.");
   adm && adm.includes("sc_activo") ? ok("admin.html actualizado (con Scoops en Mi tienda)") : mal("admin.html es una versión vieja", "Sube el admin.html del último zip a GitHub.");
   try { const r = await fetch("img/scoop-1.webp" + nc, { cache: "no-store" }); r.ok ? ok("Carpeta img con los dibujos de scoops") : mal("Falta la carpeta img", "En GitHub sube también la carpeta img (arrástrala completa)."); } catch { mal("Falta la carpeta img", "Sube la carpeta img a GitHub."); }

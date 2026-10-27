@@ -10,6 +10,7 @@
   const disp = x => x === true || (typeof x === "number" && x > 0);
   const tieneVar = p => Array.isArray(p.variantes) && p.variantes.length > 0;
   const hayStock = p => tieneVar(p) ? p.variantes.some(v => disp(v.stock)) : (p.stock === undefined || disp(p.stock));
+  const sinEmoji = t => String(t ?? "").replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu, "").replace(/[ \t]{2,}/g, " ").replace(/^[ \t]+|[ \t]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
   const foto = p => (p.imagenes && p.imagenes[0]) || T.logo;
   const maxDe = (p, vari) => { const s = tieneVar(p) ? (p.variantes.find(v => v.nombre === vari) || {}).stock : p.stock; return typeof s === "number" ? s : 99; };
 
@@ -35,7 +36,7 @@
     } catch (e) { console.warn("No se pudieron cargar los ajustes", e); }
   }
 
-  app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii… 🐾</p>`;
+  app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii…</p>`;
   await Promise.all([cargarAjustes(), cargarProductos()]);
   if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
   const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji">${esc(c.emoji || (c.nombre || "?")[0])}</span>`;
@@ -99,7 +100,7 @@
   const agregar = (id, variante, cant) => {
     const ex = carrito.find(i => i.id === id && i.variante === variante);
     ex ? ex.cant += cant : carrito.push({ id, variante, cant });
-    guardar(); toast("Agregado al carrito 🐾");
+    guardar(); toast("Agregado al carrito");
   };
   function pintarCarrito() {
     const n = carrito.reduce((a, i) => a + i.cant, 0);
@@ -109,7 +110,7 @@
       <div class="item">
         <img src="${foto(i.p)}" alt="">
         <div>
-          <h4>${esc(i.p.nombre)}</h4>
+          <h4>${esc(sinEmoji(i.p.nombre))}</h4>
           ${i.variante ? `<small>${esc(i.variante)}</small><br>` : ""}
           <small>${bs(i.p.precio)}</small>
           <div class="cantidad"><button data-menos="${i.k}">−</button><span>${i.cant}</span><button data-mas="${i.k}">+</button></div>
@@ -180,7 +181,7 @@
     <a class="tarjeta ${img2 ? "doble" : ""}" href="#/producto/${p.id}">
       <div class="foto"><img class="f1" loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" src="${esc(img2)}" alt="">` : ""}
         ${!hayStock(p) ? `<span class="etiqueta agotado">Agotado</span>` : p.nuevo ? `<span class="etiqueta">Nuevo</span>` : ""}</div>
-      <div class="info">${per ? `<span class="t-per">${esc(per.nombre)}</span>` : ""}<h3>${esc(p.nombre)}</h3><div class="precio">${bs(p.precio)}</div>
+      <div class="info">${per ? `<span class="t-per">${esc(per.nombre)}</span>` : ""}<h3>${esc(sinEmoji(p.nombre))}</h3><div class="precio">${bs(p.precio)}</div>
         <span class="ver-mas">${hayStock(p) ? "Ver opciones →" : "Ver detalles →"}</span></div>
     </a>`; };
   const grilla = lista => lista.length ? `<div class="grilla">${lista.map(tarjeta).join("")}</div>` : `<p class="vacio">No encontramos productos 😿</p>`;
@@ -220,7 +221,7 @@
       </section>
 
       <div class="fondo-gris">
-        <section class="seccion"><h2>¿Cómo comprar? 🐾</h2>
+        <section class="seccion"><h2>¿Cómo comprar?</h2>
           <div class="pasos">
             <div class="paso"><div class="num">1</div><h3>Elige tus cositas</h3><p>Agrega al carrito los productos y modelos que más te gusten.</p></div>
             <div class="paso"><div class="num">2</div><h3>Envía tu pedido</h3><p>Con un toque nos llega tu pedido completo por WhatsApp.</p></div>
@@ -284,7 +285,7 @@
     const pintar = () => {
       const dispo = tieneVar(p) ? !!vari : hayStock(p);
       const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
-      const pocos = dispo && max <= 3 ? `<p class="pocos">¡Solo ${max === 1 ? "queda 1" : `quedan ${max}`}! 🏃‍♀️</p>` : "";
+      const pocos = dispo && max <= 3 ? `<p class="pocos">¡Solo ${max === 1 ? "queda 1" : `quedan ${max}`}!</p>` : "";
       app.innerHTML = `<section class="seccion">
         <a class="volver" href="#/catalogo">← Volver al catálogo</a>
         <div class="producto">
@@ -293,9 +294,9 @@
             ${imgs.length > 1 ? `<div class="miniaturas">${imgs.map((s, k) => `<button class="${k === img ? "activo" : ""}" data-img="${k}"><img src="${s}" alt=""></button>`).join("")}</div>` : ""}
           </div>
           <div>
-            <h1>${esc(p.nombre)}</h1>
+            <h1>${esc(sinEmoji(p.nombre))}</h1>
             <div class="precio">${bs(p.precio)}</div>
-            <p>${esc(p.descripcion || "")}</p>
+            <p class="desc">${esc(sinEmoji(p.descripcion)).replace(/\n/g, "<br>")}</p>
             ${tieneVar(p) ? `<div class="etiq">Modelo</div><div class="opciones">${p.variantes.map(v => `<button class="opcion ${v.nombre === vari ? "activo" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${esc(v.nombre)}</button>`).join("")}</div>` : ""}
             <div class="etiq">Cantidad</div>
             <div class="cantidad"><button data-c="-1">−</button><span>${cant}</span><button data-c="1">+</button></div><br>
@@ -319,7 +320,7 @@
   // Mostrar "Arma tu Scoop" en el menú (si el index.html viejo no tiene el enlace, lo agrega)
   if (SC) {
     let m = $("#menu-scoops");
-    if (!m) { m = document.createElement("a"); m.id = "menu-scoops"; m.href = "#/scoops"; m.textContent = "🍬 Arma tu Scoop"; const cat = document.querySelector('.menu a[href="#/catalogo"]'); cat ? cat.after(m) : $("#menu").appendChild(m); }
+    if (!m) { m = document.createElement("a"); m.id = "menu-scoops"; m.href = "#/scoops"; m.textContent = "Arma tu Scoop"; const cat = document.querySelector('.menu a[href="#/catalogo"]'); cat ? cat.after(m) : $("#menu").appendChild(m); }
     m.hidden = false;
   }
   // ---------- Personajes / categorías ----------
@@ -372,10 +373,10 @@
     const d = document.createElement("div"); d.className = "menu-drop";
     d.innerHTML = `<button type="button" class="menu-tienda" aria-expanded="false">Tienda <span>▾</span></button>
       <div class="mega">
-        ${pers.length ? `<div class="mega-col"><h4>✨ Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}"><i>${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : esc(c.emoji || "🎀")}</i>${esc(c.nombre)}</a>`).join("")}</div>` : ""}
-        <div class="mega-col"><h4>🎀 Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}"><i>${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : esc(c.emoji || "🏷️")}</i>${esc(c.nombre)}</a>`).join("")}
+        ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}</div>` : ""}
+        <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}
           <a href="#/catalogo" class="mega-todo">Ver todo →</a></div>
-        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : "<b>🍬</b>"}<span>Arma tu Scoop</span></a>` : ""}
+        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span></a>` : ""}
       </div>`;
     cat.replaceWith(d);
     const b = d.querySelector(".menu-tienda");
