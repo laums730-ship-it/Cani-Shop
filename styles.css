@@ -888,3 +888,20 @@ html,body{overflow-x:hidden}
 .opcion.con-foto{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 5px!important}
 .opcion.con-foto img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--rosa);flex:none}
 .opcion:disabled img{opacity:.5}
+/* Arreglo celular: nada se sale de la pantalla (galería con muchas fotos y formulario de scoops) */
+.producto{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.producto > *,.galeria{min-width:0}
+.miniaturas{overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.miniaturas::-webkit-scrollbar{display:none}
+.miniaturas button{flex:none}
+.sc-paso{grid-template-columns:46px minmax(0,1fr)}
+.sc-paso > *,.sc-datos > *,.sc-form > *{min-width:0}
+.sc-datos{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+input,select,textarea{max-width:100%;min-width:0}
+@media (max-width:820px){
+  .producto{grid-template-columns:minmax(0,1fr)}
+  .sc-paso{grid-template-columns:minmax(0,1fr)}
+  .sc-datos{grid-template-columns:minmax(0,1fr)}
+  .miniaturas button{width:64px;height:64px}
+}
+@media (max-width:820px){input,select,textarea{font-size:16px!important}}
