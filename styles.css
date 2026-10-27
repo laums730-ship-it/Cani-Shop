@@ -683,3 +683,32 @@ a:hover{color:var(--cafe)}
 body{font-family:var(--f-txt)}
 button,input,select,textarea{font-family:inherit}
 h1,h2,h3,h4,.btn,.sc-op-in b,.sc-caja-in b,.precio,.mega-col h4{font-family:var(--f-tit)}
+
+/* =====================================================
+   Paleta actualizada: + amarillo #FFF275 para detalles
+   Nada de azul: botones y campos siempre en café (Safari los pinta azules)
+   ===================================================== */
+:root{--amarillo:#fff275}
+button,input,select,textarea,.sc-chip,.chip,.chip-sel,.opcion,.quiz-ops button,.cantidad button,.aviso-flecha,.icono,.menu-tienda,.pill{color:var(--cafe)}
+button{-webkit-appearance:none;appearance:none}
+input,select,textarea{-webkit-text-fill-color:currentColor}
+input::placeholder,textarea::placeholder{color:#b08a94;-webkit-text-fill-color:#b08a94;opacity:1}
+a{color:inherit}
+input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
+.sc-chip{color:var(--cafe)!important}
+.sc-chip.on{color:var(--cafe)!important}
+.sc-chip.on::after{color:var(--cafe)}
+/* Franja superior café con letras blancas */
+.aviso{background:var(--cafe)!important}
+.aviso-texto,.aviso-flecha{color:#fff!important;text-shadow:none!important}
+/* Detalles amarillos */
+.op-estrellas svg{fill:var(--amarillo)!important;stroke:#e9c94a;stroke-width:1}
+.sc-tag{background:var(--amarillo)!important}
+.cinta-osc i{color:var(--amarillo)!important}
+.cinta i{color:var(--lila)!important}
+.etiqueta:not(.agotado){background:var(--amarillo)!important;color:var(--cafe)!important}
+.sc-num{box-shadow:0 0 0 4px #fff,0 0 0 6px var(--amarillo)!important}
+.quiz-prog i.on{background:var(--amarillo)!important;box-shadow:inset 0 0 0 1px #e9c94a}
+.hero .car-puntos button.on{background:var(--amarillo)!important}
+.valor svg path:first-child{stroke:var(--cafe)!important;fill:var(--amarillo)!important}
+.t-per{color:#a07ac0!important}
