@@ -378,7 +378,7 @@
 
   // ---------- Tipografía ----------
   const FUENTES = {
-    clasica:  { t: "'Fredoka'", x: "'Nunito'", url: "family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800" },
+    clasica:  { t: "'Fredoka'", x: "'Comfortaa'", url: "family=Fredoka:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700" },
     burbuja:  { t: "'Baloo 2'", x: "'Quicksand'", url: "family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700" },
     japonesa: { t: "'Mochiy Pop One'", x: "'M PLUS Rounded 1c'", url: "family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;500;700;800" },
     dulce:    { t: "'DynaPuff'", x: "'Nunito'", url: "family=DynaPuff:wght@400;500;600;700&family=Nunito:wght@400;600;700;800" },

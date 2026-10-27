@@ -1,5 +1,5 @@
 :root{
-  --f-tit:Fredoka,Nunito,sans-serif; --f-txt:Nunito,system-ui,sans-serif;
+  --f-tit:Fredoka,sans-serif; --f-txt:Comfortaa,system-ui,sans-serif;
   --rosa-fuerte:#fd95c8;   /* barra de avisos */
   --rosa:#f9dbe4;          /* cabecera y franjas */
   --rosa-claro:#fdeef2;    /* fondos suaves */
@@ -678,3 +678,8 @@ a:hover{color:var(--cafe)}
 .pocos{color:#a0527a!important}
 .opcion.activo{border-color:var(--rosa-fuerte)!important;background:var(--rosa)!important;color:var(--cafe)!important}
 .miniaturas button.activo{border-color:var(--rosa-fuerte)!important}
+
+/* Tipografía Cani Shop: Fredoka (títulos) + Comfortaa (textos) */
+body{font-family:var(--f-txt)}
+button,input,select,textarea{font-family:inherit}
+h1,h2,h3,h4,.btn,.sc-op-in b,.sc-caja-in b,.precio,.mega-col h4{font-family:var(--f-tit)}
