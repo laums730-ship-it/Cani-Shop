@@ -321,6 +321,7 @@
         <select id="orden"><option value="destacados">Destacados</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option><option value="az">Nombre: A-Z</option></select></div>
       <div id="grilla-cat">${grilla(lista)}</div></section>`;
     $("#orden").value = ORDEN;
+    document.querySelectorAll(".filtros .chip.activo").forEach(ch => { const f = ch.parentElement; f.scrollLeft = ch.offsetLeft - f.offsetLeft - 16; });
     const repintar = () => { const l = ordenar(); $("#grilla-cat").innerHTML = grilla(l); $("#cuenta").textContent = `${l.length} productos`; };
     $("#orden").onchange = e => { ORDEN = e.target.value; repintar(); };
     $("#solo-stock").onchange = e => { SOLO_STOCK = e.target.checked; repintar(); };

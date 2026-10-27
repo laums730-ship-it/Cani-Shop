@@ -811,3 +811,17 @@ input[type=checkbox],input[type=radio]{accent-color:var(--rosa-fuerte)}
   .cabecera .menu-drop{width:100%}
 }
 @media (min-width:821px){.cabecera #btn-buscar{margin-right:calc(8px - clamp(10px,1.6vw,22px))}}
+/* Catálogo en celular: filtros en una fila deslizable, productos primero */
+@media (max-width:820px){
+  .cat-titulo{font-size:1.6rem!important;margin:4px 0 12px!important}
+  .filtros{flex-wrap:nowrap!important;overflow-x:auto;gap:8px!important;margin:0 -16px 8px!important;padding:2px 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .filtros::-webkit-scrollbar{display:none}
+  .filtros+.filtros{margin-bottom:10px!important}
+  .filtros .chip{flex:none;padding:6px 14px!important;font-size:.85rem;border-width:1.5px!important;white-space:nowrap}
+  .filtro-tit{flex:none;font-size:.62rem!important;margin:0 2px 0 4px!important;letter-spacing:.1em}
+  .orden-barra{flex-wrap:nowrap!important;gap:8px!important;padding:8px 0!important;margin:4px 0 14px!important;font-size:.8rem}
+  .orden-barra .solo-stock{white-space:nowrap;display:flex;align-items:center;gap:5px}
+  .orden-barra .solo-stock input{width:16px;height:16px;margin:0}
+  .orden-barra select{padding:6px 10px!important;font-size:.8rem;max-width:118px}
+}
+@media (max-width:820px){.seccion:has(> .cat-titulo){padding-top:18px!important}}
