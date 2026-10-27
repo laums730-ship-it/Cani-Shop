@@ -534,21 +534,21 @@
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">2</div><div class="sc-cont">
-          <h2>🎨 Colores de preferencia <small>(elige mínimo ${minC})</small></h2>
-          <div class="sc-chips" data-grupo="colores">${(SC.colores || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}"><i style="background:${hexDe(c)}"></i>${esc(c)}</button>`).join("")}</div>
-        </div></section>
-
-        <section class="sc-paso"><div class="sc-num">3</div><div class="sc-cont">
-          <h2>✨ Personajes de preferencia <small>(elige mínimo ${minP})</small></h2>
-          <div class="sc-chips" data-grupo="personajes">${(SC.personajes || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-        </div></section>
-
-        <section class="sc-paso"><div class="sc-num">4</div><div class="sc-cont">
           <h2>Escoge tu caja</h2>
           <div class="sc-cajas">${CAJAS.map((c, i) => `<label class="sc-caja">
             <input type="radio" name="caja" value="${i}" ${i === 0 ? "checked" : ""}>
             <span class="sc-caja-in">${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="sc-caja-ph"><svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/></svg></span>`}
               <b>${esc(c.nombre)}</b><em>${+c.precio > 0 ? `+${bs(+c.precio)}` : "Sin costo adicional"}</em>${c.detalle && +c.precio > 0 ? `<small>${esc(c.detalle)}</small>` : ""}</span></label>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">3</div><div class="sc-cont">
+          <h2>🎨 Colores de preferencia <small>(elige mínimo ${minC})</small></h2>
+          <div class="sc-chips" data-grupo="colores">${(SC.colores || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}"><i style="background:${hexDe(c)}"></i>${esc(c)}</button>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">4</div><div class="sc-cont">
+          <h2>✨ Personajes de preferencia <small>(elige mínimo ${minP})</small></h2>
+          <div class="sc-chips" data-grupo="personajes">${(SC.personajes || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">5</div><div class="sc-cont">

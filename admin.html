@@ -420,6 +420,11 @@
         <div id="aj-scops" class="cats-ed"></div>
         <button type="button" class="btn btn-sec btn-sm" id="aj-addscop" style="margin-top:10px;align-self:flex-start">＋ Agregar opción</button>
       </div>
+      <div class="campo"><label>🎁 Cajas</label>
+        <p class="ayuda" style="margin:0 0 6px">La primera es la que viene elegida. Toca el cuadrito para subir la foto de cada caja.</p>
+        <div id="aj-cajas" class="cats-ed"></div>
+        <button type="button" class="btn btn-sec btn-sm" id="aj-addcaja" style="margin-top:10px;align-self:flex-start">＋ Agregar caja</button>
+      </div>
       <div class="fila">
         <div class="campo"><label>🎨 Colores (uno por línea)</label><textarea name="sc_colores" rows="6"></textarea>
           <label style="font-weight:700;font-size:.85rem">Mínimo a elegir <input name="sc_minColores" type="number" min="0" max="10" style="width:70px;display:inline-block;padding:5px 8px"></label></div>
@@ -919,6 +924,15 @@
   const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos", "valores"];
   const tipoC = c => c.tipo || (c.marca ? "personaje" : "categoria");
   const TEXTOS = ["pieTexto", "franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
+  let cajasSc = [];
+  function pintarCajas() {
+    $("#aj-cajas").innerHTML = cajasSc.map((c, i) => `<div class="scopf">
+        <label class="cat-img" title="Subir foto" style="border-radius:16px">${c.imagen ? `<img src="${esc(c.imagen)}" alt="" style="object-fit:contain">` : `<span>🎁</span>`}<input type="file" accept="image/*" hidden data-cjimg="${i}"></label>
+        <div class="scopf-campos"><div class="scopf-fila"><input data-cj="${i}" data-f="nombre" value="${esc(c.nombre)}" placeholder="Nombre (ej: Caja especial)">
+          <input data-cj="${i}" data-f="precio" type="number" min="0" step="0.5" value="${esc(c.precio)}" placeholder="Bs"></div>
+          <input data-cj="${i}" data-f="detalle" value="${esc(c.detalle || "")}" placeholder="Detalle (opcional)"></div>
+        <div class="bt"><button type="button" class="q" data-cjborra="${i}" aria-label="Quitar">✕</button></div></div>`).join("");
+  }
   let categorias = [], scops = [], fuenteSel = "clasica", cursorSel = "", dests = [];
   function pintarDest() {
     const ops = [["__nuevos", "Novedades"], ...categorias.filter(c => c.nombre).map(c => [c.id || "", c.nombre])];
@@ -981,6 +995,7 @@
       ],
       colores: ["Rosa", "Lila", "Celeste", "Verde", "Amarillo", "Blanco", "Naranja", "Rojo"],
       personajes: ["My Melody", "Pochacco", "Kuromi", "Cinnamoroll", "Pompompurin", "Snoopy", "Hello Kitty", "Gatitos", "BTS", "Stitch"],
+      cajas: [{ nombre: "Caja blanca", precio: 0, detalle: "Sin costo adicional", imagen: "" }, { nombre: "Caja especial", precio: 5, detalle: "", imagen: "" }],
       qr: "", nota: "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad. 💖"
     },
     whatsapp: "59177885309", instagram: "https://instagram.com/canishopbo", tiktok: "https://www.tiktok.com/@canishopbo", ubicacion: "Santa Cruz de la Sierra, Bolivia",
@@ -1050,7 +1065,8 @@
     ["titulo", "intro", "nota", "precioVideo", "minColores", "minPersonajes"].forEach(k => A["sc_" + k].value = S0[k] ?? "");
     A.sc_colores.value = (S0.colores || []).join("\n"); A.sc_personajes.value = (S0.personajes || []).join("\n");
     scops = (S0.opciones || []).map(o => ({ ...o }));
-    pintarBanners(); pintarMinis(); pintarCats(); pintarScops();
+    cajasSc = (S0.cajas && S0.cajas.length ? S0.cajas : DEF.scoops.cajas).map(c => ({ ...c }));
+    pintarBanners(); pintarMinis(); pintarCats(); pintarScops(); pintarCajas();
   }
 
   // Categorías
@@ -1106,6 +1122,14 @@
     if (d.scborra && confirm(`¿Quitar "${scops[d.scborra].nombre}"?`)) scops.splice(+d.scborra, 1);
     pintarScops();
   });
+  $("#aj-cajas").addEventListener("input", e => { const { cj, f } = e.target.dataset; if (cj !== undefined) cajasSc[cj][f] = f === "precio" ? (parseFloat(e.target.value) || 0) : e.target.value; });
+  $("#aj-cajas").addEventListener("change", async e => {
+    const i = e.target.dataset.cjimg; if (i === undefined || !e.target.files[0]) return;
+    toast("Subiendo…"); const u = await subirArchivo(e.target.files[0], "scoops", 700);
+    if (u) { cajasSc[i].imagen = u; pintarCajas(); toast("Listo, ahora toca Guardar cambios"); }
+  });
+  $("#aj-cajas").addEventListener("click", e => { const b = e.target.closest("[data-cjborra]"); if (b && confirm(`¿Quitar "${cajasSc[b.dataset.cjborra].nombre}"?`)) { cajasSc.splice(+b.dataset.cjborra, 1); pintarCajas(); } });
+  $("#aj-addcaja").onclick = () => { cajasSc.push({ nombre: "", precio: 0, detalle: "", imagen: "" }); pintarCajas(); };
   $("#aj-addscop").onclick = () => { scops.push({ nombre: "", precio: 0, detalle: "", imagen: "", contenido: "" }); pintarScops(); };
   $("#aj-addcat").onclick = () => {
     categorias.push({ id: "", nombre: "", emoji: "🏷️" }); pintarCats();
@@ -1174,7 +1198,8 @@
         colores: A.sc_colores.value.split("\n").map(x => x.trim()).filter(Boolean),
         personajes: A.sc_personajes.value.split("\n").map(x => x.trim()).filter(Boolean),
         opciones: scops.filter(o => o.nombre.trim() && num(o.precio) > 0).map(o => ({ nombre: o.nombre.trim(), precio: num(o.precio), detalle: (o.detalle || "").trim(), imagen: o.imagen || "", contenido: (o.contenido || "").trim() })),
-        qr: imgs.scQr || ""
+        qr: imgs.scQr || "",
+        cajas: cajasSc.filter(c => (c.nombre || "").trim()).map(c => ({ nombre: c.nombre.trim(), precio: num(c.precio), detalle: (c.detalle || "").trim(), imagen: c.imagen || "" }))
       },
       fuente: fuenteSel, cursor: cursorSel,
       destacadas: dests.filter(d => d.cat).map(d => ({ titulo: (d.titulo || "").trim() || (d.cat === "__nuevos" ? "Novedades" : (categorias.find(c => c.id === d.cat) || {}).nombre || ""), cat: d.cat })),
@@ -1281,6 +1306,7 @@
   // Detalles del scoop (editable) + comprobante
   const SCF = () => AJ.scoops || {};
   const hayScoop = () => ED.items.some(i => i.id === "scoop");
+  const cajasDe = () => { const c = (SCF().cajas || []).filter(c => c.nombre); return c.length ? c : [{ nombre: "Caja blanca", precio: 0 }, { nombre: "Caja especial", precio: 5 }]; };
   function pintarExtra() {
     const x = ED.extra = ED.extra || {}, S = SCF(), ops = (S.opciones || []), pv = num(S.precioVideo || 5);
     const lock = !!ED.stock_descontado;
@@ -1298,6 +1324,7 @@
           <label class="mini-campo">Opción<select id="sc-op" ${lock ? "disabled" : ""}>${[...new Set([it.nombre, ...ops.map(o => o.nombre)])].map(n => `<option ${n === it.nombre ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
           <label class="check" style="align-self:end"><input type="checkbox" id="sc-vid" ${conVideo ? "checked" : ""} ${lock ? "disabled" : ""}> 🎥 Video (+${bs(pv)})</label>
         </div>
+        <label class="mini-campo">Caja<select id="sc-caja" ${lock ? "disabled" : ""}>${cajasDe().map(c => `<option value="${esc(c.nombre)}" ${c.nombre === (x.caja || cajasDe()[0].nombre) ? "selected" : ""}>${esc(c.nombre)}${num(c.precio) ? ` (+${bs(c.precio)})` : " (sin costo)"}</option>`).join("")}</select></label>
         <div><b>🎨 Colores</b><div class="chips-sel">${cols.map(c => chip("colores", c)).join("")}</div></div>
         <div><b>✨ Personajes</b><div class="chips-sel">${pers.map(c => chip("personajes", c)).join("")}</div></div>
         <label class="mini-campo">Usuario de TikTok<input id="sc-tk" value="${esc(x.tiktok || "")}" placeholder="@usuario"></label>
@@ -1319,11 +1346,11 @@
     if (b.id === "sc-add") {
       const o = ops[0];
       ED.items.unshift({ id: "scoop", nombre: o.nombre, variante: null, cant: 1, precio: num(o.precio), desc: 0, desc_nota: "" });
-      ED.extra = { ...(ED.extra || {}), tipo: "scoop", colores: ED.extra?.colores || [], personajes: ED.extra?.personajes || [], video: false };
+      ED.extra = { ...(ED.extra || {}), tipo: "scoop", caja: cajasDe()[0].nombre, colores: ED.extra?.colores || [], personajes: ED.extra?.personajes || [], video: false };
       const cli = CLIS.find(c => c.tel_norm && c.tel_norm === telWa(FP.telefono.value)); if (cli && cli.tiktok && !ED.extra.tiktok) ED.extra.tiktok = cli.tiktok;
       pintarExtra(); pintarItems();
     }
-    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => i.id !== "scoop" && i.id !== "video-scoop"); delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => i.id !== "scoop" && i.id !== "video-scoop" && i.id !== "caja-scoop"); delete ED.extra.caja; delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
     if (b.dataset.g) { const arr = ED.extra[b.dataset.g] = ED.extra[b.dataset.g] || [], v = b.dataset.v, i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0); }
   });
   $("#ped-extra").addEventListener("change", e => {
@@ -1332,6 +1359,12 @@
     if (e.target.id === "sc-op") {
       const o = (S.opciones || []).find(o => o.nombre === e.target.value), it = ED.items.find(i => i.id === "scoop");
       if (o && it) { it.nombre = o.nombre; it.precio = num(o.precio); } pintarItems();
+    }
+    if (e.target.id === "sc-caja") {
+      const c = cajasDe().find(c => c.nombre === e.target.value) || cajasDe()[0];
+      ED.items = ED.items.filter(i => i.id !== "caja-scoop");
+      if (num(c.precio) > 0) { const k = ED.items.findIndex(i => i.id === "scoop"); ED.items.splice(k + 1, 0, { id: "caja-scoop", nombre: c.nombre, variante: null, cant: 1, precio: num(c.precio), desc: 0, desc_nota: "" }); }
+      ED.extra.caja = c.nombre; pintarItems();
     }
     if (e.target.id === "sc-vid") {
       ED.items = ED.items.filter(i => i.id !== "video-scoop");
@@ -1437,7 +1470,7 @@
     }).join("") : `<p class="ayuda" style="margin:0">Sin productos todavía.</p>`;
     totalesPed();
   }
-  const esScoop = i => i.id === "scoop" || i.id === "video-scoop";
+  const esScoop = i => i.id === "scoop" || i.id === "video-scoop" || i.id === "caja-scoop";
   function txtStock(i) {
     if (esScoop(i)) return "🍬 Se arma a pedido";
     const s = stockDe(i);
@@ -1552,7 +1585,7 @@
     const tel = (T2.whatsapp || "").replace(/^591/, "");
     const filas = ED.items.map(i => `<tr>
         <td class="c">${num(i.cant)}</td>
-        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${i.id === "scoop" && (ED.extra || {}).tipo === "scoop" ? `<small>Colores: ${esc((ED.extra.colores || []).join(", "))}<br>Personajes: ${esc((ED.extra.personajes || []).join(", "))}</small>` : ""}${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
+        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${i.id === "scoop" && (ED.extra || {}).tipo === "scoop" ? `<small>${ED.extra.caja ? `Caja: ${esc(ED.extra.caja)}<br>` : ""}Colores: ${esc((ED.extra.colores || []).join(", "))}<br>Personajes: ${esc((ED.extra.personajes || []).join(", "))}</small>` : ""}${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="r">${bs(linea(i))}</td></tr>`).join("");
     const entrega = [v.entrega, v.ciudad, v.direccion].filter(Boolean).map(esc).join("<br>") || "—";
     const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

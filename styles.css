@@ -566,3 +566,21 @@ body{background:#fff}
 }
 .tarjeta .foto img.sin-foto{object-fit:contain!important;padding:22%;opacity:.55}
 @media (max-width:820px){.aviso{height:40px;padding:0 50px}.aviso-texto{font-size:.76rem;line-height:1.2}.gato{height:32px}}
+/* Franja superior: rosa clarito con letras blancas, sin gatitos */
+.gato{display:none!important}
+.aviso{background:#f6a9c4!important;height:38px!important;padding:0 16px!important;gap:clamp(12px,4vw,60px)!important}
+.aviso-texto{color:#fff!important;font-weight:700!important;font-size:.86rem!important;letter-spacing:.08em!important;text-transform:uppercase;text-shadow:0 1px 2px rgba(201,60,111,.25)}
+.aviso-flecha{color:#fff!important;opacity:.9!important}
+/* Escoge tu caja */
+.sc-cajas{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.sc-caja{position:relative;display:block}
+.sc-caja input{position:absolute;opacity:0;pointer-events:none}
+.sc-caja-in{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;border:3px solid var(--borde);border-radius:22px;padding:14px 12px;cursor:pointer;background:var(--fondo);height:100%;transition:all .2s}
+.sc-caja-in img{width:100%;max-width:150px;aspect-ratio:1;object-fit:contain;margin-bottom:6px}
+.sc-caja-ph{width:96px;height:96px;border-radius:20px;background:var(--rosa-claro);display:grid;place-items:center;margin-bottom:6px}
+.sc-caja-ph svg{width:52px;height:52px;fill:none;stroke:var(--rosa-tinta);stroke-width:2.2}
+.sc-caja-in b{font-family:var(--f-tit);font-size:1.08rem}
+.sc-caja-in em{font-style:normal;font-weight:800;color:var(--rosa-tinta)}
+.sc-caja-in small{color:var(--gris);font-size:.82rem}
+.sc-caja input:checked+.sc-caja-in{border-color:var(--rosa-tinta);background:var(--rosa-claro);transform:translateY(-3px);box-shadow:0 8px 20px rgba(232,87,138,.18)}
+@media (max-width:820px){.sc-cajas{grid-template-columns:1fr 1fr;gap:10px}}
