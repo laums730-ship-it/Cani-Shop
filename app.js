@@ -269,6 +269,10 @@
     }
   }
 
+  // Cani animado dentro de su caja (3 capas: caja, gatito, frente de la caja)
+  const caniAnim = () => `<div class="cani-anim" role="img" aria-label="Cani, el gatito de Cani Shop, jugando en su caja">
+      <img class="ca-caja" src="cani-caja.webp" alt=""><span class="ca-clip"><img class="ca-gato" src="cani-gato.webp" alt=""></span><img class="ca-frente" src="cani-frente.webp" alt=""></div>`;
+
   function inicio() {
     const bans = (T.banners || []).filter(b => b && b.imagen);
     const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
