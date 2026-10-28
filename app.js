@@ -605,13 +605,26 @@
     blanco: "#ffffff", negro: "#2b2b2b", naranja: "#ffb27a", rojo: "#f26b6b", morado: "#a77bdb", azul: "#7fa8f0",
     pastel: "linear-gradient(135deg,#f7a1c4,#c9a7f0,#9fd4f5)", multicolor: "linear-gradient(135deg,#f26b6b,#ffe27a,#9fe0b4,#9fd4f5,#c9a7f0)" };
   const hexDe = c => COLOR_HEX[(c || "").toLowerCase().trim()] || "#f9dbe4";
+  // Fuentes "escritas a mano" para la carta impresa
+  const FUENTES_CARTA = { "Caveat": 1.25, "Patrick Hand": 1, "Gochi Hand": 1, "Indie Flower": 1, "Mali": .88, "Dancing Script": 1.22 };
+  function cargarFuenteCarta(f) {
+    if (document.querySelector(`link[data-carta="${f}"]`)) return;
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.dataset.carta = f;
+    l.href = `https://fonts.googleapis.com/css2?family=${f.replace(/ /g, "+")}${/Caveat|Mali|Dancing/.test(f) ? ":wght@400;600" : ""}&display=swap`;
+    document.head.appendChild(l);
+  }
+  const cartaHTML = (txt, f) => `<div class="carta-prev" style="--fc:'${f}';--fz:${FUENTES_CARTA[f] || 1}"><img src="carta-marco.webp" alt=""><div class="carta-txt">${esc(txt) || '<span class="carta-ph">Aquí aparecerá tu mensaje…</span>'}</div></div>`;
+
   function scoops() {
     if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
     const ops = (SC.opciones || []).filter(o => o.nombre && +o.precio > 0);
     const CAJAS = (Array.isArray(SC.cajas) && SC.cajas.filter(c => c && c.nombre).length ? SC.cajas.filter(c => c && c.nombre)
       : [{ nombre: "Caja blanca", precio: 0, detalle: "Sin costo adicional", imagen: "" }, { nombre: "Caja especial", precio: 5, detalle: "", imagen: "" }]);
-    const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null, caja: 0 };
+    const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null, caja: 0, carta: false };
     const minC = +SC.minColores || 2, minP = +SC.minPersonajes || 2, pv = +SC.precioVideo || 0;
+    const pc = SC.precioCarta === undefined || SC.precioCarta === "" ? 3 : +SC.precioCarta || 0, cartaOn = SC.carta !== false;
+    const fuenteCarta = FUENTES_CARTA[SC.fuenteCarta] ? SC.fuenteCarta : "Caveat";
+    if (cartaOn) cargarFuenteCarta(fuenteCarta);
     const ENT = (T.entregas || []).filter(Boolean);
     app.innerHTML = `<div class="sc-wrap">
       <section class="sc-hero">
@@ -652,7 +665,17 @@
           <div class="form"><input name="tiktok" placeholder="Tu usuario de TikTok (para etiquetarte) — ej: @tuusuario"></div>
         </div></section>
 
-        <section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
+        ${cartaOn ? `<section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
+          <h2>💌 Carta personalizada</h2>
+          <label class="sc-video"><input type="checkbox" id="sc-carta"><span><b>¡Sí, quiero una carta! ${pc ? `+${bs(pc)}` : "Sin costo"}</b><small>Escribe tu mensaje y lo <b>imprimimos</b> en esta cartita para ponerlo dentro de tu Scoop</small></span></label>
+          <div class="carta-box" id="carta-box" hidden>
+            <div id="carta-vista">${cartaHTML("", fuenteCarta)}</div>
+            <div class="form"><textarea name="carta" id="carta-txt" rows="4" maxlength="280" placeholder="Ej: Para Sofi: ¡Feliz cumple! Espero que te encante. Con cariño, Laura"></textarea></div>
+            <p class="carta-nota"><span id="carta-cuenta">0</span>/280 · Así se verá tu carta <b>impresa</b>. Revisa bien lo que escribes: la imprimimos tal cual.</p>
+          </div>
+        </div></section>` : ""}
+
+        <section class="sc-paso"><div class="sc-num">${cartaOn ? 7 : 6}</div><div class="sc-cont">
           <h2>📝 Tus datos</h2>
           <div class="form sc-datos">
             <input name="nombre" placeholder="Tu nombre" required>
@@ -664,7 +687,7 @@
           </div>
         </div></section>
 
-        <section class="sc-paso"><div class="sc-num">7</div><div class="sc-cont">
+        <section class="sc-paso"><div class="sc-num">${cartaOn ? 8 : 7}</div><div class="sc-cont">
           <h2>💳 Pago por QR</h2>
           <div class="sc-pago">
             <div>
@@ -679,8 +702,16 @@
       </form></div>`;
 
     const F = $("#sc-form");
-    const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0) + (+(CAJAS[st.caja] || {}).precio || 0);
+    const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0) + (+(CAJAS[st.caja] || {}).precio || 0) + (st.carta ? pc : 0);
     const pintarTotal = () => { const t = st.op === null ? "—" : bs(total()); $("#sc-total").textContent = $("#sc-total2").textContent = t; };
+    F.addEventListener("input", e => {
+      if (e.target.id !== "carta-txt") return;
+      const t = e.target.value;
+      $("#carta-cuenta").textContent = t.length;
+      $("#carta-vista .carta-txt").innerHTML = esc(t) || '<span class="carta-ph">Aquí aparecerá tu mensaje…</span>';
+      ajustarCarta();
+    });
+    const ajustarCarta = () => { const el = $("#carta-vista .carta-txt"); if (!el) return; el.style.setProperty("--k", 1); let k = 1; while (el.scrollHeight > el.clientHeight + 1 && k > .5) { k -= .05; el.style.setProperty("--k", k); } };
     F.addEventListener("change", e => {
       if (e.target.name === "op") {
         st.op = +e.target.value;
@@ -689,6 +720,7 @@
       }
       if (e.target.name === "caja") st.caja = +e.target.value;
       if (e.target.id === "sc-video") st.video = e.target.checked;
+      if (e.target.id === "sc-carta") { st.carta = e.target.checked; $("#carta-box").hidden = !st.carta; if (st.carta) setTimeout(() => $("#carta-txt").focus(), 50); }
       if (e.target.name === "entrega") ajustarEntrega(F);
       pintarTotal();
     });
@@ -703,6 +735,7 @@
       if (st.op === null) { toast("Elige tu scoop 🍬"); return ir(".sc-ops"); }
       if (st.colores.length < minC) { toast(`Elige mínimo ${minC} colores 🎨`); return ir("[data-grupo=colores]"); }
       if (st.personajes.length < minP) { toast(`Elige mínimo ${minP} personajes ✨`); return ir("[data-grupo=personajes]"); }
+      if (st.carta && !($("#carta-txt").value || "").trim()) { toast("Escribe el mensaje de tu carta 💌"); return ir("#carta-txt"); }
       if (!F.reportValidity()) return;
       const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
       const ventana = window.open("", "_blank");
@@ -713,7 +746,8 @@
           const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
             body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad, direccion: envio.direccion,
               entrega: f.get("entrega") || "", comprobante: comp,
-              scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "" } } }) });
+              scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "",
+                carta: st.carta, carta_texto: st.carta ? (f.get("carta") || "").trim() : "" } } }) });
           if (r.ok) numero = await r.json();
         }
       } catch (err) { console.warn(err); }
@@ -723,7 +757,9 @@
         "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, tk ? `TikTok: ${tk.startsWith("@") ? tk : "@" + tk}` : null, "",
         "🛍️ *Mi Scoop*", `• ${o.nombre} — ${bs(+o.precio)}`,
         `• ${caja.nombre || "Caja blanca"} — ${+caja.precio > 0 ? bs(+caja.precio) : "sin costo"}`,
-        st.video ? `• Video del armado — ${bs(pv)}` : null, "",
+        st.video ? `• Video del armado — ${bs(pv)}` : null,
+        st.carta ? `• Carta personalizada impresa — ${pc ? bs(pc) : "sin costo"}` : null, "",
+        st.carta ? "💌 *Mi carta*" : null, st.carta ? `"${(f.get("carta") || "").trim()}"` : null, st.carta ? "" : null,
         "🎨 *Mis preferencias*", `Colores: ${st.colores.join(", ")}`, `Personajes: ${st.personajes.join(", ")}`, "",
         "🚚 *Entrega*", ...envio.lineas, "",
         `💰 *TOTAL: ${bs(total())}*`, "",

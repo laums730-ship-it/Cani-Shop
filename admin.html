@@ -7,6 +7,7 @@
   <title>Panel · Cani Shop</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Patrick+Hand&family=Gochi+Hand&family=Indie+Flower&family=Mali:wght@400;600&family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root{--rosa-fuerte:#f78db0;--rosa:#f9dbe4;--rosa-claro:#fdeef2;--rosa-tinta:#e8578a;--rosa-osc:#c93c6f;
       --fondo:#fffafb;--tinta:#2b2b2b;--gris:#7a6a70;--borde:#f3d3dd;--verde:#2fb574;--rojo:#d94452;--radio:18px}
@@ -434,6 +435,13 @@
         <div class="campo"><label>Precio del video (Bs)</label><input name="sc_precioVideo" type="number" min="0" step="0.5"></div>
       </div>
       <div class="campo"><label>Texto de bienvenida</label><input name="sc_intro"></div>
+      <div class="fila">
+        <label class="check" style="align-self:end"><input type="checkbox" name="sc_carta"> 💌 Ofrecer carta personalizada impresa</label>
+        <div class="campo"><label>Precio de la carta (Bs)</label><input name="sc_precioCarta" type="number" min="0" step="0.5" placeholder="3"></div>
+      </div>
+      <div class="campo"><label>Letra de la carta (escrita a mano)</label>
+        <select name="sc_fuenteCarta"><option>Caveat</option><option>Patrick Hand</option><option>Gochi Hand</option><option>Indie Flower</option><option>Mali</option><option>Dancing Script</option></select>
+        <p class="ayuda">Es la letra con la que tu cliente ve su carta (y la que usas para imprimirla).</p></div>
       <div class="campo"><label>Opciones (tamaños)</label>
         <div id="aj-scops" class="cats-ed"></div>
         <button type="button" class="btn btn-sec btn-sm" id="aj-addscop" style="margin-top:10px;align-self:flex-start">＋ Agregar opción</button>
@@ -1125,6 +1133,9 @@
     imgs = { gatoIzq: AJ.gatoIzq || "", gatoDer: AJ.gatoDer || "", scQr: (AJ.scoops || {}).qr || "", logo: AJ.logo || "" };
     const S0 = { ...DEF.scoops, ...(AJ.scoops || {}) };
     A.sc_activo.checked = !!S0.activo;
+    A.sc_carta.checked = S0.carta !== false;
+    A.sc_precioCarta.value = S0.precioCarta === undefined || S0.precioCarta === "" ? 3 : S0.precioCarta;
+    A.sc_fuenteCarta.value = S0.fuenteCarta || "Caveat";
     fuenteSel = AJ.fuente || "clasica"; cursorSel = AJ.cursor || "";
     dests = (Array.isArray(AJ.destacadas) && AJ.destacadas.length ? AJ.destacadas : [{ titulo: "Novedades", cat: "__nuevos" }]).map(d => ({ ...d }));
     const H0 = AJ.historia || {};
@@ -1277,6 +1288,7 @@
       logo: imgs.logo || (window.TIENDA || {}).logo || "logo.png",
       scoops: {
         activo: A.sc_activo.checked, titulo: A.sc_titulo.value.trim(), intro: A.sc_intro.value.trim(), nota: A.sc_nota.value.trim(),
+        carta: A.sc_carta.checked, precioCarta: num(A.sc_precioCarta.value), fuenteCarta: A.sc_fuenteCarta.value,
         precioVideo: num(A.sc_precioVideo.value), minColores: Math.round(num(A.sc_minColores.value)), minPersonajes: Math.round(num(A.sc_minPersonajes.value)),
         colores: A.sc_colores.value.split("\n").map(x => x.trim()).filter(Boolean),
         personajes: A.sc_personajes.value.split("\n").map(x => x.trim()).filter(Boolean),
@@ -1388,6 +1400,24 @@
   }
   // Detalles del scoop (editable) + comprobante
   const SCF = () => AJ.scoops || {};
+  function imprimirCarta(txt, f) {
+    if (!txt.trim()) return toast("La carta no tiene texto", true);
+    const w = window.open("", "_blank"); if (!w) return toast("Permite las ventanas emergentes para imprimir", true);
+    const marco = new URL("carta-marco.webp", location.href).href, z = { "Caveat": 1.25, "Mali": .88, "Dancing Script": 1.22 }[f] || 1;
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Carta</title>
+<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, "+")}${/Caveat|Mali|Dancing/.test(f) ? ":wght@400;600" : ""}&display=block" rel="stylesheet">
+<style>@page{size:A6 landscape;margin:0}html,body{margin:0}
+.c{position:relative;width:148mm;height:105mm;margin:0 auto;overflow:hidden}.c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.t{position:absolute;left:17%;right:17%;top:20%;bottom:21%;display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;
+font-family:'${f}',cursive;font-size:${(8.3 * z).toFixed(2)}mm;line-height:1.35;color:#783746}
+@media screen{body{background:#eee;padding:20px}.c{box-shadow:0 6px 20px rgba(0,0,0,.15)}}</style></head>
+<body><div class="c"><img src="${marco}" alt=""><div class="t" id="t"></div></div>
+<script>document.getElementById("t").textContent=${JSON.stringify(txt.trim())};
+document.fonts.ready.then(()=>{const t=document.getElementById("t");let k=1;while(t.scrollHeight>t.clientHeight+1&&k>.5){k-=.05;t.style.fontSize="calc(${(8.3 * z).toFixed(2)}mm*"+k+")";}
+const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(r=>i.onload=r)).then(()=>setTimeout(()=>print(),300));});<\/script></body></html>`);
+    w.document.close();
+  }
+  const precioCartaDe = () => { const v = SCF().precioCarta; return v === undefined || v === "" ? 3 : num(v); };
   const hayScoop = () => ED.items.some(i => i.id === "scoop");
   const cajasDe = () => { const c = (SCF().cajas || []).filter(c => c.nombre); return c.length ? c : [{ nombre: "Caja blanca", precio: 0 }, { nombre: "Caja especial", precio: 5 }]; };
   function pintarExtra() {
@@ -1411,6 +1441,9 @@
         <div><b>🎨 Colores</b><div class="chips-sel">${cols.map(c => chip("colores", c)).join("")}</div></div>
         <div><b>✨ Personajes</b><div class="chips-sel">${pers.map(c => chip("personajes", c)).join("")}</div></div>
         <label class="mini-campo">Usuario de TikTok<input id="sc-tk" value="${esc(x.tiktok || "")}" placeholder="@usuario"></label>
+        <label class="check"><input type="checkbox" id="sc-carta-on" ${ED.items.some(i => i.id === "carta-scoop") ? "checked" : ""} ${lock ? "disabled" : ""}> 💌 Carta personalizada impresa (+${bs(precioCartaDe())})</label>
+        ${ED.items.some(i => i.id === "carta-scoop") || x.carta ? `<label class="mini-campo">Texto de la carta (para imprimir)<textarea id="sc-carta-txt" rows="3" maxlength="280" style="font-family:'${esc(S.fuenteCarta || "Caveat")}',cursive;font-size:1.15rem">${esc(x.carta || "")}</textarea></label>
+        <button type="button" class="btn btn-sec btn-sm" id="sc-carta-imp" style="align-self:flex-start">🖨️ Imprimir carta</button>` : ""}
         ${comp}
         ${lock ? "" : `<button type="button" class="btn btn-peligro btn-sm" id="sc-quitar" style="align-self:flex-start">Quitar scoop</button>`}
       </div>`;
@@ -1433,7 +1466,8 @@
       const cli = CLIS.find(c => c.tel_norm && c.tel_norm === telWa(FP.telefono.value)); if (cli && cli.tiktok && !ED.extra.tiktok) ED.extra.tiktok = cli.tiktok;
       pintarExtra(); pintarItems();
     }
-    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => i.id !== "scoop" && i.id !== "video-scoop" && i.id !== "caja-scoop"); delete ED.extra.caja; delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id)); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.id === "sc-carta-imp") return imprimirCarta((ED.extra || {}).carta || "", S.fuenteCarta || "Caveat");
     if (b.dataset.g) { const arr = ED.extra[b.dataset.g] = ED.extra[b.dataset.g] || [], v = b.dataset.v, i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0); }
   });
   $("#ped-extra").addEventListener("change", e => {
@@ -1454,8 +1488,14 @@
       if (e.target.checked) { const k = ED.items.findIndex(i => i.id === "scoop"); ED.items.splice(k + 1, 0, { id: "video-scoop", nombre: "Video de tu Scoop", variante: null, cant: 1, precio: num(S.precioVideo || 5), desc: 0, desc_nota: "" }); }
       ED.extra.video = e.target.checked; pintarItems();
     }
+    if (e.target.id === "sc-carta-on") {
+      ED.items = ED.items.filter(i => i.id !== "carta-scoop");
+      if (e.target.checked) { const k = ED.items.findIndex(i => i.id === "scoop"); ED.items.splice(k + 1, 0, { id: "carta-scoop", nombre: "Carta personalizada impresa", variante: null, cant: 1, precio: precioCartaDe(), desc: 0, desc_nota: "" }); }
+      else delete ED.extra.carta;
+      pintarExtra(); pintarItems();
+    }
   });
-  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); });
+  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
 
   // ---------- Clientes ----------
   let CLIS = [], EC = null;
@@ -1553,7 +1593,7 @@
     }).join("") : `<p class="ayuda" style="margin:0">Sin productos todavía.</p>`;
     totalesPed();
   }
-  const esScoop = i => i.id === "scoop" || i.id === "video-scoop" || i.id === "caja-scoop";
+  const esScoop = i => i.id === "scoop" || i.id === "video-scoop" || i.id === "caja-scoop" || i.id === "carta-scoop";
   function txtStock(i) {
     if (esScoop(i)) return "🍬 Se arma a pedido";
     const s = stockDe(i);
@@ -1668,7 +1708,7 @@
     const tel = (T2.whatsapp || "").replace(/^591/, "");
     const filas = ED.items.map(i => `<tr>
         <td class="c">${num(i.cant)}</td>
-        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${i.id === "scoop" && (ED.extra || {}).tipo === "scoop" ? `<small>${ED.extra.caja ? `Caja: ${esc(ED.extra.caja)}<br>` : ""}Colores: ${esc((ED.extra.colores || []).join(", "))}<br>Personajes: ${esc((ED.extra.personajes || []).join(", "))}</small>` : ""}${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
+        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${i.id === "scoop" && (ED.extra || {}).tipo === "scoop" ? `<small>${ED.extra.caja ? `Caja: ${esc(ED.extra.caja)}<br>` : ""}Colores: ${esc((ED.extra.colores || []).join(", "))}<br>Personajes: ${esc((ED.extra.personajes || []).join(", "))}${ED.extra.carta ? `<br>Carta: “${esc(ED.extra.carta)}”` : ""}</small>` : ""}${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="r">${bs(linea(i))}</td></tr>`).join("");
     const entrega = [v.entrega, v.ciudad, v.direccion].filter(Boolean).map(esc).join("<br>") || "—";
     const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
