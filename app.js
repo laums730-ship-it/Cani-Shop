@@ -615,6 +615,10 @@
   }
   const cartaHTML = (txt, f) => `<div class="carta-prev" style="--fc:'${f}';--fz:${FUENTES_CARTA[f] || 1}"><img src="carta-marco.webp" alt=""><div class="carta-txt">${esc(txt) || '<span class="carta-ph">Aquí aparecerá tu mensaje…</span>'}</div></div>`;
 
+  // Comunicado de entregas (editable en Mi tienda → Entregas)
+  const AVISO_ENT_DEF = "La entrega es de 2 a 3 días una vez confirmado el pago de tu pedido.\nLos miércoles y sábados realizamos envíos a otros departamentos y provincias.";
+  const avisoEntrega = () => { const t = String(T.avisoEntrega ?? AVISO_ENT_DEF).trim(); return t ? `<div class="aviso-ent" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg><div><b>Importante</b>${t.split("\n").filter(x => x.trim()).map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""; };
+
   function scoops() {
     if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
     const ops = (SC.opciones || []).filter(o => o.nombre && +o.precio > 0);
@@ -622,7 +626,7 @@
       : [{ nombre: "Caja blanca", precio: 0, detalle: "Sin costo adicional", imagen: "" }, { nombre: "Caja especial", precio: 5, detalle: "", imagen: "" }]);
     const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null, caja: 0, carta: false };
     const minC = +SC.minColores || 2, minP = +SC.minPersonajes || 2, pv = +SC.precioVideo || 0;
-    const pc = SC.precioCarta === undefined || SC.precioCarta === "" ? 3 : +SC.precioCarta || 0, cartaOn = SC.carta !== false;
+    const pc = SC.precioCarta === undefined || SC.precioCarta === "" ? 4 : +SC.precioCarta || 0, cartaOn = SC.carta !== false;
     const fuenteCarta = FUENTES_CARTA[SC.fuenteCarta] ? SC.fuenteCarta : "Caveat";
     if (cartaOn) cargarFuenteCarta(fuenteCarta);
     const ENT = (T.entregas || []).filter(Boolean);
@@ -697,6 +701,7 @@
           </div>
         </div></section>
 
+        ${avisoEntrega()}
         <p class="sc-aviso">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad. 💖")}</p>
         <div class="sc-enviar"><div><small>Total</small><b id="sc-total2">—</b></div><button class="btn btn-wa" type="submit" id="sc-btn">Enviar mi pedido 💖</button></div>
       </form></div>`;
@@ -903,5 +908,6 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
   }
 
   { const pie = document.querySelector(".pie"); if (pie && CINTA.length) pie.insertAdjacentHTML("beforebegin", cinta("cinta-osc")); }
+  { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega()); }
   pintarCarrito(); ruta();
 })();

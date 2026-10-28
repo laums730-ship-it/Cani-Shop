@@ -437,7 +437,7 @@
       <div class="campo"><label>Texto de bienvenida</label><input name="sc_intro"></div>
       <div class="fila">
         <label class="check" style="align-self:end"><input type="checkbox" name="sc_carta"> 💌 Ofrecer carta personalizada impresa</label>
-        <div class="campo"><label>Precio de la carta (Bs)</label><input name="sc_precioCarta" type="number" min="0" step="0.5" placeholder="3"></div>
+        <div class="campo"><label>Precio de la carta (Bs)</label><input name="sc_precioCarta" type="number" min="0" step="0.5" placeholder="4"></div>
       </div>
       <div class="campo"><label>Letra de la carta (escrita a mano)</label>
         <select name="sc_fuenteCarta"><option>Caveat</option><option>Patrick Hand</option><option>Gochi Hand</option><option>Indie Flower</option><option>Mali</option><option>Dancing Script</option></select>
@@ -518,6 +518,7 @@
       <h2>🚚 Formas de entrega</h2>
       <p class="ayuda">Tus clientes eligen una en el carrito y te llega en el WhatsApp. <b>Una por línea.</b></p>
       <div class="campo"><textarea name="entregas" rows="3"></textarea></div>
+      <div class="campo"><label>Comunicado importante de entregas (sale al final de Arma tu Scoop y en el carrito)</label><textarea name="avisoEntrega" rows="3" placeholder="La entrega es de 2 a 3 días una vez confirmado el pago de tu pedido.&#10;Los miércoles y sábados realizamos envíos a otros departamentos y provincias."></textarea><p class="ayuda">Una idea por línea. Si lo dejas vacío, se usa este texto.</p></div>
     </section>
 
     <section class="caja">
@@ -1010,7 +1011,7 @@
   let AJ = {}, banners = [], imgs = {};
   const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos", "valores"];
   const tipoC = c => c.tipo || (c.marca ? "personaje" : "categoria");
-  const TEXTOS = ["pieTexto", "franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
+  const TEXTOS = ["avisoEntrega", "pieTexto", "franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
   let cajasSc = [];
   function pintarCajas() {
     $("#aj-cajas").innerHTML = cajasSc.map((c, i) => `<div class="scopf">
@@ -1134,7 +1135,7 @@
     const S0 = { ...DEF.scoops, ...(AJ.scoops || {}) };
     A.sc_activo.checked = !!S0.activo;
     A.sc_carta.checked = S0.carta !== false;
-    A.sc_precioCarta.value = S0.precioCarta === undefined || S0.precioCarta === "" ? 3 : S0.precioCarta;
+    A.sc_precioCarta.value = S0.precioCarta === undefined || S0.precioCarta === "" ? 4 : S0.precioCarta;
     A.sc_fuenteCarta.value = S0.fuenteCarta || "Caveat";
     fuenteSel = AJ.fuente || "clasica"; cursorSel = AJ.cursor || "";
     dests = (Array.isArray(AJ.destacadas) && AJ.destacadas.length ? AJ.destacadas : [{ titulo: "Novedades", cat: "__nuevos" }]).map(d => ({ ...d }));
@@ -1417,7 +1418,7 @@ document.fonts.ready.then(()=>{const t=document.getElementById("t");let k=1;whil
 const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(r=>i.onload=r)).then(()=>setTimeout(()=>print(),300));});<\/script></body></html>`);
     w.document.close();
   }
-  const precioCartaDe = () => { const v = SCF().precioCarta; return v === undefined || v === "" ? 3 : num(v); };
+  const precioCartaDe = () => { const v = SCF().precioCarta; return v === undefined || v === "" ? 4 : num(v); };
   const hayScoop = () => ED.items.some(i => i.id === "scoop");
   const cajasDe = () => { const c = (SCF().cajas || []).filter(c => c.nombre); return c.length ? c : [{ nombre: "Caja blanca", precio: 0 }, { nombre: "Caja especial", precio: 5 }]; };
   function pintarExtra() {

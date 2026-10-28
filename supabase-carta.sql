@@ -1,5 +1,5 @@
 -- =====================================================
---  CANI SHOP — Scoops: carta personalizada impresa (+Bs 3)
+--  CANI SHOP — Scoops: carta personalizada impresa (+Bs 4)
 --  Incluye también la caja y el video. Copia TODO, pégalo en
 --  Supabase → SQL Editor → Run. Se puede correr más de una vez.
 -- =====================================================
@@ -60,12 +60,12 @@ begin
         end if;
       end if;
     end if;
-    -- Carta personalizada impresa (precio desde tu configuración, por defecto Bs 3)
+    -- Carta personalizada impresa (precio desde tu configuración, por defecto Bs 4)
     if coalesce((sc->>'carta')::boolean, false) and coalesce((cfg->>'carta')::boolean, true) then
       carta_txt := left(btrim(coalesce(sc->>'carta_texto', '')), 280);
       if carta_txt <> '' then
         items := items || jsonb_build_object('id', 'carta-scoop', 'nombre', 'Carta personalizada impresa', 'variante', null,
-                                             'cant', 1, 'precio', coalesce(nullif(cfg->>'precioCarta', '')::numeric, 3), 'desc', 0, 'desc_nota', '');
+                                             'cant', 1, 'precio', coalesce(nullif(cfg->>'precioCarta', '')::numeric, 4), 'desc', 0, 'desc_nota', '');
       end if;
     end if;
     select coalesce(jsonb_agg(left(x, 40)), '[]') into colores
@@ -93,3 +93,8 @@ end $$;
 
 revoke all on function public.crear_pedido(jsonb) from public;
 grant execute on function public.crear_pedido(jsonb) to anon, authenticated;
+
+-- Precio de la carta: Bs 4
+update public.ajustes
+set datos = jsonb_set(datos, '{scoops,precioCarta}', '4'::jsonb, true)
+where id = 'tienda' and datos ? 'scoops';

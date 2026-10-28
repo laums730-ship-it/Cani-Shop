@@ -1031,3 +1031,10 @@ input,select,textarea{max-width:100%;min-width:0}
 .carta-ph{opacity:.45}
 .carta-nota{margin:0;font-size:.82rem;color:var(--cafe);text-align:center}
 .carta-box textarea{min-height:96px;resize:vertical}
+/* Comunicado importante de entregas */
+.aviso-ent{display:flex;gap:12px;align-items:flex-start;background:#fffbd6;border:1.5px solid var(--amarillo);border-radius:18px;padding:14px 16px;color:var(--cafe);text-align:left}
+.aviso-ent svg{flex:none;width:26px;height:26px;fill:none;stroke:var(--cafe);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
+.aviso-ent b{display:block;font-family:var(--f-tit);font-size:1rem;margin-bottom:2px}
+.aviso-ent p{margin:2px 0 0;font-size:.88rem;line-height:1.45}
+.carrito-pie .aviso-ent{margin:8px 0 12px;padding:10px 12px;border-radius:14px}
+.carrito-pie .aviso-ent p{font-size:.8rem}
