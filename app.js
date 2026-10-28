@@ -274,15 +274,17 @@
     const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
     const DEST = (Array.isArray(T.destacadas) && T.destacadas.filter(d => d && d.cat).length ? T.destacadas.filter(d => d && d.cat)
       : [{ titulo: "Novedades", cat: "__nuevos" }]).filter(d => d.cat !== "sanrio").slice(0, 3);
-    const VAL = (Array.isArray(T.valores) && T.valores.filter(Boolean).length ? T.valores.filter(Boolean)
-      : ["Productos kawaii originales, elegidos uno por uno", "Envíos a toda Bolivia", "Empaque seguro (¡y tierno!) para tus cositas"]).slice(0, 3);
+    // Beneficios: "Título | texto" (desde Mi tienda). Si no tienen ese formato, se usan los de siempre.
+    const VAL_DEF = ["Productos kawaii | Papelería, regalos y cositas adorables", "Envíos a toda Bolivia | Desde Santa Cruz hasta tu departamento", "Punto de entrega | Consulta por nuestro punto de entrega en Santa Cruz"];
+    const valGuardados = Array.isArray(T.valores) ? T.valores.filter(Boolean) : [];
+    const VAL = (valGuardados.some(v => v.includes("|")) ? valGuardados : VAL_DEF).slice(0, 3).map(v => { const [t, ...d] = v.split("|"); return { t: t.trim(), d: d.join("|").trim() }; });
     const HIST = T.historia || {};
     const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : ["historia.webp"];
     const OPS = (T.opiniones || []).filter(o => o && o.texto);
     const ICON_VAL = [
-      `<svg viewBox="0 0 48 48"><path d="M24 6l4.6 10.4L40 18l-8.4 7.6L34 37l-10-5.8L14 37l2.4-11.4L8 18l11.4-1.6z"/><path d="M38 6v6M35 9h6"/></svg>`,
-      `<svg viewBox="0 0 48 48"><path d="M4 12h24v20H4z"/><path d="M28 18h9l7 7v7H28z"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>`,
-      `<svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/><path d="M24 13c-3-7-12-8-12-2s12 2 12 2c3-7 12-8 12-2s-12 2-12 2"/></svg>`
+      `<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>`
     ];
     const ESTRELLAS = `<span class="op-estrellas">${Array(5).fill(`<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7z"/></svg>`).join("")}</span>`;
     const listaDe = d => {
@@ -312,7 +314,7 @@
 
       ${cinta()}
 
-      <section class="valores"><div class="valores-in">${VAL.map((v, i) => `<div class="valor">${ICON_VAL[i] || ICON_VAL[0]}<p>${esc(v)}</p></div>`).join("")}</div></section>
+      <section class="valores2"><div class="valores2-in">${VAL.map((v, i) => `<div class="valor2">${ICON_VAL[i] || ICON_VAL[0]}<b>${esc(v.t)}</b>${v.d ? `<small>${esc(v.d)}</small>` : ""}</div>`).join("")}</div></section>
 
       ${destacada(DEST[0])}
 

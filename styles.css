@@ -934,3 +934,17 @@ input,select,textarea{max-width:100%;min-width:0}
   .nos-txt h1{text-align:center}
   .nos-cards{grid-template-columns:minmax(0,1fr);gap:14px}
 }
+/* Beneficios: tarjeta rosa redondeada con 3 columnas */
+.valores2{padding:clamp(18px,3vw,34px) clamp(12px,3vw,40px)}
+.valores2-in{max-width:1120px;margin:0 auto;background:var(--rosa);border-radius:22px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:clamp(18px,2.4vw,26px) clamp(14px,2vw,24px);text-align:center}
+.valor2{display:flex;flex-direction:column;align-items:center;gap:6px}
+.valor2 svg{width:24px;height:24px;fill:none;stroke:var(--cafe);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-bottom:2px}
+.valor2 b{font-family:var(--f-txt);font-weight:700;color:var(--cafe);font-size:.98rem}
+.valor2 small{font-family:var(--f-txt);color:var(--cafe);opacity:.85;font-size:.8rem;line-height:1.4}
+@media (max-width:820px){
+  .valores2-in{grid-template-columns:minmax(0,1fr);gap:0;padding:6px 18px;border-radius:18px}
+  .valor2{flex-direction:row;flex-wrap:wrap;justify-content:flex-start;text-align:left;column-gap:12px;row-gap:2px;padding:14px 0;border-bottom:1px solid rgba(120,55,70,.12)}
+  .valor2:last-child{border-bottom:0}
+  .valor2 svg{margin:0}
+  .valor2 small{flex-basis:100%;padding-left:36px}
+}
