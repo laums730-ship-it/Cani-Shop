@@ -159,15 +159,15 @@
     // Abrir la ventana de WhatsApp ya (si no, el navegador la bloquea)
     const ventana = window.open("", "_blank");
     btn.disabled = true;
-    let numero = null;
+    let numero = null; const envio = datosEnvio(f);
     if (SB.url && SB.key) {
       try {
         const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/rpc/crear_pedido`, {
           method: "POST",
           headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" },
           body: JSON.stringify({ p: {
-            cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: f.get("ciudad"),
-            direccion: f.get("direccion") || "", entrega: f.get("entrega") || "", nota: f.get("nota") || "",
+            cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad,
+            direccion: envio.direccion, entrega: f.get("entrega") || "", nota: f.get("nota") || "",
             items: items.map(i => ({ id: i.id, variante: i.variante || null, cant: i.cant }))
           } })
         });
@@ -179,12 +179,15 @@
       return `• ${i.cant} x ${p.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(p.precio * i.cant)}`;
     });
     const total = items.reduce((a, i) => a + PRODS.find(p => p.id === i.id).precio * i.cant, 0);
-    const msg = [`¡Hola ${T.nombre}! Quiero hacer este pedido${numero ? ` (Pedido #${numero})` : ""}:`, "", ...lineas, "", `Subtotal: ${bs(total)}`, "",
-      `Nombre: ${f.get("nombre")}`, `Teléfono: ${f.get("telefono")}`, `Ciudad: ${f.get("ciudad")}`,
-      f.get("entrega") ? `Entrega: ${f.get("entrega")}` : null,
-      f.get("direccion") ? `Dirección: ${f.get("direccion")}` : null, f.get("nota") ? `Nota: ${f.get("nota")}` : null
+    const msg = [`🌸 *NUEVO PEDIDO · ${String(T.nombre).toUpperCase()}* 🌸`, numero ? `Pedido #${numero}` : null, "",
+      "🛍️ *Mi pedido*", ...lineas, "",
+      "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, "",
+      "🚚 *Entrega*", ...envio.lineas,
+      f.get("nota") ? "" : null, f.get("nota") ? `📝 *Nota:* ${f.get("nota")}` : null, "",
+      `💰 *TOTAL: ${bs(total)}*`, "",
+      "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"
     ].filter(x => x !== null).join("\n");
-    const url = `https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`;
+    const url = waURL(msg);
     if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
     btn.disabled = false;
     if (numero) {
@@ -192,6 +195,39 @@
       toast(`¡Pedido #${numero} enviado! 💕`);
     }
   });
+
+  // ---------- WhatsApp y datos de envío ----------
+  const waURL = msg => `https://api.whatsapp.com/send?phone=${T.whatsapp}&text=${encodeURIComponent(msg)}`;
+  const esOtroDepto = v => /otra ciudad|otro departamento|departamento|interior|provincia/i.test(v || "");
+  const esRecojo = v => /recojo|retiro|recoger/i.test(v || "");
+  const DEPTOS = ["La Paz", "El Alto", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad (Beni)", "Cobija (Pando)", "Montero", "Warnes"];
+  const envioHTML = () => `<div class="envio-datos" hidden>
+      <p class="envio-tit">Datos para el envío a otro departamento</p>
+      <input name="env_nombre" placeholder="Nombre de quien recibe" autocomplete="name">
+      <input name="env_ci" placeholder="Carnet de Identidad" inputmode="numeric">
+      <input name="env_cel" type="tel" inputmode="tel" placeholder="Celular de quien recibe">
+      <input name="env_destino" list="deptos-bo" placeholder="Destino (ciudad o departamento)">
+      <datalist id="deptos-bo">${DEPTOS.map(d => `<option value="${d}">`).join("")}</datalist>
+    </div>`;
+  function ajustarEntrega(form) {
+    const v = (form.querySelector("[name=entrega]") || {}).value || "", otro = esOtroDepto(v), recojo = esRecojo(v);
+    const box = form.querySelector(".envio-datos");
+    if (box) { box.hidden = !otro; box.querySelectorAll("input").forEach(i => i.required = otro); }
+    ["ciudad", "direccion"].forEach(n => { const i = form.querySelector(`[name=${n}]`); if (!i) return; const ver = !otro && !recojo; i.hidden = !ver; i.required = ver && (n === "ciudad" || i.dataset.req === "1"); if (!ver) i.value = ""; });
+  }
+  function datosEnvio(f) {
+    const ent = f.get("entrega") || "";
+    if (esOtroDepto(ent)) {
+      const d = { n: f.get("env_nombre"), ci: f.get("env_ci"), cel: f.get("env_cel"), des: f.get("env_destino") };
+      return { ciudad: d.des, direccion: `Envío a ${d.des} · Recibe: ${d.n} · CI: ${d.ci} · Cel: ${d.cel}`,
+        lineas: [ent, `Recibe: ${d.n}`, `Carnet de Identidad: ${d.ci}`, `Celular: ${d.cel}`, `Destino: ${d.des}`] };
+    }
+    if (esRecojo(ent)) return { ciudad: "Santa Cruz", direccion: "", lineas: [ent] };
+    const dir = [f.get("direccion"), f.get("ciudad")].filter(x => x && x.trim()).join(", ");
+    return { ciudad: f.get("ciudad") || "", direccion: f.get("direccion") || "", lineas: [ent, dir ? `Dirección: ${dir}` : null].filter(Boolean) };
+  }
+  { const fp = $("#form-pedido"), sel = $("#sel-entrega");
+    if (fp && sel) { sel.insertAdjacentHTML("afterend", envioHTML()); sel.addEventListener("change", () => ajustarEntrega(fp)); ajustarEntrega(fp); } }
 
   let tt; function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("ver"), 1800); }
 
@@ -610,20 +646,18 @@
             <input name="nombre" placeholder="Tu nombre" required>
             <input name="telefono" type="tel" inputmode="tel" placeholder="Tu WhatsApp (ej: 71234567)" required>
             ${ENT.length ? `<select name="entrega" required><option value="" disabled selected>¿Cómo quieres recibirlo?</option>${ENT.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : ""}
+            ${envioHTML()}
             <input name="ciudad" placeholder="Ciudad" required>
-            <input name="direccion" placeholder="📍 Dirección de entrega" required>
+            <input name="direccion" placeholder="Dirección de entrega" data-req="1" required>
           </div>
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">7</div><div class="sc-cont">
           <h2>💳 Pago por QR</h2>
           <div class="sc-pago">
-            ${SC.qr ? `<img class="sc-qr" src="${esc(SC.qr)}" alt="QR de pago">` : ""}
             <div>
               <div class="sc-total"><span>Total a pagar</span><b id="sc-total">—</b></div>
-              <p class="nota">${SC.qr ? "Escanea el QR, paga el total y sube aquí la captura de tu comprobante." : "Te enviamos el QR por WhatsApp. Si ya pagaste, sube aquí tu comprobante."}</p>
-              <label class="sc-subir"><input type="file" id="sc-comp" accept="image/*,application/pdf"><span id="sc-comp-txt">📎 Subir comprobante</span></label>
-              <p class="nota">¿No puedes subirlo? Envíalo por WhatsApp después de mandar tu pedido.</p>
+              <p class="nota">Cuando envíes tu pedido se abre WhatsApp: pídenos ahí tu <b>QR de pago</b> y te lo mandamos al toque. Tu Scoop se arma una vez confirmado el pago.</p>
             </div>
           </div>
         </div></section>
@@ -643,7 +677,7 @@
       }
       if (e.target.name === "caja") st.caja = +e.target.value;
       if (e.target.id === "sc-video") st.video = e.target.checked;
-      if (e.target.id === "sc-comp") { st.archivo = e.target.files[0] || null; $("#sc-comp-txt").textContent = st.archivo ? "✅ " + st.archivo.name : "📎 Subir comprobante"; }
+      if (e.target.name === "entrega") ajustarEntrega(F);
       pintarTotal();
     });
     F.addEventListener("click", e => {
@@ -661,41 +695,33 @@
       const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
       const ventana = window.open("", "_blank");
       const base = SB.url ? SB.url.replace(/\/$/, "") : "", H = { apikey: SB.key, Authorization: `Bearer ${SB.key}` };
-      let comp = null, numero = null;
+      let comp = null, numero = null; const envio = datosEnvio(f);
       try {
-        if (st.archivo && base) {
-          const ext = (st.archivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-          const ruta = `pedidos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-          const r = await fetch(`${base}/storage/v1/object/comprobantes/${ruta}`, { method: "POST", headers: { ...H, "Content-Type": st.archivo.type || "application/octet-stream", "x-upsert": "false" }, body: st.archivo });
-          if (r.ok) comp = ruta;
-        }
         if (base) {
           const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
-            body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: f.get("ciudad"), direccion: f.get("direccion"),
+            body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad, direccion: envio.direccion,
               entrega: f.get("entrega") || "", comprobante: comp,
               scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "" } } }) });
           if (r.ok) numero = await r.json();
         }
       } catch (err) { console.warn(err); }
       const o = ops[st.op];
-      const msg = [`¡Hola ${T.nombre}! 💖 Quiero armar mi Scoop${numero ? ` (Pedido #${numero})` : ""}:`, "",
-        `📝 Nombre: ${f.get("nombre")}`,
-        `📦 Cantidad de scoops: ${o.nombre} — ${bs(+o.precio)}`,
-        `🎁 Caja: ${(CAJAS[st.caja] || {}).nombre || "Caja blanca"}${+(CAJAS[st.caja] || {}).precio > 0 ? ` (+${bs(+CAJAS[st.caja].precio)})` : " (sin costo)"}`,
-        st.video ? `🎥 Video de mi Scoop: +${bs(pv)}` : null,
-        `💳 Comprobante de pago por QR: ${comp ? "subido en la página ✅" : "te lo envío por aquí"}`,
-        `🎨 Colores de preferencia: ${st.colores.join(", ")}`,
-        `✨ Personajes de preferencia: ${st.personajes.join(", ")}`,
-        f.get("tiktok") ? `🎥 Usuario de TikTok: ${f.get("tiktok")}` : null,
-        f.get("entrega") ? `🚚 Entrega: ${f.get("entrega")}` : null,
-        `📍 Dirección de entrega: ${f.get("direccion")}, ${f.get("ciudad")}`,
-        `📱 WhatsApp: ${f.get("telefono")}`, "", `Total: ${bs(total())}`].filter(x => x !== null).join("\n");
-      const url = `https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`;
+      const caja = CAJAS[st.caja] || {}, tk = (f.get("tiktok") || "").trim();
+      const msg = ["🌸 *NUEVO PEDIDO · LUCKY SCOOP* 🌸", numero ? `Pedido #${numero}` : null, "",
+        "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, tk ? `TikTok: ${tk.startsWith("@") ? tk : "@" + tk}` : null, "",
+        "🛍️ *Mi Scoop*", `• ${o.nombre} — ${bs(+o.precio)}`,
+        `• ${caja.nombre || "Caja blanca"} — ${+caja.precio > 0 ? bs(+caja.precio) : "sin costo"}`,
+        st.video ? `• Video del armado — ${bs(pv)}` : null, "",
+        "🎨 *Mis preferencias*", `Colores: ${st.colores.join(", ")}`, `Personajes: ${st.personajes.join(", ")}`, "",
+        "🚚 *Entrega*", ...envio.lineas, "",
+        `💰 *TOTAL: ${bs(total())}*`, "",
+        "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"].filter(x => x !== null).join("\n");
+      const url = waURL(msg);
       if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
       btn.disabled = false; btn.textContent = "Enviar mi pedido 💖";
       if (numero) { app.innerHTML = `<section class="seccion sc-gracias"><div class="banner">
           ${o.imagen ? `<img src="${esc(o.imagen)}" alt="" style="width:180px;margin:0 auto 10px">` : ""}
-          <h2>¡Recibimos tu Scoop! 💖</h2><p>Tu pedido es el <b>#${numero}</b>. ${comp ? "Ya tenemos tu comprobante." : "Recuerda enviarnos tu comprobante por WhatsApp."} Te escribimos pronto para coordinar la entrega.</p>
+          <h2>¡Recibimos tu Scoop! 💖</h2><p>Tu pedido es el <b>#${numero}</b>. Pídenos tu QR de pago por WhatsApp. Te escribimos pronto para coordinar la entrega.</p>
           <a class="btn" href="#/">Volver a la tienda</a></div></section>`; window.scrollTo(0, 0); }
     });
     pintarTotal();
@@ -716,7 +742,7 @@
     $("#form-contacto").onsubmit = e => {
       e.preventDefault(); const f = new FormData(e.target);
       const msg = `Hola, soy ${f.get("nombre")}${f.get("telefono") ? ` (${f.get("telefono")})` : ""}.\n${f.get("mensaje")}`;
-      window.open(`https://wa.me/${T.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+      window.open(waURL(msg), "_blank");
     };
   }
 

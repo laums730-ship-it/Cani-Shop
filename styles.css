@@ -905,3 +905,11 @@ input,select,textarea{max-width:100%;min-width:0}
   .miniaturas button{width:64px;height:64px}
 }
 @media (max-width:820px){input,select,textarea{font-size:16px!important}}
+/* Datos de envío a otro departamento */
+.envio-datos{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;background:var(--rosa);border-radius:18px;padding:14px}
+.envio-datos[hidden]{display:none!important}
+.envio-datos .envio-tit{grid-column:1/-1;margin:0;font-weight:700;color:var(--cafe);font-size:.9rem}
+.envio-datos input{background:#fff}
+.carrito .envio-datos,.form .envio-datos{display:grid}
+@media (max-width:820px){.envio-datos{grid-template-columns:minmax(0,1fr)}}
+.carrito .envio-datos{grid-template-columns:minmax(0,1fr)}
