@@ -4,7 +4,7 @@
   let PRODS = window.PRODUCTOS || [];
   const $ = s => document.querySelector(s);
   // ---------- Sin emojis en toda la tienda ----------
-  const RX_EMO = /(?![©®™])\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu;
+  const RX_EMO = /(?![©®™♡])\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu;
   const limpiarTxt = t => t.replace(RX_EMO, "").replace(/ {2,}/g, " ").replace(/ +([!?.,:;)])/g, "$1");
   const limpiarNodo = raiz => {
     if (raiz.nodeType === 3) { const v = limpiarTxt(raiz.nodeValue); if (v !== raiz.nodeValue) raiz.nodeValue = v; return; }
@@ -25,7 +25,7 @@
   const disp = x => x === true || (typeof x === "number" && x > 0);
   const tieneVar = p => Array.isArray(p.variantes) && p.variantes.length > 0;
   const hayStock = p => tieneVar(p) ? p.variantes.some(v => disp(v.stock)) : (p.stock === undefined || disp(p.stock));
-  const sinEmoji = t => String(t ?? "").replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu, "").replace(/[ \t]{2,}/g, " ").replace(/^[ \t]+|[ \t]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+  const sinEmoji = t => String(t ?? "").replace(/(?!♡)[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu, "").replace(/[ \t]{2,}/g, " ").replace(/^[ \t]+|[ \t]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
   const foto = p => (p.imagenes && p.imagenes[0]) || T.logo;
   const maxDe = (p, vari) => { const s = tieneVar(p) ? (p.variantes.find(v => v.nombre === vari) || {}).stock : p.stock; return typeof s === "number" ? s : 99; };
 
@@ -329,7 +329,7 @@
         <div class="hist-imgs ${histImgs.length === 1 ? "una" : ""}">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
         <div class="hist-txt">
           <h2>${esc(HIST.titulo || `Hola, somos ${T.nombre}`)}</h2>
-          <p>${esc(HIST.texto || T.nosotros || "")}</p>
+          <p>${esc(HIST.texto || resumenNosotros())}</p>
           <a class="btn btn-sec" href="#/nosotros">Conoce ${esc(T.nombre)}</a>
         </div>
       </section>
@@ -727,8 +727,56 @@
     pintarTotal();
   }
 
+  // Página Nosotros: el texto de Mi tienda se arma solo en secciones (una línea corta sin punto = título)
+  const NOSOTROS_DEF = `Un poquito sobre Cani Shop ♡
+¡Hola! Somos Cani Shop, una tienda boliviana nacida en Santa Cruz de la Sierra, donde creemos que las pequeñas cosas pueden alegrar un día entero.
+Nos encantan los detalles bonitos, los colores pastel y esas cositas que no sabías que necesitabas, pero que te hacen sonreír al encontrarlas.
+En nuestra tienda encontrarás papelería, accesorios, productos kawaii y personajes que tanto nos gustan, como Sanrio y Snoopy.
+Conoce a Cani
+Cani es nuestro pequeño gatito negro, curioso, juguetón y amante de las cajas. Le encanta descubrir cosas nuevas y encontrar sorpresas en los lugares más inesperados.
+Él representa el espíritu de nuestra tienda: curiosidad, ternura y la emoción de descubrir algo especial.
+Una cajita llena de sorpresas
+Además de nuestros productos individuales, tenemos experiencias como los Lucky Scoops y las Happy Boxes, pensadas para quienes aman las sorpresas y los pequeños detalles.
+De Santa Cruz para toda Bolivia
+Estamos en Santa Cruz de la Sierra y realizamos envíos a todo el país, para que un pedacito del universo de Cani llegue hasta ti.
+Gracias por ser parte de nuestro pequeño mundo. ♡`;
+  const textoNosotros = () => { const t = String(T.nosotros || "").trim(); return t.split("\n").filter(x => x.trim()).length >= 3 ? t : NOSOTROS_DEF; };
+  const esTitulo = l => { const x = l.replace(/[\s♡]+$/, ""); return x.length > 0 && x.length <= 45 && !/[.!?,:;]$/.test(x); };
+  function seccionesNosotros() {
+    const out = []; let cur = null;
+    textoNosotros().split("\n").map(x => x.trim()).filter(Boolean).forEach(l => {
+      if (esTitulo(l)) { cur = { titulo: l, ps: [] }; out.push(cur); }
+      else { if (!cur) { cur = { titulo: "", ps: [] }; out.push(cur); } cur.ps.push(l); }
+    });
+    let cierre = "";
+    const ult = out[out.length - 1];
+    if (ult && ult.ps.length > 1 && /^gracias/i.test(ult.ps[ult.ps.length - 1])) cierre = ult.ps.pop();
+    return { secs: out, cierre };
+  }
+  const resumenNosotros = () => { const { secs } = seccionesNosotros(); return (secs[0] && secs[0].ps[0]) || ""; };
   function nosotros() {
-    app.innerHTML = `<section class="seccion"><h2>Nosotros</h2><p class="texto">${esc(T.nosotros).replace(/\n/g, "<br>")}</p></section>`;
+    const { secs, cierre } = seccionesNosotros();
+    const [intro, ...resto] = secs;
+    const foto = ((T.historia || {}).imagenes || []).filter(Boolean)[0] || "historia.webp";
+    const ICON = [
+      `<svg viewBox="0 0 48 48"><path d="M10 40V18l6-8 4 7h8l4-7 6 8v22z"/><circle cx="19" cy="26" r="1.6"/><circle cx="29" cy="26" r="1.6"/><path d="M22 31c1.3 1 2.7 1 4 0"/></svg>`,
+      `<svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/><path d="M24 13c-3-7-12-8-12-2s12 2 12 2c3-7 12-8 12-2s-12 2-12 2"/></svg>`,
+      `<svg viewBox="0 0 48 48"><path d="M4 12h24v20H4z"/><path d="M28 18h9l7 7v7H28z"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>`
+    ];
+    app.innerHTML = `<section class="seccion nos">
+      <div class="nos-intro">
+        <div class="nos-foto"><img src="${esc(foto)}" alt="Cani, el gatito de Cani Shop"></div>
+        <div class="nos-txt">
+          <h1>${esc(intro ? intro.titulo || "Nosotros" : "Nosotros")}</h1>
+          ${(intro ? intro.ps : []).map(p => `<p>${esc(p)}</p>`).join("")}
+        </div>
+      </div>
+      ${resto.length ? `<div class="nos-cards">${resto.map((s, i) => `<article class="nos-card">
+          <span class="nos-ico">${ICON[i % ICON.length]}</span>
+          <h2>${esc(s.titulo)}</h2>${s.ps.map(p => `<p>${esc(p)}</p>`).join("")}</article>`).join("")}</div>` : ""}
+      ${cierre ? `<p class="nos-cierre">${esc(cierre)}</p>` : ""}
+      <div class="nos-acciones"><a class="btn" href="#/todo">Ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">Arma tu Lucky Scoop</a>` : ""}</div>
+    </section>`;
   }
   function contacto() {
     app.innerHTML = `<section class="seccion"><h2>Contacto</h2>
