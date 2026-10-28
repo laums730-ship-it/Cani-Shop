@@ -48,7 +48,7 @@
     .top .esp{flex:1}
     .top a{font-weight:700;color:var(--rosa-osc);text-decoration:none}
     main{max-width:1000px;margin:0 auto;padding:22px clamp(12px,4vw,40px) 80px}
-    .resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+    .resumen{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:20px}
     .dato{background:#fff;border-radius:var(--radio);padding:14px 16px}
     .dato b{display:block;font-family:Fredoka;font-size:1.7rem;color:var(--rosa-tinta)}
     .dato span{color:var(--gris);font-size:.88rem;font-weight:700}
@@ -101,6 +101,11 @@
     .subir:hover{background:var(--rosa-claro)}
     .subir input{display:none}
     .vars{display:flex;flex-direction:column;gap:8px}
+    .tag.costo{background:#f4ecff;color:#6b4a86}
+    .tag.gan{background:#e9f8ef;color:#2e7d4f}
+    .ganancia{border:2px dashed var(--borde);border-radius:12px;padding:11px 12px;font-weight:800;color:var(--gris);background:#fff}
+    .ganancia.bien{color:#2e7d4f;border-color:#bfe6cf;background:#f3fbf6}
+    .ganancia.mal{color:var(--rojo);border-color:#f5c2c7;background:#fdf0f1}
     .var{display:grid;grid-template-columns:46px 1fr 110px 38px;gap:8px;align-items:center}
     .var-foto{position:relative;width:46px;height:46px;border-radius:12px;border:2px dashed var(--rosa-fuerte);background:#fff;display:grid;place-items:center;cursor:pointer;overflow:visible}
     .var-foto img{width:100%;height:100%;object-fit:cover;border-radius:10px}
@@ -250,7 +255,7 @@
 
     @media (max-width:640px){
       .top h1{display:none}
-      .resumen{grid-template-columns:repeat(3,1fr);gap:8px}
+      .resumen{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.resumen .dato:nth-child(n+4){grid-column:span 1}
       .dato{padding:10px 12px}.dato b{font-size:1.35rem}.dato span{font-size:.75rem}
       .prod{grid-template-columns:60px 1fr}
       .prod>img{width:60px;height:60px}
@@ -311,6 +316,8 @@
       <div class="dato"><b id="r-total">0</b><span>productos</span></div>
       <div class="dato"><b id="r-unid">0</b><span>unidades en stock</span></div>
       <div class="dato"><b id="r-agot">0</b><span>agotados</span></div>
+      <div class="dato"><b id="r-inv">—</b><span>invertido en stock (costo)</span></div>
+      <div class="dato"><b id="r-gan">—</b><span>ganancia si vendes todo</span></div>
     </div>
     <div class="barra">
       <input id="buscar" type="search" placeholder="Buscar producto…">
@@ -621,6 +628,10 @@
       <div class="campo"><label>Precio (Bs) *</label><input name="precio" type="number" min="0" step="0.5" required placeholder="12"></div>
       <div class="campo"><label>Orden</label><input name="orden" type="number" step="1" placeholder="0"><p class="ayuda">Número más bajo = aparece primero</p></div>
     </div>
+    <div class="fila">
+      <div class="campo"><label>Costo (Bs) 🔒</label><input name="costo" type="number" min="0" step="0.01" placeholder="Lo que te costó"><p class="ayuda">Solo lo ves tú, tus clientes nunca lo ven.</p></div>
+      <div class="campo"><label>Ganancia</label><div class="ganancia" id="ed-gan">—</div></div>
+    </div>
     <div class="campo"><label>Categorías</label><div class="checks" id="ed-cats"></div></div>
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
     <div class="checks" style="margin-bottom:6px">
@@ -731,14 +742,29 @@
     $("#lista").innerHTML = `<div class="vacio">Cargando… 🐾</div>`;
     const { data, error } = await db.from("productos").select("*").order("orden").order("creado", { ascending: false });
     if (error) { $("#lista").innerHTML = `<div class="vacio">No se pudo cargar: ${esc(error.message)}</div>`; return; }
-    PRODS = data; pintar();
+    PRODS = data;
+    const c = await db.from("costos").select("id,costo");
+    COSTOS = c.error ? null : Object.fromEntries((c.data || []).map(x => [x.id, +x.costo]));
+    pintar();
   }
+  let COSTOS = null;
+  const costoDe = p => COSTOS && COSTOS[p.id] != null ? COSTOS[p.id] : null;
+  const ganTxt = (precio, costo) => {
+    if (costo == null || !(costo > 0)) return "";
+    const g = precio - costo, pct = precio > 0 ? Math.round(g / precio * 100) : 0;
+    return `${g >= 0 ? "" : "−"}${bs(Math.abs(g))} (${pct}%)`;
+  };
 
   function pintar() {
     const q = $("#buscar").value.trim().toLowerCase();
     $("#r-total").textContent = PRODS.length;
     $("#r-unid").textContent = PRODS.reduce((a, p) => a + total(p), 0);
     $("#r-agot").textContent = PRODS.filter(agotado).length;
+    if (COSTOS) {
+      let inv = 0, gan = 0;
+      PRODS.forEach(p => { const c = costoDe(p); if (c == null) return; const u = total(p); inv += c * u; gan += (num(p.precio) - c) * u; });
+      $("#r-inv").textContent = bs(inv); $("#r-gan").textContent = bs(gan);
+    } else { $("#r-inv").textContent = $("#r-gan").textContent = "—"; }
     let l = PRODS.filter(p => !q || (p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(q));
     if (filtro === "agotados") l = l.filter(p => p.activo && (agotado(p) || (tieneVar(p) && p.variantes.some(v => !+v.stock))));
     if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => pocos(v.stock)) : pocos(p.stock));
@@ -753,6 +779,7 @@
         <div>
           <h3>${esc(p.nombre)}</h3>
           <div class="meta"><b style="color:var(--rosa-tinta)">${bs(p.precio)}</b>
+            ${costoDe(p) != null ? `<span class="tag costo">Costo ${bs(costoDe(p))}</span><span class="tag ${num(p.precio) - costoDe(p) < 0 ? "rojo" : "gan"}">Ganas ${ganTxt(num(p.precio), costoDe(p))}</span>` : (COSTOS ? `<span class="tag gris">Sin costo</span>` : "")}
             ${cats.map(c => `<span class="tag">${esc(c)}</span>`).join("")}
             ${p.nuevo ? `<span class="tag">✨ Nuevo</span>` : ""}
             ${!p.activo ? `<span class="tag gris">Oculto</span>` : ""}
@@ -811,6 +838,8 @@
     F.reset();
     F.nombre.value = p?.nombre || "";
     F.precio.value = p?.precio ?? "";
+    F.costo.value = p && costoDe(p) != null ? costoDe(p) : "";
+    pintarGan();
     F.orden.value = p?.orden ?? 0;
     F.descripcion.value = p?.descripcion || "";
     F.nuevo.checked = p ? !!p.nuevo : true;
@@ -825,6 +854,12 @@
     $("#velo").hidden = $("#editor").hidden = false;
     setTimeout(() => F.nombre.focus(), 50);
   }
+  function pintarGan() {
+    const p = parseFloat(F.precio.value), c = parseFloat(F.costo.value), el = $("#ed-gan");
+    if (!(p >= 0) || !(c > 0)) { el.textContent = "—"; el.className = "ganancia"; return; }
+    el.textContent = ganTxt(p, c); el.className = "ganancia " + (p - c < 0 ? "mal" : "bien");
+  }
+  F.precio.addEventListener("input", pintarGan); F.costo.addEventListener("input", pintarGan);
   const cerrar = () => { $("#velo").hidden = $("#editor").hidden = true; };
   $("#b-nuevo").onclick = () => abrirEditor(null);
   $("#ed-cerrar").onclick = $("#velo").onclick = cerrar;
@@ -922,15 +957,21 @@
       stock: conVar ? 0 : Math.max(0, parseInt(F.stock.value) || 0)
     };
     const b = $("#ed-guardar"); b.disabled = true; b.textContent = "Guardando…";
-    let error;
+    let error, idFinal = edit ? edit.id : null;
     if (edit) ({ error } = await db.from("productos").update(datos).eq("id", edit.id));
     else {
       let id = slug(datos.nombre), n = 1;
       while (PRODS.some(p => p.id === id)) id = `${slug(datos.nombre)}-${++n}`;
+      idFinal = id;
       ({ error } = await db.from("productos").insert({ id, ...datos }));
     }
     b.disabled = false; b.textContent = "Guardar";
     if (error) return toast("No se pudo guardar: " + error.message, true);
+    if (COSTOS && idFinal) {
+      const cv = F.costo.value.trim();
+      const r = cv === "" ? await db.from("costos").delete().eq("id", idFinal) : await db.from("costos").upsert({ id: idFinal, costo: Math.max(0, parseFloat(cv) || 0) });
+      if (r.error) toast("El producto se guardó, pero el costo no: " + r.error.message, true);
+    }
     if (borrarFotos.length) await db.storage.from("fotos").remove(borrarFotos.map(rutaDe).filter(Boolean));
     cerrar(); toast(edit ? "Cambios guardados 💕" : "¡Producto agregado! 🎉"); cargar();
   };
