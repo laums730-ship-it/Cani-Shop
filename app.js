@@ -322,7 +322,20 @@
         <div><span class="sc-tag">${esc(SC.titulo || "Arma tu Scoop")}</span>
           <h2>Lucky Scoops</h2><p>${esc(SC.intro || "Elige tus colores y personajes favoritos y armamos tu scoop.")}</p>
           <span class="btn">Armar mi scoop</span></div>
-        <div class="sc-promo-imgs">${(SC.opciones || []).filter(o => o.imagen).slice(0, 3).map(o => `<img src="${esc(o.imagen)}" alt="">`).join("")}</div>
+        <div class="lucky-anim" aria-hidden="true">
+          <svg class="la-cuchara" viewBox="0 0 44 130"><defs>
+              <linearGradient id="laG" x1="0" x2="1"><stop offset="0" stop-color="#ffe3c2"/><stop offset=".45" stop-color="#fff6ec"/><stop offset="1" stop-color="#dcb8f0"/></linearGradient>
+              <radialGradient id="laP" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#ffc2dd"/><stop offset="1" stop-color="#f58ab8"/></radialGradient></defs>
+            <path d="M22 2c8 0 13 6 13 14 0 14-8 34-9 58h-8C17 50 9 30 9 16 9 8 14 2 22 2z" fill="url(#laG)" stroke="#f29cb0" stroke-width="2.2"/>
+            <ellipse cx="22" cy="104" rx="19" ry="23" fill="url(#laG)" stroke="#f29cb0" stroke-width="2.2"/>
+            <ellipse cx="22" cy="106" rx="13" ry="16" fill="#f7d6d2"/>
+            <circle class="la-perla" cx="22" cy="104" r="9" fill="url(#laP)"/>
+          </svg>
+          <img class="la-taza" src="taza-cani.webp" alt="">
+          <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <img class="la-premio la-p1" src="llavero.webp" alt="">
+          <img class="la-premio la-p2" src="libreta.webp" alt="">
+        </div>
       </a></section>` : ""}
 
       ${DEST.slice(1).map(destacada).join("")}
