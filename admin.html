@@ -2196,81 +2196,112 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     if (!ED) return;
     if (!ED.items.length) return toast("Agrega productos primero", true);
     const v = Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega"].map(k => [k, FP[k].value.trim()]));
-    const c = cuentas(ED.items, FP.envio.value, FP.pagado.value), pag = num(FP.pagado.value);
-    const T2 = AJ, logo = new URL(imgs.logo || "logo.png", location.href).href;
-    const ig = (T2.instagram || "").replace(/\/+$/, "").split("/").pop();
-    const tel = (T2.whatsapp || "").replace(/^591/, "");
-    const filas = ED.items.map(i => `<tr>
-        <td class="c">${num(i.cant)}</td>
-        <td><b>${esc(i.nombre)}${i.variante ? ` - ${esc(i.variante)}` : ""}</b>${i.id === "scoop" && (ED.extra || {}).tipo === "scoop" ? `<small>${ED.extra.caja ? `Caja: ${esc(ED.extra.caja)}<br>` : ""}Colores: ${esc((ED.extra.colores || []).join(", "))}<br>Personajes: ${esc((ED.extra.personajes || []).join(", "))}${ED.extra.carta ? `<br>Carta: “${esc(ED.extra.carta)}”` : ""}</small>` : ""}${num(i.desc) ? `<small>${esc(i.desc_nota || "Descuento")} (−${bs(i.desc)})</small>` : ""}</td>
-        <td class="r">${bs(i.precio)}</td><td class="r">${bs(linea(i))}</td></tr>`).join("");
-    const entrega = [v.entrega, v.ciudad, v.direccion].filter(Boolean).map(esc).join("<br>") || "—";
+    const c = cuentas(ED.items, FP.envio.value, FP.pagado.value), pag = num(FP.pagado.value), envio = num(FP.envio.value);
+    const T2 = AJ, logo = new URL("logo-nota.png", location.href).href;
+    const usr = u => (u || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+    const ig = usr(T2.instagram), tk = usr(T2.tiktok), tel = (T2.whatsapp || "").replace(/^591/, ""), web = location.host;
+    const conDesc = ED.items.some(i => num(i.desc) > 0);
+    const pagadoTodo = c.total > 0 && c.saldo <= 0.004, medio = (FP.medio_pago && FP.medio_pago.value) || ED.medio_pago || "";
+    const fPago = ED.pagado_en ? fecha(ED.pagado_en).split(",")[0] : "";
+    const detalleScoop = i => i.id === "scoop" && (ED.extra || {}).tipo === "scoop"
+      ? [ED.extra.caja, (ED.extra.colores || []).length ? "Colores: " + ED.extra.colores.join(", ") : "", (ED.extra.personajes || []).length ? "Personajes: " + ED.extra.personajes.join(", ") : ""].filter(Boolean).join(" · ") : "";
+    const filas = ED.items.map((i, k) => { const sub = [i.variante, detalleScoop(i)].filter(Boolean).map(esc).join(" · ");
+      return `<tr><td class="n">${k + 1}</td><td class="p"><b>${esc(i.nombre)}</b>${sub ? `<small>${sub}</small>` : ""}</td>
+        <td class="r">${bs(i.precio)}</td><td class="c">${num(i.cant)}</td>${conDesc ? `<td class="r d">${num(i.desc) ? "− " + bs(i.desc) : ""}</td>` : ""}<td class="r t">${bs(linea(i))}</td></tr>`; }).join("");
+    const entrega = [v.entrega, [v.direccion, v.ciudad].filter(Boolean).join(", ")].filter(Boolean).map(esc).join(" · ") || "—";
+    const I = { wa: '<path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.8z"/><path d="M9 9.5c.3 1.9 2.6 4.2 4.5 4.5l1.3-1.2 2 1-.4 1.6c-3.6.4-8.2-4.2-7.8-7.8l1.6-.4 1 2z"/>',
+      ig: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/>',
+      tk: '<path d="M14 3v11.5a3.5 3.5 0 1 1-3-3.46"/><path d="M14 3c.4 2.6 2.2 4.4 5 4.6"/>',
+      web: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 2.6 14.6 0 17M12 3.5c-2.6 2.4-2.6 14.6 0 17"/>' };
+    const ico = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[k]}</svg>`;
+    const redes = [tel && `<span>${ico("wa")}${esc(tel)}</span>`, ig && `<span>${ico("ig")}@${esc(ig)}</span>`, tk && `<span>${ico("tk")}@${esc(tk)}</span>`, `<span>${ico("web")}${esc(web)}</span>`].filter(Boolean).join("");
+    const k = Math.min(1, ((window.innerWidth || 800) - 16) / 575).toFixed(3);
+    const tienda = [esc(T2.ubicacion || "Santa Cruz de la Sierra, Bolivia"), tel ? "Tel. " + esc(tel) : "", ig ? "@" + esc(ig) : ""].filter(Boolean).join("<br>");
     const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nota de venta ${ED.numero ? "#" + ED.numero : ""} · ${esc(T2.nombre || "Cani Shop")}</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Comfortaa:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Comfortaa:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  @page{size:A4;margin:12mm}
+  @page{size:A5 portrait;margin:0}
   *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body{margin:0;background:#fef3f8;font-family:Comfortaa,Arial,sans-serif;color:#783746;font-size:13px}
-  .barra{position:sticky;top:0;display:flex;gap:8px;justify-content:center;padding:12px;background:#fef3f8}
-  .barra button{border:0;border-radius:999px;padding:13px 26px;font:700 15px Comfortaa,sans-serif;cursor:pointer;background:#783746;color:#fff}
-  .barra button.sec{background:#fff;color:#783746;border:2px solid #f3d3dd}
-  .hoja{position:relative;max-width:780px;margin:0 auto 30px;background:#fff;border:2px solid #fd95c8;border-radius:28px;padding:34px 36px 30px;overflow:hidden}
-  .cab{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
-  .cab img{height:84px}
-  .tab{background:#fd95c8;color:#783746;border-radius:0 0 0 30px;margin:-36px -38px 0 0;padding:22px 34px 20px;text-align:right;min-width:290px}
-  .tab h1{font-family:Fredoka,sans-serif;font-weight:600;font-size:30px;margin:0;letter-spacing:.5px}
-  .tab div{opacity:.95;font-weight:700;margin-top:4px}
-  .tienda{margin:14px 0 20px;line-height:1.5;color:#9b6a76}
-  .tienda b{color:#783746;font-size:14px}
-  .datos{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin-bottom:22px}
-  .dato span{display:block;font-size:10.5px;font-weight:800;letter-spacing:.8px;color:#783746;text-transform:uppercase;margin-bottom:4px}
-  .dato div{background:#fef3f8;border:1.5px solid #fce3ee;border-radius:12px;padding:9px 12px;min-height:38px}
-  table{width:100%;border-collapse:separate;border-spacing:0;border:1.5px solid #fd95c8;border-radius:14px;overflow:hidden}
-  th{background:#fd95c8;color:#783746;font-size:11px;letter-spacing:.8px;text-transform:uppercase;padding:11px 12px;text-align:left}
-  td{padding:11px 12px;border-top:1.5px solid #fce3ee;vertical-align:top}
-  tr:nth-child(even) td{background:#fffafb}
-  td small{display:block;color:#9b6a76;font-size:11.5px;margin-top:3px}
-  .c{text-align:center;width:56px}.r{text-align:right;white-space:nowrap}
-  .tot{margin:20px 0 0 auto;width:310px;display:flex;flex-direction:column;gap:5px}
-  .tot div{display:flex;justify-content:space-between;padding:8px 14px;background:#fef3f8;border-radius:10px}
-  .tot .big{background:#783746;color:#fff;font-family:Fredoka,sans-serif;font-size:21px;font-weight:600;padding:12px 14px;border-radius:12px}
-  .tot .saldo{background:#fff4d6;color:#8a5d00;font-weight:800}
-  .gracias{text-align:center;margin-top:26px;color:#783746;font-family:Fredoka,sans-serif;font-size:17px}
-  .gracias small{display:block;font-family:Comfortaa,sans-serif;color:#9b6a76;font-size:11.5px;margin-top:4px}
-  .estrella{position:absolute;color:#cca1e8;font-size:18px}
-  .hoja{width:780px}
-  @media screen{.hoja{zoom:${Math.min(1, ((window.innerWidth || 800) - 16) / 784).toFixed(3)}}}
-  tr,.tot,.gracias,.datos{break-inside:avoid;page-break-inside:avoid}
-  @media print{html,body{background:#fff;width:auto}.barra{display:none}
-    .hoja{width:100%;max-width:none;margin:0;padding:24px 26px 20px;border-radius:20px;font-size:12px}
-    .tab{margin:-26px -28px 0 0;padding:16px 26px 14px}.tab h1{font-size:24px}.cab img{height:66px}
-    .tienda{margin:10px 0 14px}.datos{gap:8px 12px;margin-bottom:14px}.dato div{padding:7px 10px;min-height:32px}
-    td,th{padding:8px 10px}.tot{margin-top:14px}.gracias{margin-top:16px}}
-  @media screen and (max-width:0px){.hoja{padding:24px 18px;border-radius:20px}.tab{margin:-24px -20px 0 0;min-width:0;padding:16px 18px}.tab h1{font-size:20px}.cab img{height:60px}.datos{grid-template-columns:1fr}.tot{width:100%}}
+  html,body{margin:0}
+  body{background:#f1e8ec;font-family:Comfortaa,Arial,sans-serif;color:#783746;font-size:9.5px;line-height:1.55}
+  .barra{position:sticky;top:0;z-index:5;display:flex;gap:8px;justify-content:center;padding:12px;background:#f1e8ec}
+  .barra button{border:0;border-radius:999px;padding:12px 24px;font:700 14px Comfortaa,sans-serif;cursor:pointer;background:#783746;color:#fff}
+  .barra button.sec{background:#fff;color:#783746}
+  .hoja{width:148mm;min-height:210mm;margin:0 auto 24px;background:#fff;display:flex;flex-direction:column}
+  @media screen{.hoja{zoom:${k};box-shadow:0 10px 30px rgba(120,55,70,.14)}}
+  .cab{display:flex;justify-content:space-between;align-items:flex-start;padding:11mm 10mm 0}
+  h1{font-family:Fredoka,sans-serif;font-weight:600;font-size:25px;line-height:1;margin:0}
+  .num{font-size:11px;margin-top:1.8mm;letter-spacing:.3px}
+  .cab img{height:24mm;width:auto;display:block;margin-top:-5mm;margin-right:-2mm}
+  .info{display:grid;grid-template-columns:1.1fr 1.2fr .8fr;gap:5mm;padding:7mm 10mm 6mm}
+  .info b{display:block;font-size:9.5px;font-weight:700;margin-bottom:1mm}
+  .info p{margin:0;color:#9a7780}
+  .info p strong{color:#783746;font-weight:700}
+  .banda{margin:0 10mm;border:1.5px solid #fd95c8;border-radius:6mm;padding:3mm 3mm 4mm}
+  table{width:100%;border-collapse:collapse}
+  th{background:#fce3ee;font-size:9px;font-weight:700;text-align:left;padding:2.4mm 2mm;box-shadow:1px 0 0 #fce3ee,-1px 0 0 #fce3ee}
+  th:first-child{border-radius:999px 0 0 999px;padding-left:4mm}th:last-child{border-radius:0 999px 999px 0;padding-right:4mm}
+  td:first-child{padding-left:4mm}td:last-child{padding-right:4mm}
+  td{padding:2.3mm 1.5mm;vertical-align:top;color:#783746}
+  tbody tr:first-child td{padding-top:3.6mm}
+  tbody tr:last-child td{padding-bottom:3.6mm}
+  td.n{width:6mm;color:#b89aa2}
+  td.p b{font-weight:700;display:block}
+  td.p small{display:block;color:#a8838c;font-size:8.3px;margin-top:.2mm}
+  .r{text-align:right;white-space:nowrap}.c{text-align:center;white-space:nowrap}
+  th.r{text-align:right}th.c{text-align:center}
+  td.d{color:#c2557f}
+
+  .bajo{display:grid;grid-template-columns:1fr auto;gap:8mm;margin-top:3mm;align-items:end;padding:0 4mm}
+  .bajo h3{font-size:9.5px;font-weight:700;margin:0 0 1.6mm}
+  .tag{display:inline-block;border-radius:999px;padding:1.3mm 4mm;font-weight:700;font-size:8.5px;letter-spacing:.8px}
+  .tag.ok{background:#783746;color:#fff}
+  .tag.debe{background:#fff;color:#783746;border:1.2px solid #783746}
+  .medio{margin-top:1.6mm;color:#9a7780}
+  .tot{min-width:50mm}
+  .tot div{display:flex;justify-content:space-between;gap:8mm;padding:.8mm 0}
+  .tot div span:first-child{font-weight:700}
+  .tot .d span:last-child{color:#c2557f}
+  .tot .total{margin-top:1.6mm;background:#fce3ee;border-radius:999px;padding:2mm 4mm;margin-right:-1mm;margin-left:-4mm;font-family:Fredoka,sans-serif;font-weight:600;font-size:14px}
+  .pie{margin-top:auto;padding:7mm 10mm 8mm}
+  .gracias{font-family:Fredoka,sans-serif;font-weight:600;font-size:12px;margin-bottom:2.2mm}
+  .redes{display:flex;flex-wrap:wrap;gap:1.5mm 5mm;font-size:8.8px;font-weight:700}
+  .redes span{display:inline-flex;align-items:center;gap:1.3mm}
+  .redes svg{width:3.4mm;height:3.4mm;fill:none;stroke:#783746;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .legal{margin-top:3mm;font-size:7.3px;color:#b89aa2}
+  @media print{body{background:#fff}.barra{display:none}.hoja{margin:0;width:148mm;height:210mm;min-height:0}}
 </style></head><body>
 <div class="barra"><button onclick="print()">Imprimir / Guardar PDF</button><button class="sec" onclick="close()">Cerrar</button></div>
 <div class="hoja">
-  <span class="estrella" style="left:22px;bottom:22px">✦</span><span class="estrella" style="right:30px;bottom:60px;font-size:13px">✦</span>
-  <div class="cab"><img src="${logo}" alt="${esc(T2.nombre || "Cani Shop")}">
-    <div class="tab"><h1>NOTA DE VENTA</h1><div>N.º ${ED.numero ? "#" + ED.numero : "—"}</div><div>${fecha(ED.creado || new Date()).split(",")[0]}</div></div></div>
-  <div class="tienda"><b>${esc(T2.nombre || "Cani Shop")}</b><br>${esc(T2.ubicacion || "")}${tel ? `<br>Tel.: ${esc(tel)}` : ""}${ig ? `<br>Instagram: @${esc(ig)}` : ""}</div>
-  <div class="datos">
-    <div class="dato"><span>Cliente</span><div>${esc(v.cliente) || "—"}</div></div>
-    <div class="dato"><span>Teléfono de contacto</span><div>${esc(v.telefono) || "—"}</div></div>
-    <div class="dato"><span>Fecha</span><div>${fecha(ED.creado || new Date())}</div></div>
-    <div class="dato"><span>Entrega</span><div>${entrega}</div></div>
+  <div class="cab">
+    <div><h1>Nota de venta</h1><div class="num">N.º ${ED.numero ? String(ED.numero).padStart(5, "0") : "—"}</div></div>
+    <img src="${logo}" alt="${esc(T2.nombre || "Cani Shop")}">
   </div>
-  <table><thead><tr><th class="c">Cant.</th><th>Producto</th><th class="r">Precio unit.</th><th class="r">Total</th></tr></thead><tbody>${filas}</tbody></table>
-  <div class="tot">
-    <div><span>Subtotal</span><span>${bs(c.sub)}</span></div>
-    ${c.desc ? `<div><span>Descuentos</span><span>− ${bs(c.desc)}</span></div>` : ""}
-    <div><span>Envío</span><span>${bs(FP.envio.value)}</span></div>
-    <div class="big"><span>TOTAL</span><span>${bs(c.total)}</span></div>
-    <div><span>Pagado</span><span>${bs(pag)}</span></div>
-    ${c.saldo > 0 ? `<div class="saldo"><span>Saldo</span><span>${bs(c.saldo)}</span></div>` : ""}
+  <div class="info">
+    <div><b>${esc(T2.nombre || "Cani Shop")}</b><p>${tienda}</p></div>
+    <div><b>Cliente</b><p><strong>${esc(v.cliente) || "—"}</strong>${v.telefono ? "<br>" + esc(v.telefono) : ""}<br>${entrega}</p></div>
+    <div><b>Fecha</b><p>${fecha(ED.creado || new Date()).split(",")[0]}</p></div>
   </div>
-  <div class="gracias">¡Gracias por tu compra! ♡<small>${ig ? "Síguenos en Instagram @" + esc(ig) + " · " : ""}${esc(T2.ubicacion || "")}</small></div>
+  <div class="banda">
+    <table><thead><tr><th>N°</th><th>Producto</th><th class="r">Precio</th><th class="c">Cant.</th>${conDesc ? `<th class="r">Desc.</th>` : ""}<th class="r">Total</th></tr></thead>
+      <tbody>${filas}</tbody></table>
+    <div class="bajo">
+      <div><h3>Estado del pedido</h3>${pagadoTodo ? `<span class="tag ok">PAGADO</span>` : `<span class="tag debe">POR PAGAR</span>`}
+        ${medio && pagadoTodo ? `<div class="medio">${esc(medio)}${fPago ? " · " + fPago : ""}</div>` : ""}</div>
+      <div class="tot">
+        <div><span>Subtotal</span><span>${bs(c.sub)}</span></div>
+        ${c.desc ? `<div class="d"><span>Descuentos</span><span>− ${bs(c.desc)}</span></div>` : ""}
+        ${envio ? `<div><span>Envío</span><span>${bs(envio)}</span></div>` : ""}
+        <div class="total"><span>Total</span><span>${bs(c.total)}</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="pie">
+    <div class="gracias">¡Gracias por tu compra! ♡</div>
+    <div class="redes">${redes}</div>
+    <div class="legal">Nota de venta · no válida como factura</div>
+  </div>
 </div></body></html>`;
     const w = window.open("", "_blank");
     if (!w) return toast("Permite las ventanas emergentes para ver la nota", true);
