@@ -1301,3 +1301,10 @@ input,select,textarea{max-width:100%;min-width:0}
 @media (max-width:820px){.pdx-rel .grilla{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}}
 .aviso-ent{background:#f8f1fd;border:2px solid #e8d6f5}
 .aviso-ent svg{stroke:#ad7fd0}
+/* Producto en compu: con una sola foto, foto y panel a mitades; con fotos impares, la última ocupa el ancho */
+@media (min-width:821px){
+  .pdx.una-foto{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:1240px}
+  .pdx.una-foto .pdx-pista{grid-template-columns:minmax(0,1fr)}
+  .pdx.una-foto .pdx-ph{aspect-ratio:1}
+  .pdx:not(.una-foto) .pdx-ph:last-child:nth-child(odd){grid-column:1/-1;aspect-ratio:8/5}
+}

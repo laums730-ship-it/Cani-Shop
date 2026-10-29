@@ -471,6 +471,7 @@
     </section>`;
     const pintarFotos = () => {
       const f = fotos();
+      document.querySelector(".pdx").classList.toggle("una-foto", f.length === 1);
       $("#pdx-fotos").innerHTML = `<div class="pdx-pista" id="pdx-pista">${f.map((u, k) => `<div class="pdx-ph"><img src="${esc(u)}" alt="${k ? "" : esc(sinEmoji(p.nombre))}" ${k > 1 ? 'loading="lazy"' : ""}></div>`).join("")}</div>
         ${f.length > 1 ? `<div class="pdx-puntos">${f.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
       const pista = $("#pdx-pista");
