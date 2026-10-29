@@ -284,6 +284,27 @@
   const caniAnim = () => `<div class="cani-anim" role="img" aria-label="Cani, el gatito de Cani Shop, jugando en su caja">
       <img class="ca-caja" src="cani-caja.webp" alt=""><span class="ca-clip"><img class="ca-gato" src="cani-gato.webp" alt=""></span><img class="ca-frente" src="cani-frente.webp" alt=""></div>`;
 
+  // Ícono de línea para cada categoría según su nombre (botones de Categorías del inicio)
+  const ICON_CAT = {
+    estrella: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
+    libreta: '<rect x="5" y="3" width="13" height="18" rx="2"/><path d="M9 3v18M12 8h3M12 12h3"/>',
+    lapiz: '<path d="M15.5 4.5l4 4L9 19l-5 1 1-5z"/><path d="M13.5 6.5l4 4"/>',
+    labial: '<path d="M9 21h6V11H9z"/><path d="M10 11V6l4-3v8"/>',
+    regalo: '<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18"/><path d="M12 9c-2-4-6-4-6-1.5S12 9 12 9c2-4 6-4 6-1.5S12 9 12 9"/>',
+    llavero: '<circle cx="12" cy="6" r="3"/><path d="M12 9v3"/><path d="M12 21s-5-3.2-5-6.5a2.8 2.8 0 0 1 5-1.7 2.8 2.8 0 0 1 5 1.7C17 17.8 12 21 12 21z"/>',
+    peluche: '<circle cx="7" cy="6.5" r="2.5"/><circle cx="17" cy="6.5" r="2.5"/><circle cx="12" cy="13" r="7"/><circle cx="9.5" cy="12" r=".6" fill="currentColor"/><circle cx="14.5" cy="12" r=".6" fill="currentColor"/><path d="M10.5 15.5c1 .8 2 .8 3 0"/>',
+    sticker: '<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4"/><circle cx="10" cy="12" r=".6" fill="currentColor"/><circle cx="14" cy="12" r=".6" fill="currentColor"/><path d="M10 15c1.2 1 2.8 1 4 0"/>',
+    bolso: '<path d="M5 9h14l-1 11H6z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>',
+    taza: '<path d="M5 8h11v7a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M16 10h2a2 2 0 0 1 0 4h-2"/>',
+    corazon: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
+  };
+  const iconoCat = nombre => {
+    const n = String(nombre).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const k = /juego|kawaii|juguete/.test(n) ? "estrella" : /papel|libret|cuaderno|agenda/.test(n) ? "libreta" : /lapic|bolig|pluma|boli|resalt|marcador/.test(n) ? "lapiz"
+      : /beauty|belleza|maquill|labial|skin/.test(n) ? "labial" : /happy|box|caja|regalo|scoop/.test(n) ? "regalo" : /accesor|llaver|aret|collar/.test(n) ? "llavero"
+      : /peluch/.test(n) ? "peluche" : /sticker|pegat/.test(n) ? "sticker" : /bols|mochil|cartuch|estuche|billeter/.test(n) ? "bolso" : /taza|termo|vaso|botell/.test(n) ? "taza" : "corazon";
+    return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_CAT[k]}</svg>`;
+  };
   function inicio() {
     const bans = (T.banners || []).filter(b => b && b.imagen);
     const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
@@ -325,13 +346,11 @@
       ${pers.length ? `<section class="seccion pers-fila"><h2 class="fila-tit">Personajes</h2><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
 
       <h2 class="fila-tit">Categorías</h2>
-      <section class="seccion cat-mosaico ${categs.length <= 6 || categs.length === 9 ? "c3" : "c4"}">${categs.map((c, i) => { const f = c.imagen || ((PRODS.find(p => (p.categorias || []).includes(c.id) && (p.imagenes || []).length) || {}).imagenes || [])[0];
-        const n = categs.length, resto = n % 3, final = i >= n - resto;
-        return `<a class="cat-tile ${i % 3 === 2 ? "grande" : ""} ${final && resto === 1 ? "grande sola" : ""} ${final && resto === 2 ? "par-final" : ""} ${n % 2 && i === n - 1 ? "impar-final" : ""}" href="#/catalogo/${c.id}">${f ? `<img loading="lazy" src="${esc(f)}" alt="">` : `<span class="cat-tile-ini">${esc(inicial(c.nombre))}</span>`}<span class="cat-tile-nom">${esc(c.nombre)}</span></a>`; }).join("")}</section>
-
-      <section class="seccion ben"><div class="ben-in">${VAL.map((v, i) => `<div class="ben-c ben-c${i % 3}"><span class="ben-ico">${ICON_VAL[i] || ICON_VAL[0]}</span><div class="ben-tx"><h3>${esc(v.t)}</h3>${v.d ? `<p>${esc(v.d)}</p>` : ""}</div>${v.e ? `<span class="ben-tag">${esc(v.e)}</span>` : ""}</div>`).join("")}</div></section>
+      <section class="seccion cat-pills">${categs.map((c, i) => `<a class="cat-pill cp${i % 3}" href="#/catalogo/${c.id}"><span class="cp-ico">${iconoCat(c.nombre)}</span>${esc(c.nombre)}</a>`).join("")}</section>
 
       ${destacada(DEST[0])}
+
+      <section class="seccion ben"><div class="ben-in">${VAL.map((v, i) => `<div class="ben-c ben-c${i % 3}"><span class="ben-ico">${ICON_VAL[i] || ICON_VAL[0]}</span><div class="ben-tx"><h3>${esc(v.t)}</h3>${v.d ? `<p>${esc(v.d)}</p>` : ""}</div>${v.e ? `<span class="ben-tag">${esc(v.e)}</span>` : ""}</div>`).join("")}</div></section>
 
       ${SC ? `<section class="seccion"><a class="sc-promo" href="#/scoops">
         <div><span class="sc-tag">${esc(SC.titulo || "Arma tu Scoop")}</span>

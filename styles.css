@@ -1382,3 +1382,18 @@ input,select,textarea{max-width:100%;min-width:0}
 @media (max-width:820px){.hc{grid-template-columns:minmax(0,1fr)!important;gap:18px}.hc-esc{width:100%}}
 /* Fondo de la portada: círculo rosa liso (sin hueco) */
 .hc-esc{border-radius:50%!important;background:var(--rosa)!important}
+/* Categorías del inicio: botones sticker con relieve */
+.cat-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;max-width:1000px;margin:0 auto}
+.cat-pill{display:inline-flex;align-items:center;gap:10px;background:#fff;border:2px solid #f3d7e4;border-bottom-width:5px;border-radius:999px;padding:8px 18px 8px 8px;font-family:var(--f-tit);font-weight:600;font-size:1.06rem;color:var(--cafe);text-decoration:none;transition:transform .15s,border-color .15s,background .15s}
+.cat-pill:hover{transform:translateY(-3px);border-color:var(--rosa-fuerte);background:#fff6fa}
+.cat-pill:active{transform:translateY(2px);border-bottom-width:2px}
+.cat-pill:focus-visible{outline:3px solid var(--lila);outline-offset:3px}
+.cp-ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.cp-ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cp0 .cp-ico{background:var(--rosa);color:#ee6fae}
+.cp1 .cp-ico{background:#f1e6fb;color:#ad7fd0}
+.cp2 .cp-ico{background:#fdf1e7;color:#d98a5e}
+@media (max-width:760px){.cat-pills{gap:10px}.cat-pill{font-size:.95rem;padding:6px 14px 6px 6px}.cp-ico{width:34px;height:34px}.cp-ico svg{width:19px;height:19px}}
+@media (prefers-reduced-motion:reduce){.cat-pill{transition:none}}
+/* Etiqueta "Nuevo" sin amarillo */
+.tarjeta .etiqueta:not(.agotado){background:var(--rosa-fuerte)!important;color:var(--cafe)!important}
