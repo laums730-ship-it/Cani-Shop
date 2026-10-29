@@ -240,7 +240,35 @@
     .bh-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .bh-t small{color:var(--gris);white-space:nowrap;font-weight:700}
     .bh-c i{display:block;height:7px;border-radius:999px;background:var(--rosa-fuerte);margin-top:4px}
-    @media (max-width:900px){.est-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.est-dos{grid-template-columns:minmax(0,1fr)}}
+    .est-kpis{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+    .kpi-fijo{cursor:default;background:#fffdf0}
+    .kpi em.neutro{color:var(--gris);font-weight:600}
+    .est-tres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .bh-sub{display:block;color:var(--gris);font-size:.74rem;margin-top:3px;font-weight:600}
+    .barra-h .btn{flex:none}
+    .dato-g{margin:0 0 12px;font-size:.88rem}.dato-g b{font-family:var(--f-tit);font-size:1.2rem;color:var(--rosa-tinta)}
+    .anillo{--p:0;width:92px;height:92px;border-radius:50%;margin:2px auto 6px;display:grid;place-items:center;background:conic-gradient(var(--rosa-fuerte) calc(var(--p)*1%),var(--rosa) 0)}
+    .anillo::before{content:"";grid-area:1/1;width:70px;height:70px;border-radius:50%;background:#fff}
+    .anillo b{grid-area:1/1;font-family:var(--f-tit);font-size:1.15rem;color:var(--rosa-tinta);z-index:1}
+    .anillo-t{text-align:center;font-size:.8rem;color:var(--gris);margin:0 0 12px}
+    .periodo{gap:6px}
+    .per-abrir{border:0;background:none;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;min-width:170px;padding:2px 8px;border-radius:12px}
+    .per-abrir:hover{background:var(--rosa-claro)}
+    .per-abrir b{font-family:var(--f-tit);font-size:1.05rem}
+    .per-abrir b::after{content:" ▾";font-size:.75em}
+    .per-abrir small{font-size:.72rem;color:var(--gris)}
+    .per-abrir small:empty{display:none}
+    .per-pop{position:fixed;inset:0;z-index:80;background:rgba(120,55,70,.28);display:grid;place-items:start center;padding:90px 14px 14px}
+    .per-pop[hidden]{display:none}
+    .per-caja{background:#fff;border-radius:20px;padding:18px;width:min(380px,100%);box-shadow:0 20px 50px rgba(120,55,70,.25)}
+    .per-caja h3{margin:0 0 12px;font-size:1.05rem}
+    .per-fechas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+    .per-fechas label{display:flex;flex-direction:column;gap:4px;font-size:.75rem;font-weight:700;color:var(--gris)}
+    .per-fechas input{border:2px solid var(--borde);border-radius:12px;padding:9px;font:inherit;font-size:16px;color:var(--cafe);background:#fff;min-width:0}
+    .per-opc{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+    .per-opc button{border:0;background:none;text-align:left;padding:11px 12px;border-radius:12px;font:inherit;font-size:.9rem;cursor:pointer}
+    .per-opc button:hover{background:var(--rosa-claro);color:var(--rosa-tinta)}
+    @media (max-width:900px){.est-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.est-dos,.est-tres{grid-template-columns:minmax(0,1fr)}}
     html,body{max-width:100%;overflow-x:hidden}
     button,select,input,textarea{color:inherit;font-family:inherit;-webkit-text-size-adjust:100%}
     a{color:inherit}
@@ -465,7 +493,7 @@
 
    <!-- ===== Transacciones ===== -->
    <div id="t-transacciones" hidden>
-    <div class="periodo"><button type="button" class="per-b" data-per="-1" aria-label="Mes anterior">‹</button><b class="per-txt"></b><button type="button" class="per-b" data-per="1" aria-label="Mes siguiente">›</button></div>
+    <div class="periodo"><button type="button" class="per-b" data-per="-1" aria-label="Período anterior">‹</button><button type="button" class="per-abrir"><b class="per-txt"></b><small class="per-rango"></small></button><button type="button" class="per-b" data-per="1" aria-label="Período siguiente">›</button></div>
     <div class="resumen" id="tx-resumen"></div>
     <div class="barra"><input id="tx-buscar" type="search" placeholder="Buscar por cliente, número o producto…"></div>
     <div class="aviso-config" id="tx-falta" hidden style="margin-bottom:16px">Para registrar la fecha y el medio de pago de cada transacción, corre <b>supabase-transacciones.sql</b> en Supabase → <b>SQL Editor</b> → <b>Run</b>. Mientras tanto se usa la fecha del pedido.</div>
@@ -475,18 +503,39 @@
 
    <!-- ===== Estadísticas ===== -->
    <div id="t-estadisticas" hidden>
-    <div class="periodo"><button type="button" class="per-b" data-per="-1" aria-label="Mes anterior">‹</button><b class="per-txt"></b><button type="button" class="per-b" data-per="1" aria-label="Mes siguiente">›</button></div>
+    <div class="periodo"><button type="button" class="per-b" data-per="-1" aria-label="Período anterior">‹</button><button type="button" class="per-abrir"><b class="per-txt"></b><small class="per-rango"></small></button><button type="button" class="per-b" data-per="1" aria-label="Período siguiente">›</button></div>
     <div class="est-kpis" id="est-kpis"></div>
     <div class="caja-est">
       <div class="est-cab"><h3 id="est-tit">Facturación</h3>
-        <div class="est-tabs" id="est-vista"><button type="button" data-v="hora" class="on">Hora</button><button type="button" data-v="dia">Día</button><button type="button" data-v="semana">Día de la semana</button><button type="button" data-v="mes">Mes</button></div></div>
+        <div class="est-tabs" id="est-vista"><button type="button" data-v="hora">Hora</button><button type="button" data-v="dia" class="on">Día</button><button type="button" data-v="semana">Día de la semana</button><button type="button" data-v="mes">Mes</button></div></div>
       <div id="est-graf" class="est-graf"></div>
       <div class="est-leyenda"><span class="ley-bien">Mejor</span><span class="ley-mal">Peor</span></div>
       <div class="est-tabla-wrap"><table class="est-tabla" id="est-tabla"></table></div>
     </div>
     <div class="est-dos">
-      <div class="caja-est"><h3>Productos más vendidos</h3><div id="est-top"></div></div>
-      <div class="caja-est"><h3>Medios de pago</h3><div id="est-medios"></div><h3 style="margin-top:18px">Origen de las ventas</h3><div id="est-origen"></div></div>
+      <div class="caja-est"><div class="est-cab"><h3>Productos más vendidos</h3><div class="est-tabs" id="top-modo"><button type="button" data-m="valor" class="on">Por valor</button><button type="button" data-m="unid">Por unidades</button></div></div><div id="est-top"></div></div>
+      <div class="caja-est"><h3>Mejores clientes</h3><div id="est-clientes"></div></div>
+    </div>
+    <div class="est-tres">
+      <div class="caja-est"><h3>Medios de pago</h3><div id="est-medios"></div></div>
+      <div class="caja-est"><h3>Origen de las ventas</h3><div id="est-origen"></div></div>
+      <div class="caja-est"><h3>Clientes nuevos y recurrentes</h3><div id="est-recurr"></div></div>
+    </div>
+    <div class="est-dos">
+      <div class="caja-est"><h3>Ventas por categoría y personaje</h3><div id="est-cats"></div></div>
+      <div class="caja-est"><h3>Ventas por ciudad</h3><div id="est-ciudades"></div></div>
+    </div>
+    <div class="est-dos">
+      <div class="caja-est"><h3>Lucky Scoops y extras</h3><div id="est-scoops"></div></div>
+      <div class="caja-est"><h3>Descuentos otorgados</h3><div id="est-desc"></div></div>
+    </div>
+    <div class="est-dos">
+      <div class="caja-est"><h3>Productos sin movimiento</h3><p class="ayuda" style="margin:-4px 0 10px">Con stock, pero sin ventas en los últimos 60 días. Ideales para promos, combos o Happy Box.</p><div id="est-quietos"></div></div>
+      <div class="caja-est"><h3>Clientes para reactivar</h3><p class="ayuda" style="margin:-4px 0 10px">Compraron antes, pero no en los últimos 60 días. Escríbeles con una novedad o un cupón.</p><div id="est-reactivar"></div></div>
+    </div>
+    <div class="est-dos">
+      <div class="caja-est"><h3>Más vendidos que se están agotando</h3><p class="ayuda" style="margin:-4px 0 10px">Al ritmo de venta de los últimos 30 días, les quedan pocos días de stock. Reponlos pronto.</p><div id="est-reponer"></div></div>
+      <div class="caja-est"><h3>Pedidos del período</h3><div id="est-embudo"></div></div>
     </div>
    </div>
 
@@ -693,6 +742,22 @@
     <button class="btn btn-peligro" id="cli-borrar" title="Borrar" aria-label="Borrar"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
   </div>
 </aside>
+
+<!-- ===== Selector de período ===== -->
+<div class="per-pop" id="per-pop" hidden>
+  <div class="per-caja">
+    <h3>Selecciona un período</h3>
+    <div class="per-fechas"><label>Inicial<input type="date" id="per-ini"></label><label>Final<input type="date" id="per-fin"></label></div>
+    <button type="button" class="btn btn-sm" id="per-aplicar" style="width:100%;margin-bottom:10px">Aplicar fechas</button>
+    <div class="per-opc">
+      <button type="button" data-p="hoy">Hoy</button><button type="button" data-p="ayer">Ayer</button>
+      <button type="button" data-p="semana">Esta semana</button><button type="button" data-p="semana-1">Semana pasada</button>
+      <button type="button" data-p="mes">Este mes</button><button type="button" data-p="mes-1">Mes pasado</button>
+      <button type="button" data-p="30d">Últimos 30 días</button><button type="button" data-p="90d">Últimos 90 días</button>
+      <button type="button" data-p="anio">Este año</button><button type="button" data-p="anio-1">El año pasado</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== Editor de pedido ===== -->
 <div class="velo" id="ped-velo" hidden></div>
@@ -1158,7 +1223,7 @@
     const b = e.target.closest("[data-tab]"); if (!b) return;
     document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
     ["productos", "tienda", "pedidos", "clientes", "transacciones", "estadisticas"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
-    if (b.dataset.tab === "transacciones" || b.dataset.tab === "estadisticas") cargarTx(b.dataset.tab);
+    if (b.dataset.tab === "transacciones" || b.dataset.tab === "estadisticas") cargarTx();
     if (b.dataset.tab === "clientes") { cargarClientes(); if (!PEDS.length) cargarPedidos(true); }
     if (b.dataset.tab === "pedidos") cargarPedidos();
     if (b.dataset.tab === "tienda" && !ajCargados) cargarAjustes();
@@ -1660,52 +1725,110 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
 
   // ---------- Transacciones y estadísticas ----------
-  let TX = [], TX_COLS = false, PER = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })(), EST_V = "hora", EST_MET = "fact";
+  let TX = [], TODOS = [], TX_COLS = false, EST_V = "dia", EST_MET = "fact", TOP_M = "valor";
   const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const DIA_MS = 864e5;
   const fechaTx = p => new Date(p.pagado_en || p.creado);
   const totalPed = p => cuentas(p.items || [], p.envio, 0).total;
   const costoItem = i => (COSTOS && COSTOS[i.id] != null) ? COSTOS[i.id] * num(i.cant) : null;
-  async function cargarTx(tab) {
+  const EXTRAS = ["video-scoop", "caja-scoop", "carta-scoop"];
+  const telN = t => { const d = String(t || "").replace(/\D/g, ""); return /^[67]\d{7}$/.test(d) ? "591" + d : d; };
+  const cliKey = p => { const t = telN(p.telefono); return t.length >= 8 ? t : "n:" + sinTilde(p.cliente || "").trim(); };
+  const may = t => t ? t[0].toUpperCase() + t.slice(1) : t;
+  // ----- Períodos -----
+  const d0 = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const sumD = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const lunes = d => sumD(d0(d), -((d.getDay() + 6) % 7));
+  function periodo(tipo, base = new Date()) {
+    const h = d0(base);
+    if (tipo === "hoy") return { tipo, ini: h, fin: sumD(h, 1) };
+    if (tipo === "ayer") return { tipo: "dia", ini: sumD(h, -1), fin: h };
+    if (tipo === "semana") { const l = lunes(base); return { tipo, ini: l, fin: sumD(l, 7) }; }
+    if (tipo === "semana-1") { const l = sumD(lunes(base), -7); return { tipo: "semana", ini: l, fin: sumD(l, 7) }; }
+    if (tipo === "mes") return { tipo, ini: new Date(h.getFullYear(), h.getMonth(), 1), fin: new Date(h.getFullYear(), h.getMonth() + 1, 1) };
+    if (tipo === "mes-1") return { tipo: "mes", ini: new Date(h.getFullYear(), h.getMonth() - 1, 1), fin: new Date(h.getFullYear(), h.getMonth(), 1) };
+    if (tipo === "anio") return { tipo, ini: new Date(h.getFullYear(), 0, 1), fin: new Date(h.getFullYear() + 1, 0, 1) };
+    if (tipo === "anio-1") return { tipo: "anio", ini: new Date(h.getFullYear() - 1, 0, 1), fin: new Date(h.getFullYear(), 0, 1) };
+    if (tipo === "30d" || tipo === "90d") { const n = parseInt(tipo); return { tipo: "rango", ini: sumD(h, 1 - n), fin: sumD(h, 1) }; }
+  }
+  let PER = periodo("mes");
+  try { const g = JSON.parse(localStorage.getItem("est-periodo") || "null"); if (g && g.tipo && g.tipo !== "rango" && g.tipo !== "dia") PER = periodo(g.tipo); } catch (e) {}
+  const diasDe = P => Math.round((P.fin - P.ini) / DIA_MS);
+  function mover(P, k) {
+    if (P.tipo === "mes") return { tipo: "mes", ini: new Date(P.ini.getFullYear(), P.ini.getMonth() + k, 1), fin: new Date(P.ini.getFullYear(), P.ini.getMonth() + k + 1, 1) };
+    if (P.tipo === "anio") return { tipo: "anio", ini: new Date(P.ini.getFullYear() + k, 0, 1), fin: new Date(P.ini.getFullYear() + k + 1, 0, 1) };
+    const n = diasDe(P); return { tipo: P.tipo === "hoy" ? "dia" : P.tipo, ini: sumD(P.ini, k * n), fin: sumD(P.fin, k * n) };
+  }
+  const fCorta = d => `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}${d.getFullYear() !== new Date().getFullYear() ? " " + d.getFullYear() : ""}`;
+  function perTxt(P = PER) {
+    const ult = sumD(P.fin, -1), hoy = d0(new Date());
+    if (P.tipo === "mes") return may(MESES[P.ini.getMonth()]) + " " + P.ini.getFullYear();
+    if (P.tipo === "anio") return "Año " + P.ini.getFullYear();
+    if (diasDe(P) === 1) return +P.ini === +hoy ? "Hoy" : +P.ini === +sumD(hoy, -1) ? "Ayer" : `${DIAS[P.ini.getDay()]} ${fCorta(P.ini)}`;
+    if (P.tipo === "semana") return +P.ini === +lunes(hoy) ? "Esta semana" : +P.ini === +sumD(lunes(hoy), -7) ? "Semana pasada" : "Semana del " + fCorta(P.ini);
+    return `${fCorta(P.ini)} – ${fCorta(ult)}`;
+  }
+  const perRango = (P = PER) => diasDe(P) === 1 || P.tipo === "rango" ? "" : `${fCorta(P.ini)} al ${fCorta(sumD(P.fin, -1))}`;
+  const anterior = P => P.tipo === "mes" || P.tipo === "anio" ? mover(P, -1) : { tipo: "rango", ini: sumD(P.ini, -diasDe(P)), fin: P.ini };
+  const enRango = (l, P, f = fechaTx) => l.filter(p => { const d = f(p); return d >= P.ini && d < P.fin; });
+  const isoD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  function ponerPer(P) {
+    PER = P; try { localStorage.setItem("est-periodo", JSON.stringify({ tipo: P.tipo })); } catch (e) {}
+    if (diasDe(P) <= 1 && EST_V === "dia") EST_V = "hora";
+    if (diasDe(P) > 1 && EST_V === "hora" && diasDe(P) > 7) EST_V = "dia";
+    document.querySelectorAll("#est-vista button").forEach(x => x.classList.toggle("on", x.dataset.v === EST_V));
+    $("#per-pop").hidden = true; pintarTx(); pintarEst();
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".per-b"); if (b) return ponerPer(mover(PER, +b.dataset.per));
+    const a = e.target.closest(".per-abrir");
+    if (a) { $("#per-ini").value = isoD(PER.ini); $("#per-fin").value = isoD(sumD(PER.fin, -1)); $("#per-pop").hidden = false; return; }
+    if (e.target.id === "per-pop") $("#per-pop").hidden = true;
+    const o = e.target.closest("[data-p]"); if (o) ponerPer(periodo(o.dataset.p));
+  });
+  $("#per-aplicar").onclick = () => {
+    const a = $("#per-ini").value, z = $("#per-fin").value; if (!a || !z) return toast("Elige las dos fechas", true);
+    let ini = new Date(a + "T00:00"), fin = sumD(new Date(z + "T00:00"), 1); if (fin <= ini) [ini, fin] = [sumD(fin, -1), sumD(ini, 1)];
+    ponerPer({ tipo: "rango", ini, fin });
+  };
+  async function cargarTx() {
     const probe = await db.from("pedidos").select("pagado_en,medio_pago").limit(1);
     TX_COLS = !probe.error;
-    const cols = "numero,creado,estado,origen,cliente,telefono,items,envio,pagado" + (TX_COLS ? ",pagado_en,medio_pago" : "");
-    const { data, error } = await db.from("pedidos").select(cols).in("estado", ["pagado", "entregado"]).order("numero", { ascending: false }).limit(5000);
-    TX = error ? [] : (data || []);
+    const cols = "numero,creado,estado,origen,cliente,telefono,ciudad,entrega,items,envio,pagado,extra" + (TX_COLS ? ",pagado_en,medio_pago" : "");
+    const { data, error } = await db.from("pedidos").select(cols).order("numero", { ascending: false }).limit(10000);
+    TODOS = error ? [] : (data || []);
+    TX = TODOS.filter(p => p.estado === "pagado" || p.estado === "entregado");
     $("#tx-falta").hidden = TX_COLS;
     pintarTx(); pintarEst();
   }
-  const enPeriodo = (y, m) => TX.filter(p => { const d = fechaTx(p); return d.getFullYear() === y && d.getMonth() === m; });
   function kpisDe(l) {
-    let fact = 0, gan = 0, unid = 0, sinCosto = 0;
+    let fact = 0, gan = 0, unid = 0, sinCosto = 0, desc = 0;
     l.forEach(p => {
       const t = totalPed(p); fact += t; let costo = 0;
-      (p.items || []).forEach(i => { unid += esScoop(i) && i.id !== "scoop" ? 0 : num(i.cant); const c = costoItem(i); if (c == null) { if (!["video-scoop", "caja-scoop", "carta-scoop"].includes(i.id)) sinCosto++; } else costo += c; });
+      (p.items || []).forEach(i => { desc += num(i.desc); if (!EXTRAS.includes(i.id)) unid += num(i.cant); const c = costoItem(i); if (c == null) { if (!EXTRAS.includes(i.id)) sinCosto++; } else costo += c; });
       gan += t - num(p.envio) - costo;
     });
-    return { fact, ventas: l.length, ticket: l.length ? fact / l.length : 0, gan, unid, sinCosto };
+    const clis = new Set(l.map(cliKey));
+    return { fact, ventas: l.length, ticket: l.length ? fact / l.length : 0, gan, unid, sinCosto, desc, clientes: clis.size, margen: fact ? gan / fact * 100 : 0 };
   }
-  const perTxt = () => `${MESES[PER.m][0].toUpperCase() + MESES[PER.m].slice(1)} ${PER.y}`;
-  document.addEventListener("click", e => {
-    const b = e.target.closest(".per-b"); if (!b) return;
-    PER.m += +b.dataset.per; if (PER.m < 0) { PER.m = 11; PER.y--; } if (PER.m > 11) { PER.m = 0; PER.y++; }
-    pintarTx(); pintarEst();
-  });
   function pintarTx() {
     document.querySelectorAll(".per-txt").forEach(x => x.textContent = perTxt());
+    document.querySelectorAll(".per-rango").forEach(x => x.textContent = perRango());
+    if ($("#t-transacciones").hidden) return;
     const q = sinTilde($("#tx-buscar").value.trim());
-    let l = enPeriodo(PER.y, PER.m).sort((a, b) => fechaTx(b) - fechaTx(a));
+    let l = enRango(TX, PER).sort((a, b) => fechaTx(b) - fechaTx(a));
     const k = kpisDe(l);
-    $("#tx-resumen").innerHTML = `<div class="dato"><b>${bs(k.fact)}</b><span>cobrado en el mes</span></div><div class="dato"><b>${k.ventas}</b><span>transacciones</span></div><div class="dato"><b>${bs(k.ticket)}</b><span>ticket medio</span></div>`;
+    $("#tx-resumen").innerHTML = `<div class="dato"><b>${bs(k.fact)}</b><span>cobrado</span></div><div class="dato"><b>${k.ventas}</b><span>transacciones</span></div><div class="dato"><b>${bs(k.ticket)}</b><span>ticket medio</span></div>`;
     if (q) l = l.filter(p => sinTilde(`#${p.numero} ${p.cliente} ${p.telefono} ${(p.items || []).map(i => i.nombre + " " + (i.variante || "")).join(" ")}`).includes(q));
     $("#tx-lista").innerHTML = l.length ? l.map(p => {
-      const d = fechaTx(p), n = (p.items || []).reduce((a, i) => a + num(i.cant), 0);
+      const d = fechaTx(p), n = (p.items || []).reduce((a, i) => a + (EXTRAS.includes(i.id) ? 0 : num(i.cant)), 0);
       return `<div class="tx" data-tx="${p.numero}">
         <div class="tx-fecha"><b>${d.getDate()}</b><span>${MESES[d.getMonth()].slice(0, 3)}</span></div>
         <div class="tx-info"><h4>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</h4>
           <small>${d.toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" })} · ${n} ${n === 1 ? "producto" : "productos"} · ${esc(p.medio_pago || "QR")} · ${p.origen === "web" ? "Tienda online" : "Venta manual"}</small></div>
         <div class="tx-monto">${bs(totalPed(p))}<small>${p.estado === "entregado" ? "Entregado" : "Pagado"}</small></div></div>`;
-    }).join("") : `<div class="vacio">No hay transacciones en ${perTxt()}.<br><small>Cuando marques un pedido como Pagado aparecerá aquí.</small></div>`;
+    }).join("") : `<div class="vacio">No hay transacciones en este período.<br><small>Cuando marques un pedido como Pagado aparecerá aquí.</small></div>`;
   }
   $("#tx-buscar").oninput = pintarTx;
   $("#tx-lista").addEventListener("click", async e => {
@@ -1714,58 +1837,127 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     if (!p) { const { data } = await db.from("pedidos").select("*").eq("numero", +c.dataset.tx).maybeSingle(); p = data; }
     if (p) abrirPedido(p);
   });
-  const METRICAS = { fact: ["Facturación", v => bs(v)], ventas: ["Ventas", v => String(v)], ticket: ["Ticket medio", v => bs(v)], gan: ["Ganancia", v => bs(v)], unid: ["Unidades vendidas", v => String(v)] };
+  const METRICAS = { fact: ["Facturación", v => bs(v)], ventas: ["Ventas", v => String(v)], ticket: ["Ticket medio", v => bs(v)], gan: ["Ganancia", v => bs(v)],
+    unid: ["Unidades vendidas", v => String(v)], clientes: ["Clientes que compraron", v => String(v)] };
   function grupos(l) {
     const G = [];
-    if (EST_V === "hora") for (let h = 0; h < 24; h++) G.push({ k: h, et: `${h}h`, l: l.filter(p => fechaTx(p).getHours() === h) });
-    if (EST_V === "dia") { const n = new Date(PER.y, PER.m + 1, 0).getDate(); for (let d = 1; d <= n; d++) G.push({ k: d, et: String(d), l: l.filter(p => fechaTx(p).getDate() === d) }); }
-    if (EST_V === "semana") [1, 2, 3, 4, 5, 6, 0].forEach(d => G.push({ k: d, et: DIAS[d].slice(0, 3), nom: DIAS[d], l: l.filter(p => fechaTx(p).getDay() === d) }));
-    if (EST_V === "mes") for (let m = 0; m < 12; m++) G.push({ k: m, et: MESES[m].slice(0, 3), nom: MESES[m][0].toUpperCase() + MESES[m].slice(1), l: enPeriodo(PER.y, m) });
+    if (EST_V === "hora") for (let h = 0; h < 24; h++) G.push({ et: `${h}h`, l: l.filter(p => fechaTx(p).getHours() === h) });
+    if (EST_V === "dia") { for (let d = new Date(PER.ini); d < PER.fin && G.length < 400; d = sumD(d, 1)) { const a = +d, z = +sumD(d, 1); G.push({ et: diasDe(PER) <= 31 ? String(d.getDate()) : fCorta(d), nom: `${DIAS[d.getDay()]} ${fCorta(d)}`, l: l.filter(p => { const t = +fechaTx(p); return t >= a && t < z; }) }); } }
+    if (EST_V === "semana") [1, 2, 3, 4, 5, 6, 0].forEach(d => G.push({ et: DIAS[d].slice(0, 3), nom: DIAS[d], l: l.filter(p => fechaTx(p).getDay() === d) }));
+    if (EST_V === "mes") {
+      const desde = diasDe(PER) <= 31 ? new Date(PER.ini.getFullYear(), 0, 1) : new Date(PER.ini.getFullYear(), PER.ini.getMonth(), 1);
+      const hasta = diasDe(PER) <= 31 ? new Date(PER.ini.getFullYear() + 1, 0, 1) : PER.fin;
+      for (let m = new Date(desde); m < hasta; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) { const P = { ini: m, fin: new Date(m.getFullYear(), m.getMonth() + 1, 1) }; G.push({ et: MESES[m.getMonth()].slice(0, 3), nom: may(MESES[m.getMonth()]) + " " + m.getFullYear(), l: enRango(TX, P) }); }
+    }
     return G.map(g => ({ ...g, ...kpisDe(g.l) }));
   }
   function grafico(G, met) {
     const W = Math.max(300, Math.round(($("#est-graf").clientWidth || 760))), H = W < 500 ? 200 : 230, pl = 40, pr = 12, pt = 14, pb = 28, vals = G.map(g => g[met]), max = Math.max(...vals, 1), step = (W - pl - pr) / Math.max(G.length - 1, 1);
     const nice = (() => { const e = Math.pow(10, Math.floor(Math.log10(max))), f = max / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; })();
-    const y = v => pt + (H - pt - pb) * (1 - v / nice), x = i => pl + i * step;
+    const y = v => pt + (H - pt - pb) * (1 - v / nice), x = i => G.length === 1 ? (pl + W - pr) / 2 : pl + i * step;
     const ticks = [0, .25, .5, .75, 1].map(t => t * nice);
-    const fmt = v => met === "ventas" || met === "unid" ? Math.round(v) : (v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : Math.round(v));
+    const ent = met === "ventas" || met === "unid" || met === "clientes";
+    const fmt = v => ent ? Math.round(v) : (v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : Math.round(v));
     const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-    const cada = Math.max(1, Math.ceil(G.length / Math.max(4, Math.floor((W - pl) / 34))));
+    const cada = Math.max(1, Math.ceil(G.length / Math.max(4, Math.floor((W - pl) / 38))));
     return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Gráfico de ${METRICAS[met][0]}">
       ${ticks.map(t => `<line x1="${pl}" x2="${W - pr}" y1="${y(t)}" y2="${y(t)}" class="g-lin"/><text x="${pl - 8}" y="${y(t) + 4}" class="g-y">${fmt(t)}</text>`).join("")}
-      <polygon points="${pl},${y(0)} ${pts} ${x(G.length - 1)},${y(0)}" class="g-area"/>
+      <polygon points="${x(0)},${y(0)} ${pts} ${x(G.length - 1)},${y(0)}" class="g-area"/>
       <polyline points="${pts}" class="g-linea"/>
       ${vals.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="${v ? 3.6 : 2.4}" class="g-pt ${v ? "" : "cero"}"><title>${esc(G[i].nom || G[i].et)}: ${METRICAS[met][1](v)}</title></circle>`).join("")}
       ${G.map((g, i) => i % cada ? "" : `<text x="${x(i)}" y="${H - 8}" class="g-x">${esc(g.et)}</text>`).join("")}
     </svg>`;
   }
+  const barras = (filas, vacio = "Sin ventas en este período.") => filas.length ? filas.map(f => `<div class="barra-h">${f.n != null ? `<span class="bh-n">${f.n}</span>` : ""}<div class="bh-c"><div class="bh-t"><b>${esc(f.t)}</b><small>${f.d}</small></div>${f.p != null ? `<i style="width:${Math.max(3, Math.min(100, f.p))}%"></i>` : ""}${f.sub ? `<small class="bh-sub">${f.sub}</small>` : ""}</div></div>`).join("") : `<p class="ayuda">${vacio}</p>`;
+  const anillo = (pct, txt) => `<div class="anillo" style="--p:${Math.round(pct)}"><b>${Math.round(pct)}%</b></div><p class="anillo-t">${txt}</p>`;
   function pintarEst() {
-    if ($("#t-estadisticas").hidden) return;
     document.querySelectorAll(".per-txt").forEach(x => x.textContent = perTxt());
-    const l = enPeriodo(PER.y, PER.m), k = kpisDe(l);
-    const ant = PER.m ? enPeriodo(PER.y, PER.m - 1) : enPeriodo(PER.y - 1, 11), ka = kpisDe(ant);
-    const delta = (a, b) => !b ? "" : `<em class="${a >= b ? "sube" : "baja"}">${a >= b ? "▲" : "▼"} ${Math.abs(Math.round((a - b) / b * 100))}% vs mes anterior</em>`;
+    document.querySelectorAll(".per-rango").forEach(x => x.textContent = perRango());
+    if ($("#t-estadisticas").hidden) return;
+    const l = enRango(TX, PER), k = kpisDe(l), PA = anterior(PER), ka = kpisDe(enRango(TX, PA));
+    const todosPer = enRango(TODOS, PER, p => new Date(p.creado));
+    const noCanc = todosPer.filter(p => p.estado !== "cancelado"), pagadosDeEstos = todosPer.filter(p => p.estado === "pagado" || p.estado === "entregado");
+    const tasa = noCanc.length ? pagadosDeEstos.length / todosPer.length * 100 : 0;
+    const delta = (a, b) => !b ? `<em class="neutro">sin datos del período anterior</em>` : `<em class="${a >= b ? "sube" : "baja"}">${a >= b ? "▲" : "▼"} ${Math.abs(Math.round((a - b) / b * 100))}% vs período anterior</em>`;
     $("#est-kpis").innerHTML = Object.entries(METRICAS).map(([id, [nom, f]]) => `<button type="button" class="kpi ${EST_MET === id ? "on" : ""}" data-met="${id}"><span>${nom}</span><b>${f(k[id])}</b>${delta(k[id], ka[id])}</button>`).join("")
+      + `<div class="kpi kpi-fijo"><span>Margen de ganancia</span><b>${Math.round(k.margen)}%</b><em class="neutro">ganancia ÷ facturación</em></div>`
+      + `<div class="kpi kpi-fijo"><span>Tasa de venta</span><b>${Math.round(tasa)}%</b><em class="neutro">${pagadosDeEstos.length} pagados de ${todosPer.length} pedidos</em></div>`
       + (k.sinCosto ? `<p class="ayuda kpi-nota">La ganancia no descuenta el costo de ${k.sinCosto} producto(s) vendido(s) que no tienen costo cargado.</p>` : "");
     $("#est-tit").textContent = METRICAS[EST_MET][0];
     const G = grupos(l), con = G.filter(g => g.ventas);
     const mejor = con.length ? con.reduce((a, b) => b[EST_MET] > a[EST_MET] ? b : a) : null, peor = con.length > 1 ? con.reduce((a, b) => b[EST_MET] < a[EST_MET] ? b : a) : null;
-    $("#est-graf").innerHTML = l.length || EST_V === "mes" ? grafico(G, EST_MET) : `<div class="vacio">Sin ventas pagadas en ${perTxt()} todavía.</div>`;
+    $("#est-graf").innerHTML = l.length || EST_V === "mes" ? grafico(G, EST_MET) : `<div class="vacio">Sin ventas pagadas en este período.</div>`;
     const etq = { hora: "Hora", dia: "Día", semana: "Día de la semana", mes: "Mes" }[EST_V];
-    $("#est-tabla").innerHTML = `<thead><tr><th>${etq}</th><th>Facturación</th><th>Ventas</th><th>Ticket medio</th><th>Ganancia</th></tr></thead><tbody>${con.map(g => `<tr class="${g === mejor ? "bien" : g === peor ? "mal" : ""}"><td>${esc(EST_V === "dia" ? `${g.et} de ${MESES[PER.m]}` : g.nom || g.et)}</td><td>${bs(g.fact)}</td><td>${g.ventas}</td><td>${bs(g.ticket)}</td><td>${bs(g.gan)}</td></tr>`).join("") || `<tr><td colspan="5" class="ayuda">Sin datos</td></tr>`}</tbody>`;
-    // top productos
+    $("#est-tabla").innerHTML = `<thead><tr><th>${etq}</th><th>Facturación</th><th>Ventas</th><th>Ticket medio</th><th>Ganancia</th></tr></thead><tbody>${con.map(g => `<tr class="${g === mejor ? "bien" : g === peor ? "mal" : ""}"><td>${esc(g.nom || g.et)}</td><td>${bs(g.fact)}</td><td>${g.ventas}</td><td>${bs(g.ticket)}</td><td>${bs(g.gan)}</td></tr>`).join("") || `<tr><td colspan="5" class="ayuda">Sin datos</td></tr>`}</tbody>`;
+    // Productos más vendidos
     const tp = {};
-    l.forEach(p => (p.items || []).forEach(i => { if (["video-scoop", "caja-scoop", "carta-scoop"].includes(i.id)) return; const key = i.nombre + (i.variante ? " – " + i.variante : ""); tp[key] = tp[key] || { n: 0, t: 0 }; tp[key].n += num(i.cant); tp[key].t += num(i.cant) * num(i.precio) - num(i.desc); }));
-    const top = Object.entries(tp).sort((a, b) => b[1].n - a[1].n || b[1].t - a[1].t).slice(0, 10), mx = top.length ? top[0][1].n : 1;
-    $("#est-top").innerHTML = top.length ? top.map(([n, v], i) => `<div class="barra-h"><span class="bh-n">${i + 1}</span><div class="bh-c"><div class="bh-t"><b>${esc(n)}</b><small>${v.n} u · ${bs(v.t)}</small></div><i style="width:${Math.max(4, v.n / mx * 100)}%"></i></div></div>`).join("") : `<p class="ayuda">Sin ventas este mes.</p>`;
-    const rep = (f, nombres) => { const m = {}; l.forEach(p => { const k2 = f(p); m[k2] = (m[k2] || 0) + totalPed(p); }); const tot = Object.values(m).reduce((a, b) => a + b, 0) || 1;
-      return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([k2, v]) => `<div class="barra-h"><div class="bh-c"><div class="bh-t"><b>${esc(nombres ? nombres(k2) : k2)}</b><small>${Math.round(v / tot * 100)}% · ${bs(v)}</small></div><i style="width:${Math.max(4, v / tot * 100)}%"></i></div></div>`).join("") || `<p class="ayuda">Sin ventas este mes.</p>`; };
-    $("#est-medios").innerHTML = rep(p => p.medio_pago || "QR");
-    $("#est-origen").innerHTML = rep(p => p.origen === "web" ? "web" : "manual", k2 => k2 === "web" ? "Tienda online" : "Venta manual");
+    l.forEach(p => (p.items || []).forEach(i => { if (EXTRAS.includes(i.id)) return; const key = i.nombre + (i.variante ? " – " + i.variante : ""); const v = tp[key] = tp[key] || { n: 0, t: 0, g: 0, c: true }; v.n += num(i.cant); const ing = num(i.cant) * num(i.precio) - num(i.desc); v.t += ing; const c = costoItem(i); if (c == null) v.c = false; else v.g += ing - c; }));
+    const top = Object.entries(tp).sort((a, b) => TOP_M === "unid" ? b[1].n - a[1].n || b[1].t - a[1].t : b[1].t - a[1].t).slice(0, 10), mx = top.length ? (TOP_M === "unid" ? top[0][1].n : top[0][1].t) : 1;
+    $("#est-top").innerHTML = barras(top.map(([n, v], i) => ({ n: i + 1, t: n, d: `${v.n} u · ${bs(v.t)}`, p: (TOP_M === "unid" ? v.n : v.t) / mx * 100, sub: v.c ? `Ganancia ${bs(v.g)}` : "" })));
+    // Mejores clientes
+    const cl = {};
+    l.forEach(p => { const k2 = cliKey(p); const c = cl[k2] = cl[k2] || { nom: p.cliente || p.telefono || "Sin nombre", n: 0, t: 0, ult: 0 }; c.n++; c.t += totalPed(p); c.ult = Math.max(c.ult, +fechaTx(p)); if (p.cliente) c.nom = p.cliente; });
+    const tc = Object.values(cl).sort((a, b) => b.t - a.t).slice(0, 10), mxc = tc.length ? tc[0].t : 1;
+    $("#est-clientes").innerHTML = barras(tc.map((c, i) => ({ n: i + 1, t: c.nom, d: bs(c.t), p: c.t / mxc * 100, sub: `${c.n} ${c.n === 1 ? "compra" : "compras"} · ticket ${bs(c.t / c.n)} · última ${fCorta(new Date(c.ult))}` })));
+    // Medios, origen
+    const rep = (f, nombre) => { const m = {}; l.forEach(p => { const k2 = f(p); (m[k2] = m[k2] || { t: 0, n: 0 }); m[k2].t += totalPed(p); m[k2].n++; }); const tot = Object.values(m).reduce((a, b) => a + b.t, 0) || 1;
+      return Object.entries(m).sort((a, b) => b[1].t - a[1].t).map(([k2, v]) => ({ t: nombre ? nombre(k2) : k2, d: `${Math.round(v.t / tot * 100)}% · ${bs(v.t)} · ${v.n} ${v.n === 1 ? "venta" : "ventas"}`, p: v.t / tot * 100 })); };
+    const med = rep(p => p.medio_pago || "QR");
+    $("#est-medios").innerHTML = (med.length ? anillo(med[0].p, `utilizan ${esc(med[0].t)}`) : "") + barras(med);
+    const ori = rep(p => p.origen === "web" ? "web" : "manual", k2 => k2 === "web" ? "Tienda online" : "Venta manual");
+    const web = ori.find(o => o.t === "Tienda online");
+    $("#est-origen").innerHTML = (ori.length ? anillo(web ? web.p : 0, "de tus ventas llegan por la tienda online") : "") + barras(ori);
+    // Nuevos y recurrentes
+    const primera = {}; TX.forEach(p => { const k2 = cliKey(p), t = +fechaTx(p); if (!primera[k2] || t < primera[k2]) primera[k2] = t; });
+    const clisPer = [...new Set(l.map(cliKey))], nuevos = clisPer.filter(c => primera[c] >= +PER.ini).length, rec = clisPer.length - nuevos;
+    const veces = {}; TX.forEach(p => { const k2 = cliKey(p); veces[k2] = (veces[k2] || 0) + 1; }); const totC = Object.keys(veces).length, repiten = Object.values(veces).filter(v => v > 1).length;
+    $("#est-recurr").innerHTML = clisPer.length ? anillo(rec / clisPer.length * 100, "de los clientes del período ya te habían comprado") + barras([
+      { t: "Clientes nuevos", d: String(nuevos), p: nuevos / clisPer.length * 100 }, { t: "Clientes que volvieron", d: String(rec), p: rec / clisPer.length * 100 },
+      { t: "Tasa de recompra (histórica)", d: `${totC ? Math.round(repiten / totC * 100) : 0}% · ${repiten} de ${totC}`, p: totC ? repiten / totC * 100 : 0 }]) : `<p class="ayuda">Sin ventas en este período.</p>`;
+    // Categorías y personajes
+    const cat = {}; let totCat = 0;
+    l.forEach(p => (p.items || []).forEach(i => { const ing = num(i.cant) * num(i.precio) - num(i.desc); if (i.id === "scoop" || EXTRAS.includes(i.id)) { cat["Lucky Scoops"] = (cat["Lucky Scoops"] || 0) + ing; totCat += ing; return; }
+      const pr = PRODS.find(x => x.id === i.id), cs = (pr && pr.categorias && pr.categorias.length) ? pr.categorias : ["__sin"];
+      cs.forEach(c => { const nom = c === "__sin" ? "Sin categoría" : (CATS.find(x => x.id === c) || {}).nombre || c; cat[nom] = (cat[nom] || 0) + ing; }); totCat += ing; }));
+    const tcat = Object.entries(cat).sort((a, b) => b[1] - a[1]).slice(0, 12), mxk = tcat.length ? tcat[0][1] : 1;
+    $("#est-cats").innerHTML = barras(tcat.map(([n, v]) => ({ t: n, d: `${bs(v)} · ${Math.round(v / (totCat || 1) * 100)}%`, p: v / mxk * 100 })));
+    // Ciudades
+    const ciu = rep(p => { const c = (p.ciudad || "").trim(); return c ? c.toLowerCase().replace(/(^|\s)\S/g, x => x.toUpperCase()) : /recojo|retiro/i.test(p.entrega || "") ? "Santa Cruz (recojo)" : "Sin ciudad"; }).slice(0, 10);
+    $("#est-ciudades").innerHTML = barras(ciu);
+    // Scoops y extras
+    const sc = l.filter(p => (p.items || []).some(i => i.id === "scoop")), scT = sc.reduce((a, p) => a + totalPed(p), 0);
+    const con2 = id => sc.filter(p => (p.items || []).some(i => i.id === id)).length, pctS = n => sc.length ? Math.round(n / sc.length * 100) : 0;
+    $("#est-scoops").innerHTML = sc.length ? anillo(k.fact ? scT / k.fact * 100 : 0, "de tu facturación viene de Lucky Scoops") + barras([
+      { t: "Scoops vendidos", d: `${sc.length} · ${bs(scT)} · ticket ${bs(scT / sc.length)}` },
+      { t: "Con video", d: `${pctS(con2("video-scoop"))}% · ${con2("video-scoop")}`, p: pctS(con2("video-scoop")) },
+      { t: "Con carta personalizada", d: `${pctS(con2("carta-scoop"))}% · ${con2("carta-scoop")}`, p: pctS(con2("carta-scoop")) },
+      { t: "Con caja especial", d: `${pctS(con2("caja-scoop"))}% · ${con2("caja-scoop")}`, p: pctS(con2("caja-scoop")) }]) : `<p class="ayuda">Sin Scoops vendidos en este período.</p>`;
+    // Descuentos
+    const dm = {}; l.forEach(p => (p.items || []).forEach(i => { if (!num(i.desc)) return; const m = (i.desc_nota || "Sin motivo").trim() || "Sin motivo"; dm[m] = dm[m] || { t: 0, n: 0 }; dm[m].t += num(i.desc); dm[m].n++; }));
+    const td = Object.entries(dm).sort((a, b) => b[1].t - a[1].t), mxd = td.length ? td[0][1].t : 1;
+    $("#est-desc").innerHTML = k.desc ? `<p class="dato-g"><b>${bs(k.desc)}</b> en descuentos · ${Math.round(k.desc / ((k.fact + k.desc) || 1) * 100)}% de lo que habrías cobrado a precio lleno</p>` + barras(td.map(([m, v]) => ({ t: m, d: `${bs(v.t)} · ${v.n} ${v.n === 1 ? "vez" : "veces"}`, p: v.t / mxd * 100 }))) : `<p class="ayuda">No diste descuentos en este período.</p>`;
+    // Sin movimiento (60 días)
+    const hace = (n) => +sumD(d0(new Date()), -n);
+    const vend60 = new Set(), u30 = {};
+    TX.forEach(p => { const t = +fechaTx(p); (p.items || []).forEach(i => { if (t >= hace(60)) vend60.add(i.id); if (t >= hace(30)) u30[i.id] = (u30[i.id] || 0) + num(i.cant); }); });
+    const quietos = PRODS.filter(p => p.activo && total(p) > 0 && !vend60.has(p.id)).map(p => ({ p, inv: total(p) * (costoDe(p) != null ? costoDe(p) : num(p.precio)) })).sort((a, b) => b.inv - a.inv).slice(0, 10);
+    $("#est-quietos").innerHTML = barras(quietos.map(({ p, inv }) => ({ t: p.nombre, d: `${total(p)} u · ${bs(inv)} ${costoDe(p) != null ? "invertidos" : "a precio de venta"}` })), "Todos tus productos con stock se movieron en los últimos 60 días.");
+    // Reponer
+    const rp = PRODS.filter(p => p.activo && u30[p.id]).map(p => ({ p, ritmo: u30[p.id] / 30, st: total(p) })).map(x => ({ ...x, dias: x.ritmo ? x.st / x.ritmo : 999 })).filter(x => x.dias <= 21).sort((a, b) => a.dias - b.dias).slice(0, 10);
+    $("#est-reponer").innerHTML = barras(rp.map(x => ({ t: x.p.nombre, d: x.st ? `${x.st} u · ~${Math.max(1, Math.round(x.dias))} días` : "Agotado", sub: `${u30[x.p.id]} vendidos en 30 días` })), "Nada urgente por reponer.");
+    // Clientes para reactivar
+    const ult = {}; TX.forEach(p => { const k2 = cliKey(p), t = +fechaTx(p); const c = ult[k2] = ult[k2] || { nom: p.cliente || p.telefono, tel: p.telefono, t: 0, n: 0, tot: 0 }; c.t = Math.max(c.t, t); c.n++; c.tot += totalPed(p); if (p.cliente) c.nom = p.cliente; });
+    const reac = Object.values(ult).filter(c => c.t < hace(60)).sort((a, b) => b.tot - a.tot).slice(0, 10);
+    $("#est-reactivar").innerHTML = reac.length ? reac.map(c => `<div class="barra-h"><div class="bh-c"><div class="bh-t"><b>${esc(c.nom || "Sin nombre")}</b><small>${bs(c.tot)} · ${c.n} ${c.n === 1 ? "compra" : "compras"}</small></div><small class="bh-sub">Última compra: ${fCorta(new Date(c.t))}</small></div>${telN(c.tel).length >= 8 ? `<a class="btn btn-sec btn-sm" target="_blank" rel="noopener" href="https://wa.me/${telN(c.tel)}?text=${encodeURIComponent(`¡Hola ${(c.nom || "").split(" ")[0]}! Te extrañamos en ${AJ.nombre || "Cani Shop"} ♡ Llegaron novedades que te pueden encantar: ${location.origin}/`)}">Escribir</a>` : ""}</div>`).join("") : `<p class="ayuda">Todos tus clientes compraron en los últimos 60 días.</p>`;
+    // Embudo
+    const est = e => todosPer.filter(p => p.estado === e).length, tot = todosPer.length || 1;
+    $("#est-embudo").innerHTML = todosPer.length ? barras([["Pedidos recibidos", todosPer.length], ["Sin atender (nuevos)", est("nuevo")], ["Confirmados", est("confirmado")], ["Pagados o entregados", est("pagado") + est("entregado")], ["Cancelados", est("cancelado")]]
+      .map(([t, n]) => ({ t, d: `${n} · ${Math.round(n / tot * 100)}%`, p: n / tot * 100 }))) : `<p class="ayuda">No llegaron pedidos en este período.</p>`;
   }
   let estRz; window.addEventListener("resize", () => { clearTimeout(estRz); estRz = setTimeout(pintarEst, 200); });
   $("#est-kpis").addEventListener("click", e => { const b = e.target.closest("[data-met]"); if (b) { EST_MET = b.dataset.met; pintarEst(); } });
   $("#est-vista").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; EST_V = b.dataset.v; document.querySelectorAll("#est-vista button").forEach(x => x.classList.toggle("on", x === b)); pintarEst(); });
+  $("#top-modo").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; TOP_M = b.dataset.m; document.querySelectorAll("#top-modo button").forEach(x => x.classList.toggle("on", x === b)); pintarEst(); });
 
   // ---------- Clientes ----------
   let CLIS = [], EC = null;
