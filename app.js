@@ -348,19 +348,13 @@
 
       ${DEST.slice(1).map(destacada).join("")}
 
-      <section class="seccion historia">
-        <div class="hist-imgs ${histImgs.length === 1 ? "una" : ""}">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
-        <div class="hist-txt">
-          <h2>${esc(HIST.titulo || `Hola, somos ${T.nombre}`)}</h2>
-          <p>${esc(HIST.texto || resumenNosotros())}</p>
-          <a class="btn btn-sec" href="#/nosotros">Conoce ${esc(T.nombre)}</a>
-        </div>
-      </section>
+      ${heroCani("h2", `<a class="btn" href="#/nosotros">conoce ${esc(T.nombre.toLowerCase())}</a><a class="btn btn-sec" href="#/todo">ver la tienda</a>`)}
 
       ${OPS.length ? `<section class="seccion opiniones"><div class="titulo"><h2>Lo que dicen nuestros clientes</h2></div>
         <div class="op-fila">${OPS.map(o => `<figure class="op">${ESTRELLAS}<blockquote>${esc(o.texto)}</blockquote><figcaption>${esc(o.nombre || "")}</figcaption></figure>`).join("")}</div></section>` : ""}
 
       ${seccionTikTok()}`;
+    animarCani(true);
     if (bans.length > 1) carrusel(bans.length);
     if (ttUser) cargarTikTok();
     // Lucky Scoops: explotan estrellitas al llegar (solo celular)
@@ -1017,6 +1011,46 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     return { secs: out, cierre };
   }
   const resumenNosotros = () => { const { secs } = seccionesNosotros(); return (secs[0] && secs[0].ps[0]) || ""; };
+  // Portada con Cani: título gigante por renglones + objetos flotando que siguen el mouse (inicio y Nosotros)
+  const CANI_OBJ = [
+    { src: "cani-sentado.webp", x: 50, y: 55, s: 62, z: .35, cls: "hc-cani" },
+    { src: "estuche.webp", x: 20, y: 24, s: 30, z: 1.1, r: -16, d: 5.6 },
+    { src: "llavero.webp", x: 82, y: 22, s: 22, z: 1.3, r: 12, d: 6.2, dl: -1 },
+    { src: "estrella-rosa.svg", x: 50, y: 8, s: 10, z: 2, r: -10, d: 4.4 },
+    { src: "estrella-rosa.svg", x: 88, y: 50, s: 8, z: 2.8, r: 14, d: 5, dl: -2.4 },
+    { src: "estrella-rosa.svg", x: 9, y: 55, s: 9, z: 2.4, r: 8, d: 4.6, dl: -1.2 },
+    { src: "estrella-rosa.svg", x: 18, y: 86, s: 7, z: 3, r: -6, d: 4.2, dl: -3 },
+    { src: "estrella-rosa.svg", x: 84, y: 84, s: 8, z: 2.2, r: 18, d: 4.9, dl: -.8 }
+  ];
+  const heroCani = (tag, botones) => `<section class="hc">
+    <div class="hc-txt">
+      <${tag} class="hc-tit"><span class="l"><span>somos una</span></span><span class="l"><span>tiendita <em>kawaii</em></span></span><span class="l"><span>nacida en</span></span><span class="l"><span>santa cruz <span class="hc-cora">♡</span></span></span></${tag}>
+      <p class="hc-sub">papelería, peluches y cositas que no sabías que necesitabas, de la mano de cani, nuestro gatito curioso que ama las cajas.</p>
+      <div class="hc-acc">${botones}</div>
+    </div>
+    <div class="hc-esc" aria-hidden="true">${CANI_OBJ.map(o => `<div class="hc-o ${o.cls || ""}" style="width:${o.s}%" data-x="${o.x}" data-y="${o.y}" data-z="${o.z}"><img src="${o.src}" alt="" style="--r:${o.r || 0}deg;--d:${o.d || 5}s;--dl:${o.dl || 0}s"></div>`).join("")}</div>
+  </section>`;
+  function animarCani(alVer) {
+    const root = app.querySelector(".hc"); if (!root) return;
+    const esc = root.querySelector(".hc-esc"), tit = root.querySelector(".hc-tit"), els = [...esc.querySelectorAll(".hc-o")];
+    const fino = matchMedia("(pointer:fine)").matches, quieto = matchMedia("(prefers-reduced-motion:reduce)").matches;
+    let mx = 0, my = 0, cx = 0, cy = 0, toco = false, t0 = performance.now();
+    const ab = new AbortController();
+    const mover = (x, y) => { const r = esc.getBoundingClientRect(); mx = Math.max(-1, Math.min(1, (x - r.left - r.width / 2) / (r.width / 1.4))); my = Math.max(-1, Math.min(1, (y - r.top - r.height / 2) / (r.height / 1.4))); toco = true; };
+    addEventListener("pointermove", e => mover(e.clientX, e.clientY), { signal: ab.signal });
+    addEventListener("touchmove", e => { const t = e.touches[0]; if (t) mover(t.clientX, t.clientY); }, { passive: true, signal: ab.signal });
+    const paso = t => {
+      if (!root.isConnected) { ab.abort(); return; }
+      if (!fino && !toco) { const s = (t - t0) / 1000; mx = Math.sin(s * .7) * .5; my = Math.cos(s * .5) * .35; }
+      cx += (mx - cx) * .08; cy += (my - cy) * .08;
+      const w = esc.clientWidth;
+      els.forEach(e => { const z = quieto ? 0 : +e.dataset.z; e.style.transform = `translate3d(${+e.dataset.x / 100 * w - e.offsetWidth / 2 + cx * z * 28}px,${+e.dataset.y / 100 * w - e.offsetHeight / 2 + cy * z * 28}px,0)`; });
+      requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+    if (alVer && "IntersectionObserver" in window) { const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { root.classList.add("ver"); io.disconnect(); } }, { threshold: .25 }); io.observe(root); }
+    else requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("ver")));
+  }
   function nosotros() {
     const { secs, cierre } = seccionesNosotros();
     const [intro, ...resto] = secs;
@@ -1026,11 +1060,11 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
       `<svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/><path d="M24 13c-3-7-12-8-12-2s12 2 12 2c3-7 12-8 12-2s-12 2-12 2"/></svg>`,
       `<svg viewBox="0 0 48 48"><path d="M4 12h24v20H4z"/><path d="M28 18h9l7 7v7H28z"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>`
     ];
-    app.innerHTML = `<section class="seccion nos">
-      <div class="nos-intro">
-        <div class="nos-foto"><img src="${esc(foto)}" alt="Cani, el gatito de Cani Shop"></div>
+    app.innerHTML = `${heroCani("h1", `<a class="btn" href="#/todo">ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">arma tu lucky scoop</a>` : ""}`)}
+      <section class="seccion nos">
+      <div class="nos-intro nos-intro-txt">
         <div class="nos-txt">
-          <h1>${esc(intro ? intro.titulo || "Nosotros" : "Nosotros")}</h1>
+          <h2>${esc(intro ? intro.titulo || "Nosotros" : "Nosotros")}</h2>
           ${(intro ? intro.ps : []).map(p => `<p>${esc(p)}</p>`).join("")}
         </div>
       </div>
@@ -1040,6 +1074,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
       ${cierre ? `<p class="nos-cierre">${esc(cierre)}</p>` : ""}
       <div class="nos-acciones"><a class="btn" href="#/todo">Ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">Arma tu Lucky Scoop</a>` : ""}</div>
     </section>`;
+    animarCani(false);
   }
   function contacto() {
     app.innerHTML = `<section class="seccion"><h2>Contacto</h2>

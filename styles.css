@@ -1343,3 +1343,33 @@ input,select,textarea{max-width:100%;min-width:0}
 }
 @media (prefers-reduced-motion:reduce){.ben-c{transition:none}.ben-c:hover .ben-ico svg{animation:none}}
 .ben-tag{text-transform:none}
+/* Portada con Cani (inicio y Nosotros) */
+.hc{max-width:1200px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:center;overflow-x:clip}
+.hc-tit{margin:0;font-family:var(--f-tit);font-weight:600;font-size:clamp(2.8rem,7vw,6.4rem);line-height:.95;letter-spacing:-.01em;text-transform:lowercase;color:var(--cafe)}
+.hc-tit .l{display:block;overflow:hidden;padding-bottom:.08em}
+.hc-tit .l > span{display:inline-block;transform:translateY(110%);transition:transform .9s cubic-bezier(.2,.9,.2,1)}
+.hc.ver .hc-tit .l > span{transform:none}
+.hc-tit .l:nth-child(2) > span{transition-delay:.12s}.hc-tit .l:nth-child(3) > span{transition-delay:.24s}.hc-tit .l:nth-child(4) > span{transition-delay:.36s}
+.hc-tit em{font-style:normal;color:var(--rosa-fuerte)}
+.hc-cora{display:inline-block;color:var(--lila);font-size:.7em;vertical-align:.12em;animation:hc-late 1.4s ease-in-out infinite}
+@keyframes hc-late{50%{transform:scale(1.18)}}
+.hc-sub{margin:22px 0 0;max-width:30em;font-size:1rem;line-height:1.6;color:#a87a8b;opacity:0;transform:translateY(12px);transition:opacity .7s .6s,transform .7s .6s}
+.hc-acc{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;opacity:0;transition:opacity .7s .8s}
+.hc.ver .hc-sub{opacity:1;transform:none}
+.hc.ver .hc-acc{opacity:1}
+.hc-acc .btn{text-transform:lowercase}
+.hc-esc{position:relative;aspect-ratio:1;max-width:560px;width:100%;justify-self:center;border-radius:50%;background:radial-gradient(circle at 50% 55%,#fff 0 34%,var(--rosa) 35% 100%)}
+.hc-o{position:absolute;left:0;top:0;will-change:transform;pointer-events:none}
+.hc-o img{display:block;width:100%;height:auto;animation:hc-flota var(--d,5s) ease-in-out infinite;animation-delay:var(--dl,0s);filter:drop-shadow(0 10px 12px rgba(120,55,70,.16))}
+@keyframes hc-flota{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-12px) rotate(calc(var(--r,0deg) + 6deg))}}
+.hc-cani{z-index:3}
+.hc-cani img{animation:hc-resp 3s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes hc-resp{50%{transform:scale(1.03,.97)}}
+.nos-intro-txt{display:block;max-width:760px;margin:0 auto}
+.nos-intro-txt .nos-txt h2{margin-top:0}
+@media (max-width:820px){
+  .hc{grid-template-columns:minmax(0,1fr);gap:8px;padding-top:16px}
+  .hc-esc{order:-1;max-width:380px}
+  .hc-tit{font-size:clamp(2.6rem,13vw,4rem)}
+}
+@media (prefers-reduced-motion:reduce){.hc-tit .l > span,.hc-sub,.hc-acc{transition:none;transform:none;opacity:1}.hc-o img{animation:none}}
