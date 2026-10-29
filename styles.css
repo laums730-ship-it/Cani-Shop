@@ -1038,3 +1038,10 @@ input,select,textarea{max-width:100%;min-width:0}
 .aviso-ent p{margin:2px 0 0;font-size:.88rem;line-height:1.45}
 .carrito-pie .aviso-ent{margin:8px 0 12px;padding:10px 12px;border-radius:14px}
 .carrito-pie .aviso-ent p{font-size:.8rem}
+/* Carrito: todo se desliza junto (productos arriba, datos abajo); la cabecera queda fija */
+.carrito{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:block!important}
+.carrito-cab{position:sticky;top:0;z-index:2}
+.carrito-items{flex:none!important;overflow:visible!important;padding-bottom:4px}
+.carrito-pie{border-top:1px solid var(--borde)}
+.carrito-pie .form-tit{margin:4px 0 10px;font-family:var(--f-tit);color:var(--cafe);font-size:1.05rem}
+.carrito-ir{display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 20px 14px;padding:10px;border-radius:14px;background:var(--rosa);color:var(--cafe);font-weight:700;font-size:.9rem;border:0;width:calc(100% - 40px)}

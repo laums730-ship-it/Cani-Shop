@@ -147,6 +147,12 @@
     else return;
     guardar();
   });
+  // Recordar los datos del formulario del carrito (nombre, WhatsApp, etc.)
+  { const fp = $("#form-pedido");
+    if (fp) {
+      fp.addEventListener("input", () => { try { const d = {}; for (const el of fp.elements) if (el.name && el.type !== "file" && el.name !== "nota") d[el.name] = el.value; localStorage.setItem("datos-pedido", JSON.stringify(d)); } catch (e) {} });
+      const t = document.createElement("p"); t.className = "form-tit"; t.textContent = "Tus datos para el pedido"; fp.before(t);
+    } }
   const abrir = v => { $("#carrito").classList.toggle("abierto", v); $("#velo").classList.toggle("abierto", v); };
   $("#btn-carrito").onclick = () => abrir(true);
   $("#cerrar-carrito").onclick = $("#velo").onclick = () => abrir(false);
@@ -191,7 +197,7 @@
     if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
     btn.disabled = false;
     if (numero) {
-      carrito = []; guardar(); e.target.reset(); abrir(false);
+      carrito = []; guardar(); if (e.target.elements.nota) e.target.elements.nota.value = ""; abrir(false);
       toast(`¡Pedido #${numero} enviado! 💕`);
     }
   });
@@ -227,7 +233,11 @@
     return { ciudad: f.get("ciudad") || "", direccion: f.get("direccion") || "", lineas: [ent, dir ? `Dirección: ${dir}` : null].filter(Boolean) };
   }
   { const fp = $("#form-pedido"), sel = $("#sel-entrega");
-    if (fp && sel) { sel.insertAdjacentHTML("afterend", envioHTML()); sel.addEventListener("change", () => ajustarEntrega(fp)); ajustarEntrega(fp); } }
+    if (fp && sel) {
+      sel.insertAdjacentHTML("afterend", envioHTML()); sel.addEventListener("change", () => ajustarEntrega(fp));
+      try { const d = JSON.parse(localStorage.getItem("datos-pedido") || "{}"); for (const [k, v] of Object.entries(d)) { const el = fp.elements[k]; if (el && v) el.value = v; } } catch (e) {}
+      ajustarEntrega(fp);
+    } }
 
   let tt; function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("ver"), 1800); }
 
