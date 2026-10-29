@@ -367,13 +367,19 @@
 
       ${DEST.slice(1).map(destacada).join("")}
 
-      ${heroCani("h2", `<a class="btn" href="#/nosotros">conoce ${esc(T.nombre.toLowerCase())}</a><a class="btn btn-sec" href="#/todo">ver la tienda</a>`)}
+      <section class="seccion historia">
+        <div class="hist-imgs ${histImgs.length === 1 ? "una" : ""}">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
+        <div class="hist-txt">
+          <h2>${esc(HIST.titulo || `Hola, somos ${T.nombre}`)}</h2>
+          <p>${esc(HIST.texto || resumenNosotros())}</p>
+          <a class="btn btn-sec" href="#/nosotros">Conoce ${esc(T.nombre)}</a>
+        </div>
+      </section>
 
       ${OPS.length ? `<section class="seccion opiniones"><div class="titulo"><h2>Lo que dicen nuestros clientes</h2></div>
         <div class="op-fila">${OPS.map(o => `<figure class="op">${ESTRELLAS}<blockquote>${esc(o.texto)}</blockquote><figcaption>${esc(o.nombre || "")}</figcaption></figure>`).join("")}</div></section>` : ""}
 
       ${seccionTikTok()}`;
-    animarCani(true);
     if (bans.length > 1) carrusel(bans.length);
     if (ttUser) cargarTikTok();
     // Lucky Scoops: explotan estrellitas al llegar (solo celular)
