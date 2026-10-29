@@ -857,6 +857,31 @@
       </div>`);
       ent && ent.remove(); dis && dis.remove(); extras.length = 0;
     }
+    // Video y carta: dos tarjetas para elegir (Sí / No) en vez de una casilla
+    const elegido = {};
+    const NO_TXT = { video: "Prefiero la sorpresa sin video", carta: "Prefiero que vaya sin carta" };
+    const NO_ANIMO = { video: ["¡Está súper!", "Igual lo armamos con mucho amor"], carta: ["¡Está súper!", "Tu Scoop va igual de lindo"] };
+    [["video", "#sc-video"], ["carta", "#sc-carta"]].forEach(([k, sel]) => {
+      const cb = F.querySelector(sel); if (!cb) return;
+      const lab = cb.closest("label"), si = (lab.querySelector("b") || {}).textContent || "Sí", det = lab.querySelector("small"), precio = (si.match(/\+Bs[\s\d.,]+/) || [""])[0].trim();
+      lab.hidden = true;
+      lab.insertAdjacentHTML("afterend", `<div class="scd-sino" data-k="${k}">
+        <button type="button" class="scd-op" data-v="1"><span class="scd-op-tx"><b>${esc(si.replace(precio, "").trim())}</b>${det ? `<small>${det.innerHTML}</small>` : ""}</span>${precio ? `<em>${esc(precio)}</em>` : ""}<i class="scd-op-chk"></i></button>
+        <button type="button" class="scd-op" data-v="0"><span class="scd-op-tx"><b>${NO_TXT[k]}</b></span><i class="scd-op-chk"></i></button></div>`);
+      if (k === "video") { const tk = F.querySelector("[name=tiktok]"); if (tk) tk.closest(".form").hidden = true; }
+    });
+    F.addEventListener("click", e => {
+      const b = e.target.closest(".scd-op"); if (!b) return;
+      const g = b.parentElement, k = g.dataset.k, si = b.dataset.v === "1";
+      elegido[k] = si;
+      g.querySelectorAll(".scd-op").forEach(x => x.classList.toggle("sel", x === b));
+      b.classList.remove("pum"); void b.offsetWidth; b.classList.add("pum");
+      const cb = F.querySelector(k === "video" ? "#sc-video" : "#sc-carta");
+      if (cb.checked !== si) { cb.checked = si; cb.dispatchEvent(new Event("change", { bubbles: true })); }
+      if (k === "video") { const tk = F.querySelector("[name=tiktok]"); if (tk) tk.closest(".form").hidden = !si; }
+      const globo = g.closest(".sc-paso").querySelector(".scd-globo");
+      if (globo) globo.textContent = si ? (k === "video" ? "¡Genial! Grabaremos cómo armamos tu Scoop." : "¡Qué lindo! Escribe tu mensaje aquí abajo.") : "¡Está súper! Igual lo armamos con mucho amor.";
+    });
     pasos.forEach((p, i) => {
       p.querySelector("h2").insertAdjacentHTML("afterend", `<div class="scd-charla"><div class="scd-cani" aria-hidden="true"></div><p class="scd-globo">${esc(frase(p))}</p></div>`);
       const g = p.querySelector("[data-grupo]"); if (g) g.insertAdjacentHTML("beforebegin", `<p class="scd-cuenta" data-c="${g.dataset.grupo}"></p>`);
@@ -881,6 +906,7 @@
       if (p.querySelector("[name=op]") && st.op === null) return no("Elige tu scoop");
       if (p.querySelector("[data-grupo=colores]") && st.colores.length < minC) return no(`Elige mínimo ${minC} colores`);
       if (p.querySelector("[data-grupo=personajes]") && st.personajes.length < minP) return no(`Elige mínimo ${minP} personajes`);
+      const sino = p.querySelector(".scd-sino"); if (sino && elegido[sino.dataset.k] === undefined) return no("Elige una opción");
       if (p.querySelector("#sc-carta") && st.carta && !($("#carta-txt").value || "").trim()) { if (!callado) $("#carta-txt").focus(); return no("Escribe el mensaje de tu carta"); }
       for (const el of p.querySelectorAll("input,select,textarea")) if (!el.hidden && !el.closest("[hidden]") && !el.checkValidity()) { if (!callado) el.reportValidity(); return false; }
       return true;
@@ -921,7 +947,8 @@
       if (ocupado || paso >= N - 1) return;
       if (!valido(paso)) return;
       ocupado = true;
-      const [t, s] = ANIMOS[paso % ANIMOS.length];
+      const sn = pasos[paso].querySelector(".scd-sino");
+      const [t, s] = sn && elegido[sn.dataset.k] === false ? NO_ANIMO[sn.dataset.k] : ANIMOS[paso % ANIMOS.length];
       $("#scd-fb-t").textContent = t; $("#scd-fb-s").textContent = s;
       barra.classList.add("scd-ok");
       const w = (paso + 1) / N * 100; fill.style.width = w + "%";
