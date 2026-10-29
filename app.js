@@ -1117,7 +1117,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     inpB.addEventListener("keydown", e => { if (e.key === "Enter" && inpB.value.trim()) location.hash = "#/buscar/" + encodeURIComponent(inpB.value.trim()); });
   }
 
-  { const pie = document.querySelector(".pie"); if (pie && CINTA.length) pie.insertAdjacentHTML("beforebegin", cinta("cinta-osc")); }
+  // (franja antes del pie eliminada a pedido)
   { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega(T.avisoCarrito || AVISO_CARRITO_DEF)); }
   pintarCarrito(); ruta();
 })();
