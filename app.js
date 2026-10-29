@@ -392,36 +392,65 @@
   }
 
   let ORDEN = "destacados", SOLO_STOCK = false;
+  // Catálogo con filtros combinables: personajes (uno o varios) + categorías (una o varias)
+  // Dentro de un grupo suma opciones (Sanrio o Snoopy); entre grupos se combinan (Sanrio y Peluches).
   function catalogo(cat, q, modo) {
-    let lista = PRODS;
-    if (modo === "nuevos") lista = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo));
-    if (cat) lista = lista.filter(p => p.categorias?.includes(cat));
-    if (q) { const t = q.toLowerCase(); lista = lista.filter(p => (p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t)); }
-    const base = lista;
-    const ordenar = () => {
-      let l = SOLO_STOCK ? base.filter(hayStock) : base.slice();
+    const PS = PERS(), CS = CATEG().length ? CATEG() : CATS.filter(c => !PS.some(p => p.id === c.id));
+    const selP = new Set(), selC = new Set();
+    if (cat) (PS.some(p => p.id === cat) ? selP : selC).add(cat);
+    let base = PRODS;
+    if (modo === "nuevos") base = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo));
+    if (q) { const t = q.toLowerCase(); base = base.filter(p => (p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t)); }
+    const pasa = (p, sel) => !sel.size || (p.categorias || []).some(c => sel.has(c));
+    const filtrar = () => {
+      let l = base.filter(p => pasa(p, selP) && pasa(p, selC));
+      if (SOLO_STOCK) l = l.filter(hayStock);
       if (ORDEN === "menor") l.sort((a, b) => a.precio - b.precio);
       else if (ORDEN === "mayor") l.sort((a, b) => b.precio - a.precio);
       else if (ORDEN === "az") l.sort((a, b) => sinEmoji(a.nombre).localeCompare(sinEmoji(b.nombre)));
       else l = l.filter(hayStock).concat(l.filter(p => !hayStock(p)));
       return l;
     };
-    lista = ordenar();
-    const titulo = q ? `Resultados para “${esc(q)}”` : modo === "nuevos" ? "Novedades" : cat ? esc(CATS.find(c => c.id === cat)?.nombre || "Catálogo") : "Todos los productos";
+    // cuántos productos quedarían al tocar cada opción (para no llevar a resultados vacíos)
+    const cuantos = (id, grupo) => { const sp = new Set(selP), sc = new Set(selC); const g = grupo === "p" ? sp : sc; g.has(id) ? g.delete(id) : g.add(id);
+      return base.filter(p => pasa(p, sp) && pasa(p, sc) && (!SOLO_STOCK || hayStock(p))).length; };
+    const nombre = id => (CATS.find(c => c.id === id) || {}).nombre || id;
+    const titulo = () => {
+      if (q) return `Resultados para “${esc(q)}”`;
+      const ps = [...selP].map(nombre), cs = [...selC].map(nombre);
+      if (!ps.length && !cs.length) return modo === "nuevos" ? "Novedades" : "Todos los productos";
+      return esc([cs.join(" y "), ps.length ? (cs.length ? "de " : "") + ps.join(" y ") : ""].filter(Boolean).join(" "));
+    };
+    const chip = (c, g) => { const on = (g === "p" ? selP : selC).has(c.id), n = on ? null : cuantos(c.id, g);
+      return `<button type="button" class="chip ${on ? "activo" : ""}" data-f="${g}" data-id="${esc(c.id)}" ${n === 0 ? "disabled" : ""} aria-pressed="${on}">${esc(c.nombre)}${on ? ' <span class="chip-x" aria-hidden="true">×</span>' : ""}</button>`; };
     app.innerHTML = `<section class="seccion">
-      <h1 class="cat-titulo">${titulo}</h1>
-      <div class="filtros"><a class="chip ${!cat ? "activo" : ""}" href="#/catalogo">Todo</a>
-        ${PERS().length ? `<span class="filtro-tit">Personajes</span>${PERS().map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}` : ""}</div>
-      <div class="filtros"><span class="filtro-tit">Categorías</span>${(CATEG().length ? CATEG() : CATS).map(c => `<a class="chip ${cat === c.id ? "activo" : ""}" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>
-      <div class="orden-barra"><span id="cuenta">${lista.length} productos</span>
+      <h1 class="cat-titulo" id="cat-titulo"></h1>
+      <div id="cat-filtros"></div>
+      <div class="orden-barra"><span id="cuenta"></span>
         <label class="solo-stock"><input type="checkbox" id="solo-stock" ${SOLO_STOCK ? "checked" : ""}> Solo disponibles</label>
         <select id="orden"><option value="destacados">Destacados</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option><option value="az">Nombre: A-Z</option></select></div>
-      <div id="grilla-cat">${grilla(lista)}</div></section>`;
+      <div id="grilla-cat"></div></section>`;
+    const pintar = () => {
+      const l = filtrar(), hay = selP.size || selC.size;
+      $("#cat-titulo").innerHTML = titulo();
+      $("#cat-filtros").innerHTML = `
+        ${PS.length ? `<div class="filtro-grupo"><span class="filtro-tit">Personaje</span><div class="filtros">${PS.map(c => chip(c, "p")).join("")}</div></div>` : ""}
+        <div class="filtro-grupo"><span class="filtro-tit">Tipo de producto</span><div class="filtros">${CS.map(c => chip(c, "c")).join("")}</div></div>
+        ${hay ? `<button type="button" class="filtro-limpiar" id="filtro-limpiar">Quitar filtros</button>` : ""}`;
+      $("#cuenta").textContent = `${l.length} ${l.length === 1 ? "producto" : "productos"}`;
+      $("#grilla-cat").innerHTML = l.length ? grilla(l) : `<p class="vacio">No hay productos con esa combinación. Prueba quitando un filtro.</p>`;
+      document.querySelectorAll("#cat-filtros .chip.activo").forEach(ch => { const f = ch.parentElement; if (f.scrollWidth > f.clientWidth) f.scrollLeft = ch.offsetLeft - f.offsetLeft - 16; });
+    };
+    pintar();
+    $("#cat-filtros").addEventListener("click", e => {
+      if (e.target.closest("#filtro-limpiar")) { selP.clear(); selC.clear(); return pintar(); }
+      const b = e.target.closest(".chip[data-f]"); if (!b) return;
+      const g = b.dataset.f === "p" ? selP : selC, id = b.dataset.id;
+      g.has(id) ? g.delete(id) : g.add(id); pintar();
+    });
     $("#orden").value = ORDEN;
-    document.querySelectorAll(".filtros .chip.activo").forEach(ch => { const f = ch.parentElement; f.scrollLeft = ch.offsetLeft - f.offsetLeft - 16; });
-    const repintar = () => { const l = ordenar(); $("#grilla-cat").innerHTML = grilla(l); $("#cuenta").textContent = `${l.length} productos`; };
-    $("#orden").onchange = e => { ORDEN = e.target.value; repintar(); };
-    $("#solo-stock").onchange = e => { SOLO_STOCK = e.target.checked; repintar(); };
+    $("#orden").onchange = e => { ORDEN = e.target.value; pintar(); };
+    $("#solo-stock").onchange = e => { SOLO_STOCK = e.target.checked; pintar(); };
   }
 
   function producto(id) {
