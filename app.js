@@ -290,9 +290,11 @@
     const DEST = (Array.isArray(T.destacadas) && T.destacadas.filter(d => d && d.cat).length ? T.destacadas.filter(d => d && d.cat)
       : [{ titulo: "Novedades", cat: "__nuevos" }]).filter(d => d.cat !== "sanrio").slice(0, 3);
     // Beneficios: "Título | texto" (desde Mi tienda). Si no tienen ese formato, se usan los de siempre.
-    const VAL_DEF = ["Productos kawaii | Papelería, regalos y cositas adorables", "Envíos a toda Bolivia | Desde Santa Cruz hasta tu departamento", "Punto de entrega | Consulta por nuestro punto de entrega en Santa Cruz"];
-    const valGuardados = Array.isArray(T.valores) ? T.valores.filter(Boolean) : [];
-    const VAL = (valGuardados.some(v => v.includes("|")) ? valGuardados : VAL_DEF).slice(0, 3).map(v => { const [t, ...d] = v.split("|"); return { t: t.trim(), d: d.join("|").trim() }; });
+    // Formato: "Título | texto | etiqueta" (la etiqueta es opcional)
+    const VAL_DEF = ["Cositas kawaii | Papelería, peluches y regalos que alegran el día | +200 productos", "Envíos a toda Bolivia | De Santa Cruz a tu departamento | 9 departamentos", "Recojo en Santa Cruz | Coordinamos tu entrega por WhatsApp, sin complicaciones | Pago con QR"];
+    const VAL_VIEJOS = ["Productos kawaii | Papelería, regalos y cositas adorables", "Envíos a toda Bolivia | Desde Santa Cruz hasta tu departamento", "Punto de entrega | Consulta por nuestro punto de entrega en Santa Cruz"];
+    const valGuardados = (Array.isArray(T.valores) ? T.valores.filter(Boolean) : []).map((v, i) => v.trim() === VAL_VIEJOS[i] ? VAL_DEF[i] : v);
+    const VAL = (valGuardados.some(v => v.includes("|")) ? valGuardados : VAL_DEF).slice(0, 3).map(v => { const [t, d = "", e = ""] = v.split("|").map(x => x.trim()); return { t, d, e }; });
     const HIST = T.historia || {};
     const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : ["historia.webp"];
     const OPS = (T.opiniones || []).filter(o => o && o.texto);
@@ -327,9 +329,7 @@
         const n = categs.length, resto = n % 3, final = i >= n - resto;
         return `<a class="cat-tile ${i % 3 === 2 ? "grande" : ""} ${final && resto === 1 ? "grande sola" : ""} ${final && resto === 2 ? "par-final" : ""} ${n % 2 && i === n - 1 ? "impar-final" : ""}" href="#/catalogo/${c.id}">${f ? `<img loading="lazy" src="${esc(f)}" alt="">` : `<span class="cat-tile-ini">${esc(inicial(c.nombre))}</span>`}<span class="cat-tile-nom">${esc(c.nombre)}</span></a>`; }).join("")}</section>
 
-      ${cinta()}
-
-      <section class="valores2"><div class="valores2-in">${VAL.map((v, i) => `<div class="valor2">${ICON_VAL[i] || ICON_VAL[0]}<b>${esc(v.t)}</b>${v.d ? `<small>${esc(v.d)}</small>` : ""}</div>`).join("")}</div></section>
+      <section class="seccion ben"><div class="ben-in">${VAL.map((v, i) => `<div class="ben-c ben-c${i % 3}"><span class="ben-ico">${ICON_VAL[i] || ICON_VAL[0]}</span><div class="ben-tx"><h3>${esc(v.t)}</h3>${v.d ? `<p>${esc(v.d)}</p>` : ""}</div>${v.e ? `<span class="ben-tag">${esc(v.e)}</span>` : ""}</div>`).join("")}</div></section>
 
       ${destacada(DEST[0])}
 

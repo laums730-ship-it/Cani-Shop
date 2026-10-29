@@ -1317,3 +1317,29 @@ input,select,textarea{max-width:100%;min-width:0}
 @keyframes pdx-cinta{to{transform:translateX(-50%)}}
 @media (max-width:820px){.pdx-cinta{order:3;border-radius:0;margin:0}}
 @media (prefers-reduced-motion:reduce){.pdx-cinta-pista{animation:none}}
+/* Beneficios del inicio: stickers de colores */
+.ben-in{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1120px;margin:0 auto}
+.ben-c{border-radius:26px;padding:24px 22px 22px;display:flex;flex-direction:column;gap:10px;border:2px solid rgba(120,55,70,.08);border-bottom-width:6px;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.ben-c0{background:var(--rosa);transform:rotate(-1.5deg)}
+.ben-c1{background:#f1e6fb;transform:rotate(1deg) translateY(6px)}
+.ben-c2{background:#fdf1e7;transform:rotate(-.8deg)}
+.ben-c:hover{transform:rotate(0) translateY(-6px)}
+.ben-ico{width:60px;height:60px;border-radius:20px;background:#fff;display:grid;place-items:center;color:var(--rosa-fuerte);box-shadow:0 4px 0 rgba(120,55,70,.08);margin-bottom:4px;flex:none}
+.ben-c1 .ben-ico{color:#ad7fd0}
+.ben-c2 .ben-ico{color:#d98a5e}
+.ben-ico svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ben-c:hover .ben-ico svg{animation:ben-men .5s ease}
+@keyframes ben-men{30%{transform:rotate(-12deg)}60%{transform:rotate(10deg)}}
+.ben-tx{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ben-tx h3{font-family:var(--f-tit);font-weight:600;font-size:1.25rem;line-height:1.15;margin:0;color:var(--cafe);text-transform:lowercase;text-wrap:balance}
+.ben-tx p{margin:0;font-size:.88rem;line-height:1.5;color:#a87a8b;text-transform:lowercase}
+.ben-tag{align-self:flex-start;font-family:var(--f-tit);font-weight:600;font-size:.78rem;background:#fff;color:var(--cafe);border-radius:999px;padding:3px 11px;margin-top:auto;text-transform:lowercase}
+@media (max-width:760px){
+  .ben-in{grid-template-columns:minmax(0,1fr);gap:14px}
+  .ben-c{flex-direction:row;flex-wrap:wrap;align-items:flex-start;column-gap:14px;row-gap:8px;padding:18px}
+  .ben-ico{width:54px;height:54px;margin:0}
+  .ben-tx{flex:1 1 calc(100% - 70px)}
+  .ben-tag{margin:0 0 0 68px}
+}
+@media (prefers-reduced-motion:reduce){.ben-c{transition:none}.ben-c:hover .ben-ico svg{animation:none}}
+.ben-tag{text-transform:none}
