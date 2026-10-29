@@ -844,6 +844,19 @@
       : p.querySelector("[name=nombre]") ? "¡Casi listo! ¿A quién se lo enviamos?"
       : "¡Tu Scoop está listo! Envíanos tu pedido y te pasamos el QR por WhatsApp.";
     const ANIMOS = [["¡Qué lindo!", "Cani aprueba tu elección"], ["¡Buena elección!", "Vas súper bien"], ["¡Me encanta!", "Tu Scoop va quedando precioso"], ["¡Perfecto!", "Sigamos"], ["¡Genial!", "Ya casi terminamos"], ["¡Listo!", "Solo un pasito más"]];
+    // Avisos finales en una sola tarjeta ordenada (entrega + disponibilidad)
+    {
+      const ent = F.querySelector(".aviso-ent"), dis = F.querySelector(".sc-aviso");
+      const pn = pasos[N - 1].querySelector(".sc-pago .nota"), pagoNota = pn ? pn.innerHTML : ""; pn && pn.remove();
+      const lineas = ent ? [...ent.querySelectorAll("p")].map(x => x.textContent) : [], nota = dis ? dis.textContent.trim() : "";
+      if (pagoNota || lineas.length || nota) pasos[N - 1].querySelector(".sc-cont").insertAdjacentHTML("beforeend", `<div class="scd-notas">
+        <b class="scd-notas-tit">Antes de enviar</b>
+        ${pagoNota ? `<div class="scd-nota"><span class="scd-nota-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg></span><div><b>Pago</b><p>${pagoNota}</p></div></div>` : ""}
+        ${lineas.length ? `<div class="scd-nota"><span class="scd-nota-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg></span><div><b>Entrega</b>${lineas.map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""}
+        ${nota ? `<div class="scd-nota"><span class="scd-nota-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><div><b>Tu selección</b><p>${esc(nota)}</p></div></div>` : ""}
+      </div>`);
+      ent && ent.remove(); dis && dis.remove(); extras.length = 0;
+    }
     pasos.forEach((p, i) => {
       p.querySelector("h2").insertAdjacentHTML("afterend", `<div class="scd-charla"><div class="scd-cani" aria-hidden="true"></div><p class="scd-globo">${esc(frase(p))}</p></div>`);
       const g = p.querySelector("[data-grupo]"); if (g) g.insertAdjacentHTML("beforebegin", `<p class="scd-cuenta" data-c="${g.dataset.grupo}"></p>`);
@@ -859,7 +872,7 @@
       <div class="scd-fila">
         <button type="button" class="scd-atras" id="sc-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="scd-total"><small>Total</small><b id="sc-total2">—</b></div>
-        <button type="button" class="scd-btn" id="sc-seguir">Continuar</button>
+        <button type="button" class="scd-btn" id="sc-seguir"><span>Continuar</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <button type="submit" class="scd-btn scd-enviar" id="sc-btn">Enviar mi pedido</button>
       </div></div>`;
     pintarTotal();
@@ -920,8 +933,8 @@
     $("#sc-atras").onclick = () => { if (!ocupado) mostrar(paso - 1, -1); };
     F.addEventListener("click", e => { const b = e.target.closest(".sc-chip"); if (b) { b.classList.remove("pum"); void b.offsetWidth; if (b.classList.contains("on")) b.classList.add("pum"); } setTimeout(estado, 0); });
     F.addEventListener("input", estado);
-    // al elegir el tamaño del scoop o la caja, avanza solo (con su mensajito)
-    F.addEventListener("change", e => { estado(); if ((e.target.name === "op" || e.target.name === "caja") && pasos[paso].contains(e.target)) setTimeout(avanzar, 300); });
+    // ya no avanza solo: la persona confirma con el botón de flecha
+    F.addEventListener("change", estado);
     mostrar(0, 1, false);
   }
 
