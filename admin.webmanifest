@@ -1,0 +1,21 @@
+{
+  "name": "Cani Shop · Panel",
+  "short_name": "Cani Panel",
+  "description": "Pedidos, notas de venta, productos y estadísticas de Cani Shop",
+  "start_url": "admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff6fa",
+  "theme_color": "#fce3ee",
+  "lang": "es",
+  "icons": [
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icono-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Nuevo pedido", "short_name": "Nuevo pedido", "url": "admin.html#nuevo-pedido", "icons": [{ "src": "icono-192.png", "sizes": "192x192" }] },
+    { "name": "Estadísticas", "short_name": "Estadísticas", "url": "admin.html#estadisticas", "icons": [{ "src": "icono-192.png", "sizes": "192x192" }] }
+  ]
+}
