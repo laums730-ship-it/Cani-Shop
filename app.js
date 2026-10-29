@@ -119,8 +119,27 @@
   const agregar = (id, variante, cant) => {
     const ex = carrito.find(i => i.id === id && i.variante === variante);
     ex ? ex.cant += cant : carrito.push({ id, variante, cant });
-    guardar(); toast("Agregado al carrito");
+    guardar(); avisoAgregado(id, variante);
   };
+  // Ventanita "¡Agregado!" con la foto, y botones para ver el carrito o seguir comprando
+  function avisoAgregado(id, variante) {
+    const p = PRODS.find(x => x.id === id); if (!p) return toast("Agregado al carrito");
+    let box = $("#agregado");
+    if (!box) {
+      document.body.insertAdjacentHTML("beforeend", `<div class="agregado" id="agregado" role="dialog" aria-live="polite" hidden><div class="ag-in">
+        <div class="ag-cab"><span class="ag-ok"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>¡Agregado al carrito!</b><button type="button" class="ag-x" aria-label="Cerrar">✕</button></div>
+        <div class="ag-prod"><img id="ag-img" alt=""><div><span id="ag-nom"></span><small id="ag-var"></small></div></div>
+        <div class="ag-btns"><button type="button" class="btn btn-sec ag-seguir">seguir comprando</button><button type="button" class="btn ag-ver">ver carrito</button></div>
+      </div></div>`);
+      box = $("#agregado");
+      const cerrar = () => { box.classList.remove("ver"); setTimeout(() => box.hidden = true, 250); };
+      box.addEventListener("click", e => { if (e.target === box || e.target.closest(".ag-x,.ag-seguir")) cerrar(); if (e.target.closest(".ag-ver")) { cerrar(); abrir(true); } });
+    }
+    const v = (p.variantes || []).find(x => x.nombre === variante);
+    $("#ag-img").src = (v && v.imagen) || foto(p); $("#ag-nom").textContent = sinEmoji(p.nombre); $("#ag-var").textContent = variante || "";
+    box.hidden = false; requestAnimationFrame(() => box.classList.add("ver"));
+    const b = $("#btn-carrito"); b.classList.remove("salta"); void b.offsetWidth; b.classList.add("salta");
+  }
   function pintarCarrito() {
     const n = carrito.reduce((a, i) => a + i.cant, 0);
     const c = $("#contador"); c.textContent = n; c.dataset.v = n;
@@ -154,7 +173,16 @@
       fp.addEventListener("input", () => { try { const d = {}; for (const el of fp.elements) if (el.name && el.type !== "file" && el.name !== "nota") d[el.name] = el.value; localStorage.setItem("datos-pedido", JSON.stringify(d)); } catch (e) {} });
       const t = document.createElement("p"); t.className = "form-tit"; t.textContent = "Tus datos para el pedido"; fp.before(t);
     } }
-  const abrir = v => { $("#carrito").classList.toggle("abierto", v); $("#velo").classList.toggle("abierto", v); };
+  const abrir = v => { $("#carrito").classList.toggle("abierto", v); $("#velo").classList.toggle("abierto", v); document.body.classList.toggle("carrito-abierto", v); if (v) $("#carrito").classList.remove("paso-datos"); };
+  // Carrito en dos pasos: 1) tus productos  2) tus datos
+  { const pie = $("#carrito-pie"), fp = $("#form-pedido");
+    if (pie && fp) {
+      fp.insertAdjacentHTML("beforebegin", `<button type="button" class="btn car-seguir" id="car-seguir">Continuar con mis datos <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button type="button" class="car-volver" id="car-volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg> volver a mis productos</button>`);
+      $("#car-seguir").onclick = () => { $("#carrito").classList.add("paso-datos"); $("#carrito").scrollTop = 0; const sc = $("#carrito .carrito-pie"); if (sc) sc.scrollIntoView({ block: "start" }); };
+      $("#car-volver").onclick = () => $("#carrito").classList.remove("paso-datos");
+      { const t = $("#carrito .form-tit"); if (t) $("#car-volver").after(t); }
+    } }
   $("#btn-carrito").onclick = () => abrir(true);
   $("#cerrar-carrito").onclick = $("#velo").onclick = () => abrir(false);
 
@@ -252,7 +280,7 @@
     </a>`; };
   const grilla = lista => lista.length ? `<div class="grilla">${lista.map(tarjeta).join("")}</div>` : `<p class="vacio">No encontramos productos 😿</p>`;
 
-  const ESTRELLA_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z" fill="#fff275" stroke="#fd95c8" stroke-width="1.2" stroke-linejoin="round"/></svg>');
+  const ESTRELLA_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z" fill="#fd95c8" stroke="#ee6fae" stroke-width="1.2" stroke-linejoin="round"/></svg>');
   let estrellaSrc = "estrella.webp";
   { const pre = new Image(); pre.onerror = () => { estrellaSrc = ESTRELLA_SVG; }; pre.src = estrellaSrc; }
   function estrellitas(el) {
@@ -327,12 +355,12 @@
     const ESTRELLAS = `<span class="op-estrellas">${Array(5).fill(`<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7z"/></svg>`).join("")}</span>`;
     const listaDe = d => {
       const l = d.cat === "__nuevos" ? PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)) : PRODS.filter(p => (p.categorias || []).includes(d.cat));
-      return l.filter(hayStock).concat(l.filter(p => !hayStock(p))).slice(0, d.cat === "__nuevos" ? 2 : 8);
+      return l.filter(hayStock).concat(l.filter(p => !hayStock(p))).slice(0, d.cat === "__nuevos" ? 4 : 8);
     };
     const destacada = d => {
       const l = listaDe(d); if (!l.length) return "";
       const href = d.cat === "__nuevos" ? "#/novedades" : `#/catalogo/${d.cat}`;
-      return `<section class="seccion dest ${l.length <= 2 ? "dest-dos" : ""}"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
+      return `<section class="seccion dest ${d.cat === "__nuevos" ? "dest-nov" : ""} ${l.length <= 2 ? "dest-dos" : ""}"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
     };
     app.innerHTML = `
       ${bans.length ? `<section class="hero ${bans.every(b => b.imagenMovil) ? "movil-ok" : ""}"><div class="car-pista" id="car-pista">${bans.map(b => {
@@ -448,7 +476,7 @@
       <div id="cat-filtros"></div>
       <div class="orden-barra"><span id="cuenta"></span>
         <label class="solo-stock"><input type="checkbox" id="solo-stock" ${SOLO_STOCK ? "checked" : ""}> Solo disponibles</label>
-        <select id="orden"><option value="destacados">Destacados</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option><option value="az">Nombre: A-Z</option></select></div>
+        <select id="orden"><option value="destacados">Destacados</option><option value="menor">Menor precio</option><option value="mayor">Mayor precio</option><option value="az">De la A a la Z</option></select></div>
       <div id="grilla-cat"></div></section>`;
     const pintar = () => {
       const l = filtrar(), hay = selP.size || selC.size;
@@ -517,6 +545,17 @@
         <small class="pdx-nota">envíos a toda bolivia · pago con QR</small>`;
     };
     pintarFotos(); pintarPan(); window.scrollTo(0, 0);
+    // Barra fija abajo (celular) con precio y "agregar": aparece cuando el botón grande no se ve
+    {
+      app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">agregar al carrito</button></div>`);
+      const barra = $("#pdx-barra");
+      const vigilar = () => { const a = $("#agregar"), r = a ? a.getBoundingClientRect() : null; const fuera = !r || r.bottom < 70 || r.top > innerHeight; barra.classList.toggle("ver", !!a && fuera && barra.isConnected); $("#pdx-b-var").textContent = vari || ""; };
+      const ab = new AbortController();
+      addEventListener("scroll", () => { if (!barra.isConnected) return ab.abort(); vigilar(); }, { passive: true, signal: ab.signal });
+      setTimeout(vigilar, 300);
+      barra.onclick = e => { if (e.target.closest("#pdx-b-add")) { const a = $("#agregar"); if (a) a.click(); } };
+      if (!hayStock(p)) barra.remove();
+    }
     // Franja de texto que se desliza bajo las fotos (frase propia del panel, o automática)
     {
       const cat = (p.categorias || []).map(c => CATS.find(x => x.id === c)).find(c => c && tipoDe(c) === "categoria");
@@ -607,7 +646,7 @@
       <div class="mega">
         ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}</div>` : ""}
         <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}
-          <a href="#/catalogo" class="mega-todo">Ver todo →</a></div>
+          <a href="#/novedades" class="mega-todo">Novedades →</a><a href="#/todo" class="mega-todo">Ver todo →</a></div>
         ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span></a>` : ""}
       </div>`;
     cat.replaceWith(d);
@@ -626,15 +665,18 @@
   const ttUser = (T.tiktok || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
   const ttVideos = (T.tiktokVideos || []).map(u => (String(u).match(/video\/(\d+)/) || String(u).match(/^(\d{10,})$/) || [])[1]).filter(Boolean).slice(0, 6);
   const seccionTikTok = () => !ttUser ? "" : `<section class="seccion tiktok">
-      <div class="tk-cab"><h2>¡Míranos en TikTok! 🎥</h2><p>Unboxings, scoops y novedades todas las semanas</p></div>
-      ${ttVideos.length ? `<div class="tk-videos">${ttVideos.map(id => `<div class="tk-video"><iframe src="https://www.tiktok.com/embed/v2/${id}" loading="lazy" allow="encrypted-media; fullscreen" allowfullscreen title="Video de TikTok"></iframe></div>`).join("")}</div>`
-        : `<div class="tk-perfil"><blockquote class="tiktok-embed" cite="https://www.tiktok.com/@${esc(ttUser)}" data-unique-id="${esc(ttUser)}" data-embed-type="creator" style="max-width:780px;min-width:288px;margin:0 auto"><section><a target="_blank" href="https://www.tiktok.com/@${esc(ttUser)}">@${esc(ttUser)}</a></section></blockquote></div>`}
+      <div class="tk-cab"><h2>¡Míranos en TikTok!</h2><p>Unboxings, scoops y novedades todas las semanas</p></div>
+      ${ttVideos.length ? `<div class="tk-grid">${ttVideos.map((id, i) => `<a class="tk-card" data-id="${id}" href="https://www.tiktok.com/@${esc(ttUser)}/video/${id}" target="_blank" rel="noopener" aria-label="Ver video ${i + 1} en TikTok"><span class="tk-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></a>`).join("")}</div>`
+        : `<a class="tk-perfil-card" href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener"><img src="cani-charla.webp" alt=""><div><b>@${esc(ttUser)}</b><span>Mira cómo armamos los scoops y todas las novedades</span></div><span class="tk-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></a>`}
       <div style="text-align:center;margin-top:20px"><a class="btn btn-tk" href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener">Seguir a @${esc(ttUser)} en TikTok</a></div>
     </section>`;
   { const bt = $("#btn-tiktok"); if (bt && ttUser) { bt.href = `https://www.tiktok.com/@${ttUser}`; bt.hidden = false; }
     const bi = $("#btn-insta"); if (bi && T.instagram) { bi.href = T.instagram; bi.hidden = false; }
     const ps = document.querySelector(".pie-scoops"); if (ps && SC) ps.hidden = false; }
-  const cargarTikTok = () => { if (!ttVideos.length && ttUser && !document.querySelector('script[src*="tiktok.com/embed.js"]')) { const s = document.createElement("script"); s.async = true; s.src = "https://www.tiktok.com/embed.js"; document.body.appendChild(s); } else if (window.tiktokEmbed && window.tiktokEmbed.lib) { try { window.tiktokEmbed.lib.render(document.querySelectorAll(".tiktok-embed")); } catch (e) {} } };
+  // Miniaturas de los videos (si TikTok no responde, queda la tarjeta rosa con el botón de play)
+  const cargarTikTok = () => document.querySelectorAll(".tk-card[data-id]").forEach(a => {
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(a.href)}`).then(r => r.ok ? r.json() : null).then(d => { if (d && d.thumbnail_url) { a.style.backgroundImage = `url("${d.thumbnail_url}")`; a.classList.add("con-foto"); } }).catch(() => {});
+  });
 
   // ---------- Quiz "¿Qué personaje eres?" ----------
   const QUIZ = {
@@ -1124,6 +1166,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
     document.body.classList.toggle("en-scoop", (location.hash.split("/")[1] || "") === "scoops");
+    document.body.classList.toggle("en-producto", (location.hash.split("/")[1] || "") === "producto");
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
