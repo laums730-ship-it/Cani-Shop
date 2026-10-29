@@ -135,11 +135,12 @@
           <div class="cantidad"><button data-menos="${i.k}">−</button><span>${i.cant}</span><button data-mas="${i.k}">+</button></div>
         </div>
         <button class="quitar" data-quitar="${i.k}">Quitar</button>
-      </div>`).join("") : `<p class="vacio">Tu carrito está vacío</p>`;
+      </div>`).join("") : `<div class="carrito-vacio"><div class="cv-cani" aria-hidden="true"></div><p>hay tantas cositas lindas esperándote…</p><a class="btn cv-btn" href="#/catalogo" data-cerrar-carrito>ver la tienda</a></div>`;
     $("#subtotal").textContent = bs(items.reduce((a, i) => a + i.p.precio * i.cant, 0));
     $("#carrito-pie").style.display = items.length ? "" : "none";
   }
   $("#carrito-items").addEventListener("click", e => {
+    if (e.target.closest("[data-cerrar-carrito]")) { abrir(false); return; }
     const d = e.target.dataset;
     if (d.mas) { const it = carrito[d.mas], p = PRODS.find(x => x.id === it.id); if (p && it.cant >= maxDe(p, it.variante)) return toast("No hay más stock de este modelo"); it.cant++; }
     else if (d.menos) { carrito[d.menos].cant--; if (carrito[d.menos].cant < 1) carrito.splice(d.menos, 1); }
@@ -496,6 +497,15 @@
         <small class="pdx-nota">envíos a toda bolivia · pago con QR</small>`;
     };
     pintarFotos(); pintarPan(); window.scrollTo(0, 0);
+    // Te puede gustar: mismos personaje/categorías primero, solo con stock
+    {
+      const mias = new Set(p.categorias || []), perId = per && per.id;
+      const sem = x => [...String(x.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0) + id.length) % 997, 7);
+      const rel = PRODS.filter(x => x.id !== p.id && hayStock(x))
+        .map(x => { const cs = x.categorias || []; return { x, pts: (perId && cs.includes(perId) ? 3 : 0) + cs.filter(c => mias.has(c)).length, r: sem(x) }; })
+        .filter(o => o.pts > 0).sort((a, b) => b.pts - a.pts || a.r - b.r).slice(0, 4).map(o => o.x);
+      if (rel.length) app.insertAdjacentHTML("beforeend", `<section class="seccion pdx-rel"><h2>te puede gustar</h2><div class="grilla">${rel.map(tarjeta).join("")}</div></section>`);
+    }
     app.onclick = e => {
       const b = e.target.closest("button"); if (!b) return;
       if (b.id === "pdx-mas") { abierto = !abierto; pintarPan(); }

@@ -1290,3 +1290,12 @@ input,select,textarea{max-width:100%;min-width:0}
 .en-scoop .sc-cont .form[hidden]{display:none!important}
 .sc-video[hidden]{display:none!important}
 .scd-op-tx small b,.scd-op.sel .scd-op-tx small b{font:inherit;font-weight:800;color:inherit!important;font-size:inherit}
+/* Carrito vacío con Cani */
+.carrito-vacio{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:48px 20px 30px}
+.cv-cani{width:150px;height:132px;background:url(cani-charla.webp) center bottom/contain no-repeat;animation:scd-respira 2.6s ease-in-out infinite;transform-origin:50% 100%}
+.carrito-vacio p{margin:0;font-family:var(--f-tit);font-size:1.15rem;color:var(--cafe);max-width:18em;text-wrap:balance}
+.cv-btn{margin-top:4px}
+/* Te puede gustar */
+.pdx-rel{padding-top:10px}
+.pdx-rel h2{font-size:clamp(1.4rem,3vw,1.9rem);margin:0 0 18px;text-transform:lowercase}
+@media (max-width:820px){.pdx-rel .grilla{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}}
