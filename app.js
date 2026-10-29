@@ -129,7 +129,7 @@
       document.body.insertAdjacentHTML("beforeend", `<div class="agregado" id="agregado" role="dialog" aria-live="polite" hidden><div class="ag-in">
         <div class="ag-cab"><span class="ag-ok"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>¡Agregado al carrito!</b><button type="button" class="ag-x" aria-label="Cerrar">✕</button></div>
         <div class="ag-prod"><img id="ag-img" alt=""><div><span id="ag-nom"></span><small id="ag-var"></small></div></div>
-        <div class="ag-btns"><button type="button" class="btn btn-sec ag-seguir">seguir comprando</button><button type="button" class="btn ag-ver">ver carrito</button></div>
+        <div class="ag-btns"><button type="button" class="btn btn-sec ag-seguir">Seguir comprando</button><button type="button" class="btn ag-ver">Ver carrito</button></div>
       </div></div>`);
       box = $("#agregado");
       const cerrar = () => { box.classList.remove("ver"); setTimeout(() => box.hidden = true, 250); };
@@ -154,7 +154,7 @@
           <div class="cantidad"><button data-menos="${i.k}">−</button><span>${i.cant}</span><button data-mas="${i.k}">+</button></div>
         </div>
         <button class="quitar" data-quitar="${i.k}">Quitar</button>
-      </div>`).join("") : `<div class="carrito-vacio"><div class="cv-cani" aria-hidden="true"></div><p>hay tantas cositas lindas esperándote…</p><a class="btn cv-btn" href="#/catalogo" data-cerrar-carrito>ver la tienda</a></div>`;
+      </div>`).join("") : `<div class="carrito-vacio"><div class="cv-cani" aria-hidden="true"></div><p>Hay tantas cositas lindas esperándote…</p><a class="btn cv-btn" href="#/catalogo" data-cerrar-carrito>Ver la tienda</a></div>`;
     $("#subtotal").textContent = bs(items.reduce((a, i) => a + i.p.precio * i.cant, 0));
     $("#carrito-pie").style.display = items.length ? "" : "none";
   }
@@ -178,7 +178,7 @@
   { const pie = $("#carrito-pie"), fp = $("#form-pedido");
     if (pie && fp) {
       fp.insertAdjacentHTML("beforebegin", `<button type="button" class="btn car-seguir" id="car-seguir">Continuar con mis datos <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-        <button type="button" class="car-volver" id="car-volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg> volver a mis productos</button>`);
+        <button type="button" class="car-volver" id="car-volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg> Volver a mis productos</button>`);
       $("#car-seguir").onclick = () => { $("#carrito").classList.add("paso-datos"); $("#carrito").scrollTop = 0; const sc = $("#carrito .carrito-pie"); if (sc) sc.scrollIntoView({ block: "start" }); };
       $("#car-volver").onclick = () => $("#carrito").classList.remove("paso-datos");
       { const t = $("#carrito .form-tit"); if (t) $("#car-volver").after(t); }
@@ -528,26 +528,26 @@
       const dispo = tieneVar(p) ? !!vari : hayStock(p);
       const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
       $("#pdx-pan").innerHTML = `
-        <a class="pdx-volver" href="#/catalogo">← volver</a>
+        <a class="pdx-volver" href="#/catalogo">← Volver</a>
         ${per ? `<a class="pdx-per" href="#/catalogo/${per.id}">${esc(per.nombre)}</a>` : ""}
         <h1 class="pdx-tit">${esc(sinEmoji(p.nombre))}</h1>
         ${frase ? `<p class="pdx-frase">${esc(frase)}</p>` : ""}
-        ${resto.length ? `<button type="button" class="pdx-mas" id="pdx-mas" aria-expanded="${abierto}">${abierto ? "ocultar detalles" : "ver detalles"}</button>
+        ${resto.length ? `<button type="button" class="pdx-mas" id="pdx-mas" aria-expanded="${abierto}">${abierto ? "Ocultar detalles" : "Ver detalles"}</button>
           <div class="pdx-det" ${abierto ? "" : "hidden"}>${resto.map(l => `<p>${esc(l)}</p>`).join("")}</div>` : ""}
         <div class="pdx-precio">${bs(p.precio)}</div>
-        ${tieneVar(p) ? `<div class="pdx-etq">modelo: <b>${esc(vari || "elige uno")}</b></div>
+        ${tieneVar(p) ? `<div class="pdx-etq">Modelo: <b>${esc(vari || "elige uno")}</b></div>
           <div class="pdx-mods">${p.variantes.map(v => `<button type="button" class="pdx-mod ${v.nombre === vari ? "on" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
         ${dispo ? `<div class="pdx-fila">
             <div class="pdx-cant"><button type="button" data-c="-1" aria-label="Menos">−</button><span>${cant}</span><button type="button" data-c="1" aria-label="Más">+</button></div>
-            <button type="button" class="pdx-btn" id="agregar">agregar al carrito</button></div>
+            <button type="button" class="pdx-btn" id="agregar">Agregar al carrito</button></div>
 `
-          : `<button type="button" class="pdx-btn" disabled>agotado</button>`}
-        <small class="pdx-nota">envíos a toda bolivia · pago con QR</small>`;
+          : `<button type="button" class="pdx-btn" disabled>Agotado</button>`}
+        <small class="pdx-nota">Envíos a toda Bolivia · Pago con QR</small>`;
     };
     pintarFotos(); pintarPan(); window.scrollTo(0, 0);
     // Barra fija abajo (celular) con precio y "agregar": aparece cuando el botón grande no se ve
     {
-      app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">agregar al carrito</button></div>`);
+      app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">Agregar al carrito</button></div>`);
       const barra = $("#pdx-barra");
       const vigilar = () => { const a = $("#agregar"), r = a ? a.getBoundingClientRect() : null; const fuera = !r || r.bottom < 70 || r.top > innerHeight; barra.classList.toggle("ver", !!a && fuera && barra.isConnected); $("#pdx-b-var").textContent = vari || ""; };
       const ab = new AbortController();
@@ -562,9 +562,9 @@
       const pn = per ? per.nombre : "", cn = cat ? cat.nombre : "";
       const propia = String(p.frase || "").split(/[✦·|]/).map(x => x.trim()).filter(Boolean);
       const partes = (propia.length ? propia
-        : p.nuevo ? ["recién llegado", "novedad cani", pn || cn]
-        : pn ? [pn, cn, "cani shop"]
-        : cn ? [cn, "cositas kawaii", "cani shop"] : ["cositas kawaii", "cani shop"]).filter(Boolean).map(x => sinEmoji(x).toLowerCase());
+        : p.nuevo ? ["Recién llegado", "Novedad Cani", pn || cn]
+        : pn ? [pn, cn, "Cani Shop"]
+        : cn ? [cn, "Cositas kawaii", "Cani Shop"] : ["Cositas kawaii", "Cani Shop"]).filter(Boolean).map(x => sinEmoji(x));
       const serie = Array(Math.max(3, Math.ceil(12 / partes.length))).fill(partes).flat().map(x => `<span>${esc(x)}</span><i aria-hidden="true">✦</i>`).join("");
       document.querySelector(".pdx").insertAdjacentHTML("beforeend", `<div class="pdx-cinta" aria-label="${esc(partes.join(", "))}"><div class="pdx-cinta-pista" aria-hidden="true"><div>${serie}</div><div>${serie}</div></div></div>`);
     }
@@ -575,7 +575,7 @@
       const rel = PRODS.filter(x => x.id !== p.id && hayStock(x))
         .map(x => { const cs = x.categorias || []; return { x, pts: (perId && cs.includes(perId) ? 3 : 0) + cs.filter(c => mias.has(c)).length, r: sem(x) }; })
         .filter(o => o.pts > 0).sort((a, b) => b.pts - a.pts || a.r - b.r).slice(0, 4).map(o => o.x);
-      if (rel.length) app.insertAdjacentHTML("beforeend", `<section class="seccion pdx-rel"><h2>te puede gustar</h2><div class="grilla">${rel.map(tarjeta).join("")}</div></section>`);
+      if (rel.length) app.insertAdjacentHTML("beforeend", `<section class="seccion pdx-rel"><h2>Te puede gustar</h2><div class="grilla">${rel.map(tarjeta).join("")}</div></section>`);
     }
     app.onclick = e => {
       const b = e.target.closest("button"); if (!b) return;
@@ -1091,8 +1091,8 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
   ];
   const heroCani = (tag, botones) => `<section class="hc">
     <div class="hc-txt">
-      <${tag} class="hc-tit"><span class="l"><span>somos una</span></span><span class="l"><span>tiendita <em>kawaii</em></span></span><span class="l"><span>nacida en</span></span><span class="l"><span>santa cruz <span class="hc-cora">♡</span></span></span></${tag}>
-      <p class="hc-sub">papelería, peluches y cositas que no sabías que necesitabas, de la mano de cani, nuestro gatito curioso que ama las cajas.</p>
+      <${tag} class="hc-tit"><span class="l"><span>Somos una</span></span><span class="l"><span>tiendita <em>kawaii</em></span></span><span class="l"><span>nacida en</span></span><span class="l"><span>Santa Cruz <span class="hc-cora">♡</span></span></span></${tag}>
+      <p class="hc-sub">Papelería, peluches y cositas que no sabías que necesitabas, de la mano de Cani, nuestro gatito curioso que ama las cajas.</p>
       <div class="hc-acc">${botones}</div>
     </div>
     <div class="hc-esc" aria-hidden="true">${CANI_OBJ.map(o => `<div class="hc-o ${o.cls || ""}" style="width:${o.s}%" data-x="${o.x}" data-y="${o.y}" data-z="${o.z}"><img src="${o.src}" alt="" style="--r:${o.r || 0}deg;--d:${o.d || 5}s;--dl:${o.dl || 0}s"></div>`).join("")}</div>
@@ -1130,7 +1130,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
       `<svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/><path d="M24 13c-3-7-12-8-12-2s12 2 12 2c3-7 12-8 12-2s-12 2-12 2"/></svg>`,
       `<svg viewBox="0 0 48 48"><path d="M4 12h24v20H4z"/><path d="M28 18h9l7 7v7H28z"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>`
     ];
-    app.innerHTML = `${heroCani("h1", `<a class="btn" href="#/todo">ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">arma tu lucky scoop</a>` : ""}`)}
+    app.innerHTML = `${heroCani("h1", `<a class="btn" href="#/todo">Ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">Arma tu Lucky Scoop</a>` : ""}`)}
       <section class="seccion nos">
       <div class="nos-intro nos-intro-txt">
         <div class="nos-txt">
