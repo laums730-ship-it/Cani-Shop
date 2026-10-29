@@ -453,42 +453,54 @@
     $("#solo-stock").onchange = e => { SOLO_STOCK = e.target.checked; pintar(); };
   }
 
+  // Página de producto estilo Starface (opción 2: blanco con detalles rosa)
   function producto(id) {
     const p = PRODS.find(x => x.id === id);
     if (!p) return catalogo();
-    let img = 0, cant = 1, vari = tieneVar(p) ? (p.variantes.find(v => disp(v.stock)) || {}).nombre : null;
-    const imgs = (p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)]).slice();
-    (p.variantes || []).forEach(v => { if (v.imagen && !imgs.includes(v.imagen)) imgs.push(v.imagen); });
-    const imgDeVar = n => { const v = (p.variantes || []).find(x => x.nombre === n); return v && v.imagen ? imgs.indexOf(v.imagen) : -1; };
-    const pintar = () => {
+    let cant = 1, vari = tieneVar(p) ? (p.variantes.find(v => disp(v.stock)) || {}).nombre : null, abierto = false;
+    const base = (p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)]).slice();
+    (p.variantes || []).forEach(v => { if (v.imagen && !base.includes(v.imagen)) base.push(v.imagen); });
+    const fotos = () => { const v = (p.variantes || []).find(x => x.nombre === vari); return v && v.imagen ? [v.imagen, ...base.filter(u => u !== v.imagen)] : base; };
+    const lineas = sinEmoji(p.descripcion || "").split("\n").map(l => l.trim()).filter(Boolean);
+    const frase = lineas[0] || "", resto = lineas.slice(1);
+    const per = personajeDe(p);
+    app.innerHTML = `<section class="pdx">
+      <div class="pdx-fotos" id="pdx-fotos"></div>
+      <aside class="pdx-pan" id="pdx-pan"></aside>
+    </section>`;
+    const pintarFotos = () => {
+      const f = fotos();
+      $("#pdx-fotos").innerHTML = `<div class="pdx-pista" id="pdx-pista">${f.map((u, k) => `<div class="pdx-ph"><img src="${esc(u)}" alt="${k ? "" : esc(sinEmoji(p.nombre))}" ${k > 1 ? 'loading="lazy"' : ""}></div>`).join("")}</div>
+        ${f.length > 1 ? `<div class="pdx-puntos">${f.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
+      const pista = $("#pdx-pista");
+      pista.onscroll = () => { const k = Math.round(pista.scrollLeft / pista.clientWidth); document.querySelectorAll(".pdx-puntos i").forEach((d, n) => d.classList.toggle("on", n === k)); };
+    };
+    const pintarPan = () => {
       const dispo = tieneVar(p) ? !!vari : hayStock(p);
       const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
-      const pocos = dispo && max <= 3 ? `<p class="pocos">¡Solo ${max === 1 ? "queda 1" : `quedan ${max}`}!</p>` : "";
-      app.innerHTML = `<section class="seccion">
-        <a class="volver" href="#/catalogo">← Volver al catálogo</a>
-        <div class="producto">
-          <div class="galeria">
-            <div class="principal"><img src="${imgs[img]}" alt="${esc(p.nombre)}"></div>
-            ${imgs.length > 1 ? `<div class="miniaturas">${imgs.map((s, k) => `<button class="${k === img ? "activo" : ""}" data-img="${k}"><img src="${s}" alt=""></button>`).join("")}</div>` : ""}
-          </div>
-          <div>
-            <h1>${esc(sinEmoji(p.nombre))}</h1>
-            <div class="precio">${bs(p.precio)}</div>
-            <p class="desc">${esc(sinEmoji(p.descripcion)).replace(/\n/g, "<br>")}</p>
-            ${tieneVar(p) ? `<div class="etiq">Modelo</div><div class="opciones">${p.variantes.map(v => `<button class="opcion ${v.imagen ? "con-foto" : ""} ${v.nombre === vari ? "activo" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
-            <div class="etiq">Cantidad</div>
-            <div class="cantidad"><button data-c="-1">−</button><span>${cant}</span><button data-c="1">+</button></div><br>
-            ${pocos}<button class="btn" id="agregar" ${dispo ? "" : "disabled"}>${dispo ? "Agregar al carrito" : "Agotado"}</button>
-            <p class="nota" style="margin-top:16px">${esc(T.pago)}</p>
-          </div>
-        </div></section>`;
+      $("#pdx-pan").innerHTML = `
+        <a class="pdx-volver" href="#/catalogo">← volver</a>
+        ${per ? `<a class="pdx-per" href="#/catalogo/${per.id}">${esc(per.nombre)}</a>` : ""}
+        <h1 class="pdx-tit">${esc(sinEmoji(p.nombre))}</h1>
+        ${frase ? `<p class="pdx-frase">${esc(frase)}</p>` : ""}
+        ${resto.length ? `<button type="button" class="pdx-mas" id="pdx-mas" aria-expanded="${abierto}">${abierto ? "ocultar detalles" : "ver detalles"}</button>
+          <div class="pdx-det" ${abierto ? "" : "hidden"}>${resto.map(l => `<p>${esc(l)}</p>`).join("")}</div>` : ""}
+        <div class="pdx-precio">${bs(p.precio)}</div>
+        ${tieneVar(p) ? `<div class="pdx-etq">modelo: <b>${esc(vari || "elige uno")}</b></div>
+          <div class="pdx-mods">${p.variantes.map(v => `<button type="button" class="pdx-mod ${v.nombre === vari ? "on" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
+        ${dispo ? `<div class="pdx-fila">
+            <div class="pdx-cant"><button type="button" data-c="-1" aria-label="Menos">−</button><span>${cant}</span><button type="button" data-c="1" aria-label="Más">+</button></div>
+            <button type="button" class="pdx-btn" id="agregar">agregar al carrito</button></div>
+          ${max <= 3 ? `<p class="pdx-pocos">${max === 1 ? "¡queda solo 1!" : `¡quedan solo ${max}!`}</p>` : ""}`
+          : `<button type="button" class="pdx-btn" disabled>agotado</button>`}
+        <small class="pdx-nota">envíos a toda bolivia · pago con QR</small>`;
     };
-    pintar();
+    pintarFotos(); pintarPan(); window.scrollTo(0, 0);
     app.onclick = e => {
       const b = e.target.closest("button"); if (!b) return;
-      if (b.dataset.img) { img = +b.dataset.img; pintar(); }
-      else if (b.dataset.var) { vari = b.dataset.var; const k = imgDeVar(vari); if (k >= 0) img = k; pintar(); }
-      else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintar(); }
+      if (b.id === "pdx-mas") { abierto = !abierto; pintarPan(); }
+      else if (b.dataset.var) { vari = b.dataset.var; pintarPan(); pintarFotos(); }
+      else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintarPan(); }
       else if (b.id === "agregar") agregar(p.id, vari, cant);
     };
   }
