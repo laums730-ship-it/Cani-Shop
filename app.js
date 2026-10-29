@@ -678,7 +678,9 @@
 
   // Comunicado de entregas (editable en Mi tienda → Entregas)
   const AVISO_ENT_DEF = "La entrega es de 2 a 3 días una vez confirmado el pago de tu pedido.\nLos miércoles y sábados realizamos envíos a otros departamentos y provincias.";
-  const avisoEntrega = () => { const t = String(T.avisoEntrega || AVISO_ENT_DEF).trim(); return t ? `<div class="aviso-ent" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg><div><b>Importante</b>${t.split("\n").filter(x => x.trim()).map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""; };
+  // En el carrito (productos de la tienda) la entrega se coordina por WhatsApp; los 2-3 días son solo para Scoops
+  const AVISO_CARRITO_DEF = "La entrega de tu pedido la coordinamos contigo por WhatsApp.\nLos miércoles y sábados realizamos envíos a otros departamentos y provincias.";
+  const avisoEntrega = (txt) => { const t = String(txt || T.avisoEntrega || AVISO_ENT_DEF).trim(); return t ? `<div class="aviso-ent" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg><div><b>Importante</b>${t.split("\n").filter(x => x.trim()).map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""; };
 
   function scoops() {
     if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
@@ -1103,6 +1105,6 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
   }
 
   { const pie = document.querySelector(".pie"); if (pie && CINTA.length) pie.insertAdjacentHTML("beforebegin", cinta("cinta-osc")); }
-  { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega()); }
+  { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega(T.avisoCarrito || AVISO_CARRITO_DEF)); }
   pintarCarrito(); ruta();
 })();
