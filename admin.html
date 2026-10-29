@@ -405,7 +405,8 @@
       .fila{grid-template-columns:1fr}
       .var{grid-template-columns:46px 1fr 80px 38px}
     }
-  </style>
+  #campo-frase[hidden]{display:none!important}
+</style>
 </head>
 <body>
 
@@ -850,6 +851,7 @@
     </div>
     <div class="campo"><label>Categorías</label><div class="checks" id="ed-cats"></div></div>
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
+    <div class="campo" id="campo-frase"><label>Frase en movimiento</label><input name="frase" maxlength="90" placeholder="Ej: ¡felicidades, graduada! ✦ regalo perfecto ✦ snoopy"><p class="ayuda">Se desliza debajo de las fotos. Separa las frases con ✦ o con una coma. Si lo dejas vacío, se arma sola con el personaje y la categoría.</p></div>
     <div class="checks" style="margin-bottom:6px">
       <label class="check"><input type="checkbox" name="nuevo"> ✨ Mostrar en Novedades</label>
       <label class="check"><input type="checkbox" name="activo" checked> 👀 Visible en la tienda</label>
@@ -883,6 +885,7 @@
 <script src="productos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+
 // Sin emojis en el panel (igual que en la tienda); se respetan ✕ ★ ♡ ✓
 (() => {
   const RX = /(?![©®™])\p{Extended_Pictographic}[\uFE0F\u200D\u{1F3FB}-\u{1F3FF}]*|[\uFE0F\u20E3]/gu;
@@ -909,6 +912,8 @@
   const db = window.supabase.createClient(CFG.url, CFG.key);
 
   let PRODS = [], filtro = "todos";
+  // La columna "frase" existe solo después de correr supabase-frase.sql
+  const TIENE_FRASE = () => PRODS.some(p => p && Object.prototype.hasOwnProperty.call(p, "frase"));
 
   // ---------- Sesión ----------
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("admin-sw.js").catch(() => {});
@@ -1085,6 +1090,8 @@
     pintarGan();
     F.orden.value = p?.orden ?? 0;
     F.descripcion.value = p?.descripcion || "";
+    F.frase.value = p?.frase || "";
+    $("#campo-frase").hidden = !TIENE_FRASE();
     F.nuevo.checked = p ? !!p.nuevo : true;
     F.activo.checked = p ? !!p.activo : true;
     F.stock.value = p && !sinCtrl(p.stock) ? p.stock : 0;
@@ -1194,6 +1201,7 @@
       precio: parseFloat(F.precio.value) || 0,
       orden: parseInt(F.orden.value) || 0,
       descripcion: F.descripcion.value.trim(),
+      ...(TIENE_FRASE() ? { frase: F.frase.value.replace(/,/g, " ✦ ").replace(/\s+/g, " ").trim() } : {}),
       nuevo: F.nuevo.checked, activo: F.activo.checked,
       categorias: [...document.querySelectorAll("#ed-cats input:checked")].map(i => i.value),
       imagenes: fotos, variantes,

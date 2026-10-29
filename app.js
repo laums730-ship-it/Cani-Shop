@@ -493,11 +493,23 @@
         ${dispo ? `<div class="pdx-fila">
             <div class="pdx-cant"><button type="button" data-c="-1" aria-label="Menos">−</button><span>${cant}</span><button type="button" data-c="1" aria-label="Más">+</button></div>
             <button type="button" class="pdx-btn" id="agregar">agregar al carrito</button></div>
-          ${max <= 3 ? `<p class="pdx-pocos">${max === 1 ? "¡queda solo 1!" : `¡quedan solo ${max}!`}</p>` : ""}`
+`
           : `<button type="button" class="pdx-btn" disabled>agotado</button>`}
         <small class="pdx-nota">envíos a toda bolivia · pago con QR</small>`;
     };
     pintarFotos(); pintarPan(); window.scrollTo(0, 0);
+    // Franja de texto que se desliza bajo las fotos (frase propia del panel, o automática)
+    {
+      const cat = (p.categorias || []).map(c => CATS.find(x => x.id === c)).find(c => c && tipoDe(c) === "categoria");
+      const pn = per ? per.nombre : "", cn = cat ? cat.nombre : "";
+      const propia = String(p.frase || "").split(/[✦·|]/).map(x => x.trim()).filter(Boolean);
+      const partes = (propia.length ? propia
+        : p.nuevo ? ["recién llegado", "novedad cani", pn || cn]
+        : pn ? [pn, cn, "cani shop"]
+        : cn ? [cn, "cositas kawaii", "cani shop"] : ["cositas kawaii", "cani shop"]).filter(Boolean).map(x => sinEmoji(x).toLowerCase());
+      const serie = Array(Math.max(3, Math.ceil(12 / partes.length))).fill(partes).flat().map(x => `<span>${esc(x)}</span><i aria-hidden="true">✦</i>`).join("");
+      document.querySelector(".pdx").insertAdjacentHTML("beforeend", `<div class="pdx-cinta" aria-label="${esc(partes.join(", "))}"><div class="pdx-cinta-pista" aria-hidden="true"><div>${serie}</div><div>${serie}</div></div></div>`);
+    }
     // Te puede gustar: mismos personaje/categorías primero, solo con stock
     {
       const mias = new Set(p.categorias || []), perId = per && per.id;
