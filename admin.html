@@ -81,6 +81,7 @@
     /* Editor */
     .velo{position:fixed;inset:0;background:rgba(43,43,43,.4);z-index:30}
     .editor{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:var(--fondo);z-index:40;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.15)}
+    .editor,.editor .ed-cuerpo{overflow-x:hidden}.editor .ed-cuerpo > *{min-width:0}
     .ed-cab{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--rosa)}
     .ed-cab h2{font-size:1.25rem}
     .x{border:0;background:rgba(255,255,255,.7);width:38px;height:38px;border-radius:50%;font-size:1.1rem}
@@ -125,10 +126,11 @@
     .caja{background:#fff;border-radius:var(--radio);padding:18px 18px 6px;margin-bottom:14px}
     .caja h2{font-size:1.15rem;margin-bottom:4px}
     .caja>.ayuda{margin:0 0 12px}
-    .mini{display:flex;align-items:center;gap:10px}
+    .mini{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     .mini .ft{width:76px;flex:none}
     .mini .ft img{object-fit:contain}
-    .mini-logo .ft{width:180px;background:#fce3ee;border-radius:14px;padding:8px}
+    .mini{max-width:100%;min-width:0}.campo{min-width:0}
+    .mini-logo .ft{width:min(180px,100%);background:#fce3ee;border-radius:14px;padding:8px}
     .banners{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
     .ban-imgs{display:flex;gap:6px;align-items:center;position:relative}
     .ban-movil{width:56px;height:56px;border-radius:10px;border:2px dashed var(--rosa-fuerte);display:grid;place-items:center;text-align:center;font-size:.55rem;font-weight:800;line-height:1.15;cursor:pointer;background:#fff;overflow:hidden;flex:none}
@@ -180,6 +182,19 @@
     .subir-ancho{aspect-ratio:auto;padding:16px;margin-bottom:14px}
     .guardar-barra{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,#f8f3f5 30%)}
     .guardar-barra .btn{width:100%;padding:14px}
+    html,body{max-width:100%;overflow-x:hidden}
+    @media (max-width:760px){
+      .top{flex-wrap:wrap;row-gap:8px;padding:8px 12px}
+      .top .tabs{order:5;flex:1 0 100%;overflow-x:auto;scrollbar-width:none;border-radius:16px;justify-content:space-between}
+      .top .tabs::-webkit-scrollbar{display:none}
+      .top .tabs button{flex:1 0 auto;padding:9px 8px;font-size:.86rem}
+      .top img{height:36px}
+      main{padding-left:12px!important;padding-right:12px!important}
+      .barra{flex-wrap:wrap}
+      .barra input{flex:1 0 100%}
+      .resumen{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+      input,select,textarea{font-size:16px}
+    }
     @media (max-width:640px){
       .tabs button{padding:7px 9px;font-size:.85rem}
       .top{gap:8px}
@@ -231,7 +246,8 @@
     .cli-peds{display:flex;flex-direction:column;gap:6px}
     .cli-ped{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:2px solid var(--borde);border-radius:12px;padding:9px 12px;cursor:pointer}
     .cli-ped:hover{border-color:var(--rosa-fuerte)}
-    .pit{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px}
+    .pit{background:#fff;border:2px solid var(--borde);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;min-width:0}
+    .pit > *{min-width:0}
     .pit.sin{border-color:#f5c6cb;background:#fdf6f7}
     .pit h4{margin:0;font-size:.98rem}
     .pit .st-info{font-size:.8rem;color:var(--gris);font-weight:700}
@@ -241,14 +257,31 @@
     .pit input,.pit select{border:2px solid var(--borde);border-radius:10px;padding:7px 9px;background:#fff;width:100%;min-width:0}
     .pit .linea{font-weight:800;color:var(--rosa-tinta);white-space:nowrap}
     .pit .q{border:0;background:#fdecee;color:var(--rojo);border-radius:10px;width:32px;height:32px;font-weight:800}
-    .agregar-prod input{width:100%;margin-top:10px;border:2px dashed var(--rosa-fuerte);border-radius:12px;padding:11px 13px;background:#fff}
+    .agregar-prod{position:relative;margin-bottom:10px;scroll-margin-top:70px}
+    .agregar-prod input{width:100%;border:2px solid var(--rosa-fuerte);border-radius:12px;padding:12px 13px;background:#fff;font-size:16px}
+    .ped-res{margin-top:6px;border:2px solid var(--borde);border-radius:14px;background:#fff;max-height:min(52vh,420px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column}
+    .ped-res[hidden]{display:none}
+    .pr{border-bottom:1px solid var(--borde);padding:6px}
+    .pr:last-child{border-bottom:0}
+    .pr-main{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:4px;text-align:left;font:inherit;color:inherit;border-radius:10px;cursor:pointer}
+    .pr-main[data-addp]:active,.pr-main.ok{background:var(--rosa-claro)}
+    .pr-main img{width:46px;height:46px;border-radius:10px;object-fit:cover;background:var(--rosa-claro);flex:none}
+    .pr-main span{flex:1;min-width:0;display:flex;flex-direction:column}
+    .pr-main b{font-size:.92rem;line-height:1.25}
+    .pr-main small{color:var(--gris);font-weight:700;font-size:.76rem}
+    .pr-main i{font-style:normal;font-weight:800;color:#fff;background:var(--rosa-tinta);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none}
+    .pr-vars{display:flex;flex-wrap:wrap;gap:6px;padding:4px 4px 4px 60px}
+    .pr-var{border:2px solid var(--borde);background:#fff;border-radius:999px;padding:6px 11px;font:inherit;font-size:.8rem;font-weight:700;color:var(--cafe);cursor:pointer}
+    .pr-var b{color:var(--rosa-tinta);margin-left:2px}
+    .pr-var.cero{opacity:.5}
+    .pr-var.ok{background:var(--rosa-claro);border-color:var(--rosa-fuerte)}
     .totales{display:flex;flex-direction:column;gap:6px;max-width:340px;margin-left:auto}
     .totales>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 12px;border-radius:10px;background:var(--rosa-claro)}
     .totales input{width:110px;border:2px solid var(--borde);border-radius:10px;padding:6px 9px;text-align:right;background:#fff}
     .totales .pt-total{background:var(--rosa-tinta);color:#fff;font-family:Fredoka;font-size:1.25rem;padding:10px 12px}
     .ped-pie .btn:first-child{flex:1}
     .bloqueado .pit input,.bloqueado .pit select,.bloqueado .pit .q,.bloqueado .agregar-prod{pointer-events:none;opacity:.6}
-    @media (max-width:640px){ .pit .nums{grid-template-columns:1fr 1fr} .ped-card{grid-template-columns:1fr} .ped-card .der{text-align:left} }
+    @media (max-width:640px){ .pit .nums{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .pr-vars{padding-left:4px} .ped-card{grid-template-columns:1fr} .ped-card .der{text-align:left} }
 
     .toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--tinta);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;transition:transform .3s;z-index:60;max-width:90vw;text-align:center}
     .toast.ver{transform:translate(-50%,0)}
@@ -591,11 +624,11 @@
     <div id="ped-extra"></div>
     <div class="sep"></div>
     <div class="campo"><label>Productos</label>
-      <div id="ped-items" class="ped-items"></div>
       <div class="agregar-prod">
-        <input id="ped-add" list="ped-prods" placeholder="＋ Agregar producto (escribe para buscar)…">
-        <datalist id="ped-prods"></datalist>
+        <input id="ped-add" type="search" autocomplete="off" placeholder="🔍 Buscar producto para agregar… (ej: obakenu goma)">
+        <div id="ped-res" class="ped-res" hidden></div>
       </div>
+      <div id="ped-items" class="ped-items"></div>
     </div>
 
     <div class="sep"></div>
@@ -764,6 +797,15 @@
     return `${g >= 0 ? "" : "−"}${bs(Math.abs(g))} (${pct}%)`;
   };
 
+  // Búsqueda sin tildes y por palabras sueltas (ej: "goma obake" encuentra "Borrador de Goma Obakenu")
+  const sinTilde = t => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const textoBusq = p => sinTilde(p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ") + " " + (p.categorias || []).map(c => (CATS.find(x => x.id === c) || {}).nombre || c).join(" "));
+  function buscarProds(q) {
+    const ws = sinTilde(q).split(/\s+/).filter(Boolean); if (!ws.length) return PRODS.slice();
+    return PRODS.map(p => { const t = textoBusq(p), n = sinTilde(p.nombre); if (!ws.every(w => t.includes(w))) return null;
+      return { p, sc: (n.startsWith(ws[0]) ? 3 : 0) + ws.filter(w => n.includes(w)).length + (total(p) > 0 ? 1 : 0) }; })
+      .filter(Boolean).sort((a, b) => b.sc - a.sc).map(x => x.p);
+  }
   function pintar() {
     const q = $("#buscar").value.trim().toLowerCase();
     $("#r-total").textContent = PRODS.length;
@@ -774,7 +816,7 @@
       PRODS.forEach(p => { const c = costoDe(p); if (c == null) return; const u = total(p); inv += c * u; gan += (num(p.precio) - c) * u; });
       $("#r-inv").textContent = bs(inv); $("#r-gan").textContent = bs(gan);
     } else { $("#r-inv").textContent = $("#r-gan").textContent = "—"; }
-    let l = PRODS.filter(p => !q || (p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(q));
+    let l = q ? buscarProds(q) : PRODS.slice();
     if (filtro === "agotados") l = l.filter(p => p.activo && (agotado(p) || (tieneVar(p) && p.variantes.some(v => !+v.stock))));
     if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => pocos(v.stock)) : pocos(p.stock));
     if (filtro === "ocultos") l = l.filter(p => !p.activo);
@@ -1394,7 +1436,7 @@
     FP.envio.value = num(ED.envio); FP.pagado.value = num(ED.pagado);
     FP.querySelectorAll("[name=estado]").forEach(r => r.checked = r.value === ED.estado);
     $("#ped-entregas").innerHTML = (AJ.entregas || []).map(x => `<option value="${esc(x)}">`).join("");
-    $("#ped-prods").innerHTML = [...PRODS].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(p => `<option value="${esc(p.nombre)} · ${bs(p.precio)}">`).join("");
+    $("#ped-add").value = ""; $("#ped-res").hidden = true;
     $("#ped-borrar").hidden = !ED.numero;
     pintarExtra(); pintarItems();
     $("#ped-velo").hidden = $("#ped").hidden = false;
@@ -1622,12 +1664,30 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   });
   $("#ped-items").addEventListener("click", e => { const b = e.target.closest("[data-quitar]"); if (b) { ED.items.splice(+b.dataset.quitar, 1); pintarItems(); } });
   FP.envio.oninput = FP.pagado.oninput = totalesPed;
-  $("#ped-add").addEventListener("change", e => {
-    const v = e.target.value, p = [...PRODS].find(p => `${p.nombre} · ${bs(p.precio)}` === v) || PRODS.find(p => p.nombre.toLowerCase() === v.toLowerCase());
-    if (!p) return;
-    const vari = tieneVar(p) ? (p.variantes.find(x => +x.stock > 0) || p.variantes[0]).nombre : null;
-    ED.items.push({ id: p.id, nombre: p.nombre, variante: vari, cant: 1, precio: num(p.precio), desc: 0, desc_nota: "" });
-    e.target.value = ""; pintarItems();
+  // Buscador de productos del pedido: resultados con foto y modelos, un toque para agregar
+  function pintarRes() {
+    const q = $("#ped-add").value, box = $("#ped-res");
+    if (!q.trim()) { box.hidden = true; box.innerHTML = ""; return; }
+    const l = buscarProds(q).slice(0, 15);
+    box.hidden = false;
+    box.innerHTML = l.length ? l.map(p => {
+      const st = total(p), foto = (p.imagenes || [])[0] || "logo.png";
+      const vs = tieneVar(p) ? `<div class="pr-vars">${p.variantes.map((v, i) => `<button type="button" class="pr-var ${+v.stock ? "" : "cero"}" data-addp="${esc(p.id)}" data-v="${i}">${esc(v.nombre)} <b>${+v.stock || 0}</b></button>`).join("")}</div>` : "";
+      return `<div class="pr"><button type="button" class="pr-main" ${tieneVar(p) ? "" : `data-addp="${esc(p.id)}"`}>
+          <img src="${esc(foto)}" alt=""><span><b>${esc(p.nombre)}</b><small>${bs(p.precio)} · ${st ? `${st} en stock` : "Agotado"}${tieneVar(p) ? " · elige el modelo 👇" : ""}</small></span>${tieneVar(p) ? "" : `<i>＋</i>`}</button>${vs}</div>`;
+    }).join("") : `<p class="ayuda" style="margin:8px">No encontré “${esc(q)}”. Prueba con otra palabra.</p>`;
+  }
+  $("#ped-add").addEventListener("input", pintarRes);
+  $("#ped-add").addEventListener("focus", () => setTimeout(() => $("#ped-add").scrollIntoView({ block: "start", behavior: "smooth" }), 250));
+  $("#ped-res").addEventListener("click", e => {
+    const b = e.target.closest("[data-addp]"); if (!b || !ED) return;
+    const p = PRODS.find(x => x.id === b.dataset.addp); if (!p) return;
+    const vari = tieneVar(p) ? (b.dataset.v !== undefined ? p.variantes[+b.dataset.v] : (p.variantes.find(x => +x.stock > 0) || p.variantes[0])).nombre : null;
+    const ya = ED.items.find(i => i.id === p.id && (i.variante || null) === vari);
+    if (ya) ya.cant = num(ya.cant) + 1;
+    else ED.items.push({ id: p.id, nombre: p.nombre, variante: vari, cant: 1, precio: num(p.precio), desc: 0, desc_nota: "" });
+    pintarItems(); toast(`Agregado: ${p.nombre}${vari ? " – " + vari : ""}`);
+    b.classList.add("ok"); setTimeout(() => b.classList.remove("ok"), 600);
   });
   const cerrarPed = () => { $("#ped-velo").hidden = $("#ped").hidden = true; ED = null; };
   $("#ped-cerrar").onclick = $("#ped-velo").onclick = cerrarPed;
