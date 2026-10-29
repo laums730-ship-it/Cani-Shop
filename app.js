@@ -58,7 +58,7 @@
   const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji circ-letra">${esc(inicial(c.nombre))}</span>`;
 
   // ---------- Datos fijos ----------
-  document.title = T.nombre;
+  document.title = `${T.nombre} · Tienda kawaii en Santa Cruz, Bolivia`;
   $("#pie-nombre").textContent = $("#pie-nombre2").textContent = T.nombre;
   $("#anio").textContent = new Date().getFullYear();
 
@@ -668,7 +668,7 @@
 
   // Comunicado de entregas (editable en Mi tienda → Entregas)
   const AVISO_ENT_DEF = "La entrega es de 2 a 3 días una vez confirmado el pago de tu pedido.\nLos miércoles y sábados realizamos envíos a otros departamentos y provincias.";
-  const avisoEntrega = () => { const t = String(T.avisoEntrega ?? AVISO_ENT_DEF).trim(); return t ? `<div class="aviso-ent" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg><div><b>Importante</b>${t.split("\n").filter(x => x.trim()).map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""; };
+  const avisoEntrega = () => { const t = String(T.avisoEntrega || AVISO_ENT_DEF).trim(); return t ? `<div class="aviso-ent" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg><div><b>Importante</b>${t.split("\n").filter(x => x.trim()).map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""; };
 
   function scoops() {
     if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
@@ -683,7 +683,7 @@
     const ENT = (T.entregas || []).filter(Boolean);
     app.innerHTML = `<div class="sc-wrap">
       <section class="sc-hero">
-        <h1>${esc(SC.titulo || "Arma tu Scoop")} <span>🍬</span></h1>
+        <h1>${esc(SC.titulo || "Arma tu Scoop")}</h1>
         <p>${esc(SC.intro || "Elige tu scoop, tus colores y personajes favoritos, ¡y nosotras lo armamos para ti!")}</p>
       </section>
       <form id="sc-form" class="sc-form" novalidate>
@@ -697,12 +697,12 @@
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">2</div><div class="sc-cont">
-          <h2>🎨 Colores de preferencia <small>(elige mínimo ${minC})</small></h2>
+          <h2>Colores de preferencia <small>(elige mínimo ${minC})</small></h2>
           <div class="sc-chips" data-grupo="colores">${(SC.colores || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}"><i style="background:${hexDe(c)}"></i>${esc(c)}</button>`).join("")}</div>
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">3</div><div class="sc-cont">
-          <h2>✨ Personajes de preferencia <small>(elige mínimo ${minP})</small></h2>
+          <h2>Personajes de preferencia <small>(elige mínimo ${minP})</small></h2>
           <div class="sc-chips" data-grupo="personajes">${(SC.personajes || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
         </div></section>
 
@@ -715,13 +715,13 @@
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">5</div><div class="sc-cont">
-          <h2>🎥 Video de tu Scoop</h2>
+          <h2>Video de tu Scoop</h2>
           ${pv ? `<label class="sc-video"><input type="checkbox" id="sc-video"><span><b>¡Sí, quiero el video! +${bs(pv)}</b><small>Grabamos cómo armamos tu scoop y te etiquetamos en TikTok</small></span></label>` : ""}
           <div class="form"><input name="tiktok" placeholder="Tu usuario de TikTok (para etiquetarte) — ej: @tuusuario"></div>
         </div></section>
 
         ${cartaOn ? `<section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
-          <h2>💌 Carta personalizada</h2>
+          <h2>Carta personalizada</h2>
           <label class="sc-video"><input type="checkbox" id="sc-carta"><span><b>¡Sí, quiero una carta! ${pc ? `+${bs(pc)}` : "Sin costo"}</b><small>Escribe tu mensaje y lo <b>imprimimos</b> en esta cartita para ponerlo dentro de tu Scoop</small></span></label>
           <div class="carta-box" id="carta-box" hidden>
             <div id="carta-vista">${cartaHTML("", fuenteCarta)}</div>
@@ -731,7 +731,7 @@
         </div></section>` : ""}
 
         <section class="sc-paso"><div class="sc-num">${cartaOn ? 7 : 6}</div><div class="sc-cont">
-          <h2>📝 Tus datos</h2>
+          <h2>Tus datos</h2>
           <div class="form sc-datos">
             <input name="nombre" placeholder="Tu nombre" required>
             <input name="telefono" type="tel" inputmode="tel" placeholder="Tu WhatsApp (ej: 71234567)" required>
@@ -743,7 +743,7 @@
         </div></section>
 
         <section class="sc-paso"><div class="sc-num">${cartaOn ? 8 : 7}</div><div class="sc-cont">
-          <h2>💳 Pago por QR</h2>
+          <h2>Pago por QR</h2>
           <div class="sc-pago">
             <div>
               <div class="sc-total"><span>Total a pagar</span><b id="sc-total">—</b></div>
@@ -753,8 +753,8 @@
         </div></section>
 
         ${avisoEntrega()}
-        <p class="sc-aviso">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad. 💖")}</p>
-        <div class="sc-enviar"><div><small>Total</small><b id="sc-total2">—</b></div><button class="btn btn-wa" type="submit" id="sc-btn">Enviar mi pedido 💖</button></div>
+        <p class="sc-aviso">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad.")}</p>
+        <div class="sc-enviar"><div><small>Total</small><b id="sc-total2">—</b></div><button class="btn btn-wa" type="submit" id="sc-btn">Enviar mi pedido</button></div>
       </form></div>`;
 
     const F = $("#sc-form");
@@ -788,10 +788,10 @@
     const ir = sel => F.querySelector(sel).scrollIntoView({ behavior: "smooth", block: "center" });
     F.addEventListener("submit", async e => {
       e.preventDefault();
-      if (st.op === null) { toast("Elige tu scoop 🍬"); return ir(".sc-ops"); }
-      if (st.colores.length < minC) { toast(`Elige mínimo ${minC} colores 🎨`); return ir("[data-grupo=colores]"); }
-      if (st.personajes.length < minP) { toast(`Elige mínimo ${minP} personajes ✨`); return ir("[data-grupo=personajes]"); }
-      if (st.carta && !($("#carta-txt").value || "").trim()) { toast("Escribe el mensaje de tu carta 💌"); return ir("#carta-txt"); }
+      if (st.op === null) { toast("Elige tu scoop"); return ir(".sc-ops"); }
+      if (st.colores.length < minC) { toast(`Elige mínimo ${minC} colores`); return ir("[data-grupo=colores]"); }
+      if (st.personajes.length < minP) { toast(`Elige mínimo ${minP} personajes`); return ir("[data-grupo=personajes]"); }
+      if (st.carta && !($("#carta-txt").value || "").trim()) { toast("Escribe el mensaje de tu carta"); return ir("#carta-txt"); }
       if (!F.reportValidity()) return;
       const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
       const ventana = window.open("", "_blank");
@@ -822,13 +822,107 @@
         "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"].filter(x => x !== null).join("\n");
       const url = waURL(msg);
       if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
-      btn.disabled = false; btn.textContent = "Enviar mi pedido 💖";
+      btn.disabled = false; btn.textContent = "Enviar mi pedido";
       if (numero) { app.innerHTML = `<section class="seccion sc-gracias"><div class="banner">
           ${o.imagen ? `<img src="${esc(o.imagen)}" alt="" style="width:180px;margin:0 auto 10px">` : ""}
-          <h2>¡Recibimos tu Scoop! 💖</h2><p>Tu pedido es el <b>#${numero}</b>. Pídenos tu QR de pago por WhatsApp. Te escribimos pronto para coordinar la entrega.</p>
+          <h2>¡Recibimos tu Scoop!</h2><p>Tu pedido es el <b>#${numero}</b>. Pídenos tu QR de pago por WhatsApp. Te escribimos pronto para coordinar la entrega.</p>
           <a class="btn" href="#/">Volver a la tienda</a></div></section>`; window.scrollTo(0, 0); }
     });
     pintarTotal();
+
+    // ---- Paso a paso estilo app (inspirado en Duolingo): Cani habla, botones con relieve, ánimo al avanzar ----
+    const pasos = [...F.querySelectorAll(".sc-paso")], N = pasos.length, extras = [...F.querySelectorAll(".aviso-ent, .sc-aviso")];
+    let paso = 0, ocupado = false;
+    const ESTRELLA = "estrella-rosa.svg";
+    const ICO_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    const frase = p => p.querySelector("[name=op]") ? "¡Hola! Soy Cani. ¿Qué scoop quieres hoy?"
+      : p.querySelector("[data-grupo=colores]") ? `¿Qué colores te gustan más? Elige al menos ${minC}.`
+      : p.querySelector("[data-grupo=personajes]") ? `¡Ahora tus personajes favoritos! Elige al menos ${minP}.`
+      : p.querySelector("[name=caja]") ? "¿En qué cajita te lo enviamos?"
+      : p.querySelector("[name=tiktok]") ? "¿Grabamos cómo armamos tu Scoop? Te etiquetamos en TikTok."
+      : p.querySelector("#sc-carta") ? "¿Le escribimos una cartita? La imprimimos para ti."
+      : p.querySelector("[name=nombre]") ? "¡Casi listo! ¿A quién se lo enviamos?"
+      : "¡Tu Scoop está listo! Envíanos tu pedido y te pasamos el QR por WhatsApp.";
+    const ANIMOS = [["¡Qué lindo!", "Cani aprueba tu elección"], ["¡Buena elección!", "Vas súper bien"], ["¡Me encanta!", "Tu Scoop va quedando precioso"], ["¡Perfecto!", "Sigamos"], ["¡Genial!", "Ya casi terminamos"], ["¡Listo!", "Solo un pasito más"]];
+    pasos.forEach((p, i) => {
+      p.querySelector("h2").insertAdjacentHTML("afterend", `<div class="scd-charla"><div class="scd-cani" aria-hidden="true"></div><p class="scd-globo">${esc(frase(p))}</p></div>`);
+      const g = p.querySelector("[data-grupo]"); if (g) g.insertAdjacentHTML("beforebegin", `<p class="scd-cuenta" data-c="${g.dataset.grupo}"></p>`);
+      if (i === N - 1) p.classList.add("scd-final");
+    });
+    F.parentElement.insertAdjacentHTML("afterbegin", `<div class="scd-top">
+      <a class="scd-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+      <div class="scd-barra"><i id="scd-fill"></i><img class="scd-chispa" id="scd-chispa" src="${ESTRELLA}" alt=""></div>
+      <div class="scd-cont"><img src="${ESTRELLA}" alt=""><span id="scd-n">1</span>/${N}</div></div>`);
+    const barra = F.querySelector(".sc-enviar");
+    barra.innerHTML = `<div class="scd-pie">
+      <div class="scd-fb"><span class="scd-fb-ico">${ICO_OK}</span><div><b id="scd-fb-t"></b><span id="scd-fb-s"></span></div></div>
+      <div class="scd-fila">
+        <button type="button" class="scd-atras" id="sc-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="scd-total"><small>Total</small><b id="sc-total2">—</b></div>
+        <button type="button" class="scd-btn" id="sc-seguir">Continuar</button>
+        <button type="submit" class="scd-btn scd-enviar" id="sc-btn">Enviar mi pedido</button>
+      </div></div>`;
+    pintarTotal();
+    const valido = (k, callado) => {
+      const p = pasos[k], no = t => { if (!callado) toast(t); return false; };
+      if (p.querySelector("[name=op]") && st.op === null) return no("Elige tu scoop");
+      if (p.querySelector("[data-grupo=colores]") && st.colores.length < minC) return no(`Elige mínimo ${minC} colores`);
+      if (p.querySelector("[data-grupo=personajes]") && st.personajes.length < minP) return no(`Elige mínimo ${minP} personajes`);
+      if (p.querySelector("#sc-carta") && st.carta && !($("#carta-txt").value || "").trim()) { if (!callado) $("#carta-txt").focus(); return no("Escribe el mensaje de tu carta"); }
+      for (const el of p.querySelectorAll("input,select,textarea")) if (!el.hidden && !el.closest("[hidden]") && !el.checkValidity()) { if (!callado) el.reportValidity(); return false; }
+      return true;
+    };
+    const estado = () => {
+      const ok = valido(paso, true);
+      $("#sc-seguir").classList.toggle("apagado", !ok); $("#sc-btn").classList.toggle("apagado", !ok);
+      F.querySelectorAll(".scd-cuenta").forEach(c => { const n = st[c.dataset.c].length, m = c.dataset.c === "colores" ? minC : minP; c.innerHTML = `Elegiste <b>${n}</b> de mínimo ${m}`; });
+    };
+    const fill = $("#scd-fill"), chispa = $("#scd-chispa");
+    const ancho = k => k >= N - 1 ? 100 : (k + .25) / N * 100;
+    const lluvia = () => {
+      const cx = innerWidth / 2, cy = Math.min(220, innerHeight / 3);
+      for (let k = 0; k < 18; k++) {
+        const e = document.createElement("img"), a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 140;
+        e.src = ESTRELLA; e.className = "scd-estrella"; e.alt = "";
+        e.style.cssText = `left:${cx - 13}px;top:${cy}px;--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d}px;--r:${Math.random() * 360}deg`;
+        document.body.appendChild(e); setTimeout(() => e.remove(), 1200);
+      }
+    };
+    const mostrar = (k, dir = 1, anim = true) => {
+      const viejo = pasos[paso]; paso = Math.max(0, Math.min(N - 1, k)); const nuevo = pasos[paso];
+      const poner = () => {
+        pasos.forEach((p, i) => { p.hidden = i !== paso; p.classList.remove("scd-in-der", "scd-in-izq", "scd-out-izq", "scd-out-der"); });
+        extras.forEach(x => x.hidden = paso !== N - 1);
+        if (anim) { void nuevo.offsetWidth; nuevo.classList.add(dir > 0 ? "scd-in-der" : "scd-in-izq"); }
+        $("#scd-n").textContent = paso + 1;
+        fill.style.width = ancho(paso) + "%";
+        $("#sc-atras").style.visibility = paso ? "visible" : "hidden";
+        $("#sc-seguir").hidden = paso === N - 1; $("#sc-btn").hidden = paso !== N - 1;
+        window.scrollTo(0, 0);
+        estado();
+        if (anim && paso === N - 1 && dir > 0) lluvia();
+      };
+      if (anim && viejo !== nuevo) { viejo.classList.add(dir > 0 ? "scd-out-izq" : "scd-out-der"); setTimeout(poner, 200); } else poner();
+    };
+    const avanzar = () => {
+      if (ocupado || paso >= N - 1) return;
+      if (!valido(paso)) return;
+      ocupado = true;
+      const [t, s] = ANIMOS[paso % ANIMOS.length];
+      $("#scd-fb-t").textContent = t; $("#scd-fb-s").textContent = s;
+      barra.classList.add("scd-ok");
+      const w = (paso + 1) / N * 100; fill.style.width = w + "%";
+      chispa.style.left = w + "%"; chispa.classList.remove("pop"); void chispa.offsetWidth; chispa.classList.add("pop");
+      try { navigator.vibrate && navigator.vibrate(15); } catch (e) {}
+      setTimeout(() => { barra.classList.remove("scd-ok"); ocupado = false; mostrar(paso + 1, 1); }, 850);
+    };
+    $("#sc-seguir").onclick = avanzar;
+    $("#sc-atras").onclick = () => { if (!ocupado) mostrar(paso - 1, -1); };
+    F.addEventListener("click", e => { const b = e.target.closest(".sc-chip"); if (b) { b.classList.remove("pum"); void b.offsetWidth; if (b.classList.contains("on")) b.classList.add("pum"); } setTimeout(estado, 0); });
+    F.addEventListener("input", estado);
+    // al elegir el tamaño del scoop o la caja, avanza solo (con su mensajito)
+    F.addEventListener("change", e => { estado(); if ((e.target.name === "op" || e.target.name === "caja") && pasos[paso].contains(e.target)) setTimeout(avanzar, 300); });
+    mostrar(0, 1, false);
   }
 
   // Página Nosotros: el texto de Mi tienda se arma solo en secciones (una línea corta sin punto = título)
