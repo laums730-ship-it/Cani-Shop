@@ -1289,7 +1289,7 @@
       logo: imgs.logo || (window.TIENDA || {}).logo || "logo.png",
       scoops: {
         activo: A.sc_activo.checked, titulo: A.sc_titulo.value.trim(), intro: A.sc_intro.value.trim(), nota: A.sc_nota.value.trim(),
-        carta: A.sc_carta.checked, precioCarta: num(A.sc_precioCarta.value), fuenteCarta: A.sc_fuenteCarta.value,
+        carta: A.sc_carta.checked, precioCarta: A.sc_precioCarta.value.trim() === "" ? 4 : num(A.sc_precioCarta.value), fuenteCarta: A.sc_fuenteCarta.value,
         precioVideo: num(A.sc_precioVideo.value), minColores: Math.round(num(A.sc_minColores.value)), minPersonajes: Math.round(num(A.sc_minPersonajes.value)),
         colores: A.sc_colores.value.split("\n").map(x => x.trim()).filter(Boolean),
         personajes: A.sc_personajes.value.split("\n").map(x => x.trim()).filter(Boolean),
