@@ -1036,15 +1036,18 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     const fino = matchMedia("(pointer:fine)").matches, quieto = matchMedia("(prefers-reduced-motion:reduce)").matches;
     let mx = 0, my = 0, cx = 0, cy = 0, toco = false, t0 = performance.now();
     const ab = new AbortController();
-    const mover = (x, y) => { const r = esc.getBoundingClientRect(); mx = Math.max(-1, Math.min(1, (x - r.left - r.width / 2) / (r.width / 1.4))); my = Math.max(-1, Math.min(1, (y - r.top - r.height / 2) / (r.height / 1.4))); toco = true; };
+    // la posición del mouse se mide en toda la pantalla, así todo reacciona aunque no estés encima de Cani
+    const mover = (x, y) => { mx = (x / innerWidth - .5) * 2; my = (y / innerHeight - .5) * 2; toco = true; };
     addEventListener("pointermove", e => mover(e.clientX, e.clientY), { signal: ab.signal });
     addEventListener("touchmove", e => { const t = e.touches[0]; if (t) mover(t.clientX, t.clientY); }, { passive: true, signal: ab.signal });
     const paso = t => {
       if (!root.isConnected) { ab.abort(); return; }
-      if (!fino && !toco) { const s = (t - t0) / 1000; mx = Math.sin(s * .7) * .5; my = Math.cos(s * .5) * .35; }
-      cx += (mx - cx) * .08; cy += (my - cy) * .08;
-      const w = esc.clientWidth;
-      els.forEach(e => { const z = quieto ? 0 : +e.dataset.z; e.style.transform = `translate3d(${+e.dataset.x / 100 * w - e.offsetWidth / 2 + cx * z * 28}px,${+e.dataset.y / 100 * w - e.offsetHeight / 2 + cy * z * 28}px,0)`; });
+      if (!fino && !toco) { const s = (t - t0) / 1000; mx = Math.sin(s * .9) * .8; my = Math.cos(s * .7) * .6; }
+      cx += (mx - cx) * .12; cy += (my - cy) * .12;
+      const w = esc.clientWidth, r = esc.getBoundingClientRect();
+      const sc = Math.max(-1, Math.min(1, (r.top + r.height / 2 - innerHeight / 2) / innerHeight)); // al bajar, cada objeto se desplaza distinto
+      els.forEach(e => { const z = quieto ? 0 : +e.dataset.z;
+        e.style.transform = `translate3d(${+e.dataset.x / 100 * w - e.offsetWidth / 2 + cx * z * 46}px,${+e.dataset.y / 100 * w - e.offsetHeight / 2 + cy * z * 46 + sc * z * 60}px,0) rotate(${cx * z * 7}deg)`; });
       requestAnimationFrame(paso);
     };
     requestAnimationFrame(paso);
