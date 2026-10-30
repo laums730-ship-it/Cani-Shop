@@ -501,6 +501,7 @@
     </div>
     <div class="barra" id="filtros">
       <button class="filtro on" data-f="todos">Todos</button>
+      <button class="filtro" data-f="reponer" id="f-reponer">Por reponer</button>
       <button class="filtro" data-f="agotados">Agotados</button>
       <button class="filtro" data-f="pocos">Pocas unidades</button>
       <button class="filtro" data-f="ocultos">Ocultos</button>
@@ -939,6 +940,7 @@
       <div class="campo"><label>Costo (Bs) 🔒</label><input name="costo" type="number" min="0" step="0.01" placeholder="Lo que te costó"><p class="ayuda">Solo lo ves tú, tus clientes nunca lo ven.</p></div>
       <div class="campo"><label>Ganancia</label><div class="ganancia" id="ed-gan">—</div></div>
     </div>
+    <div class="campo" id="campo-minimo"><label>Stock mínimo (solo lo ves tú)</label><input name="minimo" type="number" min="0" step="1" placeholder="3"><p class="ayuda">Cuando queden estas unidades o menos, el producto aparece en "Por reponer". Si lo dejas vacío se usan 3.</p></div>
     <div class="campo"><label>Categorías</label><div class="checks" id="ed-cats"></div></div>
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
     <div class="campo" id="campo-frase"><label>Frase en movimiento</label><input name="frase" maxlength="90" placeholder="Ej: ¡felicidades, graduada! ✦ regalo perfecto ✦ snoopy"><p class="ayuda">Se desliza debajo de las fotos. Separa las frases con ✦ o con una coma. Si lo dejas vacío, se arma sola con el personaje y la categoría.</p></div>
@@ -1074,10 +1076,15 @@
     PRODS = data;
     const c = await db.from("costos").select("id,costo");
     COSTOS = c.error ? null : Object.fromEntries((c.data || []).map(x => [x.id, +x.costo]));
+    const m = await db.from("stock_minimos").select("id,minimo");   // existe después de correr supabase-stock-minimo.sql
+    MINS = m.error ? null : Object.fromEntries((m.data || []).map(x => [x.id, +x.minimo]));
     pintar();
   }
-  let COSTOS = null;
+  let COSTOS = null, MINS = null;
   const costoDe = p => COSTOS && COSTOS[p.id] != null ? COSTOS[p.id] : null;
+  // Stock mínimo: el que pusiste en el producto, o 3 si no pusiste ninguno
+  const minDe = p => MINS && MINS[p.id] != null ? MINS[p.id] : 3;
+  const porReponer = p => p.activo && total(p) <= minDe(p);
   const ganTxt = (precio, costo) => {
     if (costo == null || !(costo > 0)) return "";
     const g = precio - costo, pct = precio > 0 ? Math.round(g / precio * 100) : 0;
@@ -1103,7 +1110,10 @@
       PRODS.forEach(p => { const c = costoDe(p); if (c == null) return; const u = total(p); inv += c * u; gan += (num(p.precio) - c) * u; });
       $("#r-inv").textContent = bs(inv); $("#r-gan").textContent = bs(gan);
     } else { $("#r-inv").textContent = $("#r-gan").textContent = "—"; }
+    const nRep = PRODS.filter(porReponer).length;
+    $("#f-reponer").textContent = "Por reponer" + (nRep ? " (" + nRep + ")" : "");
     let l = q ? buscarProds(q) : PRODS.slice();
+    if (filtro === "reponer") l = l.filter(porReponer).sort((a, b) => total(a) - total(b));
     if (filtro === "agotados") l = l.filter(p => p.activo && (agotado(p) || (tieneVar(p) && p.variantes.some(v => !+v.stock))));
     if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => pocos(v.stock)) : pocos(p.stock));
     if (filtro === "ocultos") l = l.filter(p => !p.activo);
@@ -1121,7 +1131,7 @@
             ${cats.map(c => `<span class="tag">${esc(c)}</span>`).join("")}
             ${p.nuevo ? `<span class="tag">✨ Nuevo</span>` : ""}
             ${!p.activo ? `<span class="tag gris">Oculto</span>` : ""}
-            ${agotado(p) ? `<span class="tag rojo">Agotado</span>` : ""}
+            ${agotado(p) ? `<span class="tag rojo">Agotado</span>` : (porReponer(p) ? `<span class="tag rojo">Por reponer · quedan ${total(p)}</span>` : "")}
             ${(p.imagenes || []).length ? "" : `<span class="tag gris">📷 Sin foto</span>`}</div>
           <div class="stocks">${stocks}</div>
         </div>
@@ -1177,6 +1187,8 @@
     F.nombre.value = p?.nombre || "";
     F.precio.value = p?.precio ?? "";
     F.costo.value = p && costoDe(p) != null ? costoDe(p) : "";
+    F.minimo.value = p && MINS && MINS[p.id] != null ? MINS[p.id] : "";
+    $("#campo-minimo").hidden = !MINS;   // se muestra cuando ya corriste supabase-stock-minimo.sql
     pintarGan();
     F.orden.value = p?.orden ?? 0;
     F.descripcion.value = p?.descripcion || "";
@@ -1312,6 +1324,11 @@
       const cv = F.costo.value.trim();
       const r = cv === "" ? await db.from("costos").delete().eq("id", idFinal) : await db.from("costos").upsert({ id: idFinal, costo: Math.max(0, parseFloat(cv) || 0) });
       if (r.error) toast("El producto se guardó, pero el costo no: " + r.error.message, true);
+    }
+    if (MINS && idFinal) {
+      const mv = F.minimo.value.trim();
+      const r = mv === "" ? await db.from("stock_minimos").delete().eq("id", idFinal) : await db.from("stock_minimos").upsert({ id: idFinal, minimo: Math.max(0, parseInt(mv) || 0) });
+      if (r.error) toast("El producto se guardó, pero el stock mínimo no: " + r.error.message, true);
     }
     if (borrarFotos.length) await db.storage.from("fotos").remove(borrarFotos.map(rutaDe).filter(Boolean));
     cerrar(); toast(edit ? "Cambios guardados 💕" : "¡Producto agregado! 🎉"); cargar();
@@ -2517,17 +2534,17 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#cmp-costos").checked = true; $("#cmp-stock").checked = false;
     $("#cmp-provs").innerHTML = [...new Set(CMP.map(c => c.proveedor).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join("");
     $("#cmp-prods").innerHTML = PRODS.map(p => `<option value="${esc(p.nombre)}">`).join("");
-    ayudaStock(); pintarItems(); cmpVista(true);
+    ayudaStock(); pintarItemsCmp(); cmpVista(true);
   };
   $("#cmp-volver").onclick = () => cmpVista(false);
-  $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "" }); pintarItems(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
+  $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "" }); pintarItemsCmp(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
   function ayudaStock() {
     $("#cmp-stock-ayuda").textContent = $("#cmp-stock").checked
       ? "El stock sube con las cantidades de esta compra, solo en los productos que ya están en tu tienda. Si el costo también se guarda, se calcula el promedio con lo que ya tenías."
       : "El stock no cambia. Marca \"Sumar al stock\" solo cuando los productos todavía no estén contados en la tienda.";
   }
-  $("#cmp-stock").onchange = () => { ayudaStock(); pintarItems(); };
-  function pintarItems() {
+  $("#cmp-stock").onchange = () => { ayudaStock(); pintarItemsCmp(); };
+  function pintarItemsCmp() {
     const sumar = $("#cmp-stock").checked;
     $("#cmp-items").innerHTML = CI.map((it, i) => {
       const p = prodPorNombre(it.nombre), conModelos = sumar && p && tieneVar(p);
@@ -2602,14 +2619,14 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       const p = prodPorNombre(e.target.value);
       if (p) { // al elegir un producto de la tienda se completa su precio actual
         if (!num(CI[i].precio) && +p.precio > 0) { CI[i].precio = String(p.precio); $("#cmp-p-" + i).value = p.precio; }
-        if (tieneVar(p) && $("#cmp-stock").checked) { pintarItems(); const n = $("#cmp-n-" + i); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } return; }
+        if (tieneVar(p) && $("#cmp-stock").checked) { pintarItemsCmp(); const n = $("#cmp-n-" + i); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } return; }
       }
     }
     actualizarCmp();
   });
   $("#cmp-items").addEventListener("click", e => {
     const q = e.target.closest("[data-quitar]"); if (!q || CI.length < 2) return;
-    CI.splice(+q.dataset.quitar, 1); pintarItems();
+    CI.splice(+q.dataset.quitar, 1); pintarItemsCmp();
   });
   ["#cmp-flota", "#cmp-taxi", "#cmp-min"].forEach(s => $(s).addEventListener("input", () => {
     if (s === "#cmp-min") { try { localStorage.setItem("cmp-min", $(s).value); } catch (e) {} }
