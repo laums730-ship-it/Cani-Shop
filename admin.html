@@ -2236,8 +2236,17 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   .barra{position:sticky;top:0;z-index:5;display:flex;gap:8px;justify-content:center;padding:12px;background:#f1e8ec}
   .barra button{border:0;border-radius:999px;padding:12px 24px;font:700 14px Comfortaa,sans-serif;cursor:pointer;background:#783746;color:#fff}
   .barra button.sec{background:#fff;color:#783746}
-  .hoja{width:148mm;min-height:210mm;margin:0 auto 24px;background:#fff;display:flex;flex-direction:column}
+  .barra button[disabled]{opacity:.6}
+  .barra button[hidden]{display:none}
+  .barra{flex-wrap:wrap}
+  .hoja{width:148mm;height:210mm;margin:0 auto 24px;background:#fff;overflow:hidden}
+  .cont{--z:1;zoom:var(--z);width:calc(148mm / var(--z));height:calc(210mm / var(--z));display:flex;flex-direction:column}
+  .hoja.larga,.hoja.larga .cont{height:auto;min-height:210mm}
   @media screen{.hoja{zoom:${k};box-shadow:0 10px 30px rgba(120,55,70,.14)}}
+  .compacta td{padding-top:1.4mm;padding-bottom:1.4mm}
+  .compacta tbody tr:first-child td{padding-top:2.6mm}
+  .compacta .info{padding-top:5mm;padding-bottom:4mm}
+  tr,.bajo,.pie{break-inside:avoid}
   .cab{display:flex;justify-content:space-between;align-items:flex-start;padding:11mm 10mm 0}
   h1{font-family:Fredoka,sans-serif;font-weight:600;font-size:25px;line-height:1;margin:0;color:#5e2a37}
   .num{font-size:11px;margin-top:1.8mm;letter-spacing:.3px}
@@ -2278,10 +2287,10 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   .redes span{display:inline-flex;align-items:center;gap:1.3mm}
   .redes svg{width:3.4mm;height:3.4mm;fill:none;stroke:#783746;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   .legal{margin-top:3mm;font-size:7.3px;color:#a8838c}
-  @media print{body{background:#fff}.barra{display:none}.hoja{margin:0;width:148mm;height:210mm;min-height:0}}
+  @media print{body{background:#fff}.barra{display:none}.hoja{margin:0;zoom:1!important;box-shadow:none}}
 </style></head><body>
-<div class="barra"><button onclick="print()">Imprimir / Guardar PDF</button><button class="sec" onclick="close()">Cerrar</button></div>
-<div class="hoja">
+<div class="barra"><button id="b-pdf">Descargar PDF</button><button class="sec" id="b-compartir" hidden>Compartir</button><button class="sec" onclick="print()">Imprimir</button><button class="sec" onclick="close()">Cerrar</button></div>
+<div class="hoja ${ED.items.length > 7 ? "compacta" : ""}"><div class="cont">
   <div class="cab">
     <div><h1>Nota de venta</h1><div class="num">N.º ${ED.numero ? String(ED.numero).padStart(5, "0") : "—"}</div></div>
     <img src="${logo}" alt="${esc(T2.nombre || "Cani Shop")}">
@@ -2310,11 +2319,55 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     <div class="redes">${redes}</div>
     <div class="legal">Nota de venta · no válida como factura</div>
   </div>
-</div></body></html>`;
+</div></div></body></html>`;
     const w = window.open("", "_blank");
     if (!w) return toast("Permite las ventanas emergentes para ver la nota", true);
     w.document.open(); w.document.write(html); w.document.close();
+    prepararNota(w, `Nota-${ED.numero ? String(ED.numero).padStart(5, "0") : "venta"}-${(v.cliente || "cliente").replace(/[^\wáéíóúñ ]+/gi, "").trim().replace(/\s+/g, "-")}`);
   };
+  // La nota entra siempre en una hoja A5 (se achica si hay muchos productos) y se puede bajar como PDF o compartir
+  function prepararNota(w, nombreArchivo) {
+    const d = w.document;
+    const ajustar = () => {
+      const hoja = d.querySelector(".hoja"), cont = d.querySelector(".cont"); if (!hoja) return;
+      cont.style.setProperty("--z", 1); hoja.classList.remove("larga");
+      const alto = hoja.clientHeight; cont.style.height = "auto";
+      const natural = cont.scrollHeight; cont.style.height = "";
+      let z = natural > alto ? alto / natural : 1;
+      if (z < .55) { z = .55; hoja.classList.add("larga"); }   // muchísimos productos: sigue en otra hoja
+      cont.style.setProperty("--z", z.toFixed(3));
+    };
+    const cargar = src => new Promise((ok, mal) => { const sc = d.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = mal; d.head.appendChild(sc); });
+    const libs = Promise.all([cargar("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"), cargar("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")]);
+    const hacerPDF = async () => {
+      await libs; if (d.fonts && d.fonts.ready) await d.fonts.ready;
+      // se copia la hoja a tamaño real (sin el zoom de pantalla) para que el PDF salga igual en compu y en celu
+      const caja = d.createElement("div"); caja.style.cssText = "position:fixed;left:-10000px;top:0;";
+      const copia = d.querySelector(".hoja").cloneNode(true); copia.style.zoom = "1"; copia.style.margin = "0"; copia.style.boxShadow = "none";
+      { const z = parseFloat(getComputedStyle(d.querySelector(".cont")).getPropertyValue("--z")) || 1, cc = copia.querySelector(".cont");
+        cc.style.zoom = "1"; if (z < 1) { cc.style.transform = `scale(${z})`; cc.style.transformOrigin = "0 0"; } }
+      caja.appendChild(copia); d.body.appendChild(caja);
+      const canvas = await w.html2canvas(copia, { scale: 2.5, useCORS: true, backgroundColor: "#ffffff" });
+      caja.remove();
+      const { jsPDF } = w.jspdf, larga = copia.classList.contains("larga");
+      const altoMM = larga ? 148 * canvas.height / canvas.width : 210;
+      const pdf = new jsPDF({ unit: "mm", format: larga ? [148, altoMM] : "a5", orientation: "portrait" });
+      pdf.addImage(canvas.toDataURL("image/jpeg", .95), "JPEG", 0, 0, 148, altoMM);
+      return pdf;
+    };
+    const listo = () => {
+      ajustar();
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(ajustar);
+      const bp = d.getElementById("b-pdf"), bc = d.getElementById("b-compartir");
+      bp.onclick = async () => { bp.disabled = true; bp.textContent = "Preparando…"; try { (await hacerPDF()).save(nombreArchivo + ".pdf"); } catch (e) { w.print(); } bp.disabled = false; bp.textContent = "Descargar PDF"; };
+      const prueba = new w.File([""], "x.pdf", { type: "application/pdf" });
+      if (w.navigator.canShare && w.navigator.canShare({ files: [prueba] })) {
+        bc.hidden = false;
+        bc.onclick = async () => { bc.disabled = true; try { const blob = (await hacerPDF()).output("blob"); await w.navigator.share({ files: [new w.File([blob], nombreArchivo + ".pdf", { type: "application/pdf" })], title: "Nota de venta" }); } catch (e) {} bc.disabled = false; };
+      }
+    };
+    if (d.readyState === "complete") listo(); else w.addEventListener("load", listo);
+  }
 
   // ---------- Fotos en lote ----------
   let LOTE = [];
