@@ -2325,7 +2325,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     w.document.open(); w.document.write(html); w.document.close();
     prepararNota(w, `Nota-${ED.numero ? String(ED.numero).padStart(5, "0") : "venta"}-${(v.cliente || "cliente").replace(/[^\wáéíóúñ ]+/gi, "").trim().replace(/\s+/g, "-")}`);
   };
-  // La nota entra siempre en una hoja A5 (se achica si hay muchos productos) y se puede bajar como PDF o compartir
+  // La nota es una hoja A5; si hay muchos productos la hoja se alarga (sin achicar letras) y se puede bajar como PDF o compartir
   function prepararNota(w, nombreArchivo) {
     const d = w.document;
     const ajustar = () => {
@@ -2333,9 +2333,9 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       cont.style.setProperty("--z", 1); hoja.classList.remove("larga");
       const alto = hoja.clientHeight; cont.style.height = "auto";
       const natural = cont.scrollHeight; cont.style.height = "";
-      let z = natural > alto ? alto / natural : 1;
-      if (z < .55) { z = .55; hoja.classList.add("larga"); }   // muchísimos productos: sigue en otra hoja
-      cont.style.setProperty("--z", z.toFixed(3));
+      // si no cabe en una hoja A5, la hoja se alarga (las letras no se achican, así se lee bien en el celu)
+      if (natural > alto) hoja.classList.add("larga");
+      cont.style.setProperty("--z", 1);
     };
     const cargar = src => new Promise((ok, mal) => { const sc = d.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = mal; d.head.appendChild(sc); });
     const libs = Promise.all([cargar("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"), cargar("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")]);
