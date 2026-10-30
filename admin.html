@@ -416,6 +416,11 @@
     .totales>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 12px;border-radius:10px;background:var(--rosa-claro)}
     .totales input{width:110px;border:2px solid var(--borde);border-radius:10px;padding:6px 9px;text-align:right;background:#fff}
     .totales .pt-total{background:var(--rosa-tinta);color:#fff;font-family:var(--f-tit);font-size:1.25rem;padding:10px 12px}
+    .ped-gan{max-width:340px;margin:14px 0 0 auto;border:2px dashed var(--borde);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:#fff}
+    .ped-gan h4{font-size:.95rem}
+    .ped-gan>div{display:flex;justify-content:space-between;gap:10px;font-variant-numeric:tabular-nums}
+    .ped-gan b.bien{color:#2e7d4f}.ped-gan b.mal{color:var(--rojo)}
+    .ped-gan .nota-gan{font-size:.8rem;color:var(--gris);margin:0}
     .ped-pie .btn:first-child{flex:1}
     .bloqueado .pit input,.bloqueado .pit select,.bloqueado .pit .q,.bloqueado .agregar-prod{pointer-events:none;opacity:.6}
     @media (max-width:640px){ .pit .nums{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .pr-vars{padding-left:4px} .ped-card{grid-template-columns:1fr} .ped-card .der{text-align:left} }
@@ -905,6 +910,13 @@
       <div><span>Pagado</span><input name="pagado" type="number" min="0" step="0.5" value="0"></div>
       <div id="pt-medio-fila"><span>Medio de pago</span><select name="medio_pago"><option>QR</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
       <div><span>Saldo</span><b id="pt-saldo"></b></div>
+    </div>
+    <div class="ped-gan" id="ped-gan" hidden>
+      <h4>Ganancia de este pedido (solo tú la ves)</h4>
+      <div><span>Costo de los productos</span><b id="pg-costo"></b></div>
+      <div><span>Ganancia</span><b id="pg-gan"></b></div>
+      <div><span>Margen</span><b id="pg-marg"></b></div>
+      <p class="nota-gan" id="pg-nota"></p>
     </div>
   </form>
   <div class="ed-pie ped-pie">
@@ -1724,6 +1736,7 @@
             ${(p.extra || {}).tipo === "scoop" ? `<span class="tag">🍬 Scoop</span>` : ""}
             ${(p.extra || {}).comprobante ? `<span class="tag" style="background:#e8f8ef;color:#1d7a4c">📎 Comprobante</span>` : ""}
             ${p.entrega ? `<span>🚚 ${esc(p.entrega)}</span>` : ""}</div>
+          ${COSTOS && p.estado !== "cancelado" ? (() => { const g = gananciaPed(p.items); return `<div class="meta" style="margin:6px 0 0"><span class="tag costo">Costo ${bs(g.costo)}</span><span class="tag ${g.gan < 0 ? "rojo" : "gan"}">Ganas ${bs(g.gan)} · ${Math.round(g.marg * 100)}%</span>${g.sinCosto ? `<span class="tag gris">Falta costo de ${g.sinCosto}</span>` : ""}</div>`; })() : ""}
           ${faltaEn(p) ? `<div class="falta">⚠️ Falta stock de algún producto: revísalo</div>` : ""}
         </div>
         <div class="der"><b>${bs(c.total)}</b><span class="est est-${p.estado}">${ESTADO_TXT[p.estado] || p.estado}</span></div>
@@ -1860,6 +1873,16 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   const totalPed = p => cuentas(p.items || [], p.envio, 0).total;
   const costoItem = i => (COSTOS && COSTOS[i.id] != null) ? COSTOS[i.id] * num(i.cant) : null;
   const EXTRAS = ["video-scoop", "caja-scoop", "carta-scoop"];
+  // Costo y ganancia de un pedido: lo vendido en productos (sin envío) menos el costo de cada producto
+  const gananciaPed = items => {
+    let ing = 0, costo = 0, sinCosto = 0;
+    (items || []).forEach(i => {
+      ing += num(i.cant) * num(i.precio) - num(i.desc);
+      const c = costoItem(i);
+      if (c == null) { if (!EXTRAS.includes(i.id)) sinCosto++; } else costo += c;
+    });
+    return { ing, costo, gan: ing - costo, marg: ing > 0 ? (ing - costo) / ing : 0, sinCosto };
+  };
   const telN = t => { const d = String(t || "").replace(/\D/g, ""); return /^[67]\d{7}$/.test(d) ? "591" + d : d; };
   const cliKey = p => { const t = telN(p.telefono); return t.length >= 8 ? t : "n:" + sinTilde(p.cliente || "").trim(); };
   const may = t => t ? t[0].toUpperCase() + t.slice(1) : t;
@@ -2192,6 +2215,14 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const c = cuentas(ED.items, FP.envio.value, FP.pagado.value);
     $("#pt-sub").textContent = bs(c.sub); $("#pt-desc").textContent = c.desc ? "− " + bs(c.desc) : bs(0);
     $("#pt-total").textContent = bs(c.total); $("#pt-saldo").textContent = bs(c.saldo);
+    const g = gananciaPed(ED.items), caja = $("#ped-gan");
+    caja.hidden = !COSTOS || !ED.items.length;
+    if (!caja.hidden) {
+      $("#pg-costo").textContent = bs(g.costo);
+      $("#pg-gan").textContent = bs(g.gan); $("#pg-gan").className = g.gan < 0 ? "mal" : "bien";
+      $("#pg-marg").textContent = Math.round(g.marg * 100) + "%";
+      $("#pg-nota").textContent = (g.sinCosto ? `Falta el costo de ${g.sinCosto} producto(s): la ganancia real es menor. ` : "") + "No cuenta el envío.";
+    }
   }
   $("#ped-items").addEventListener("input", e => {
     const { k, f } = e.target.dataset; if (k === undefined) return;
