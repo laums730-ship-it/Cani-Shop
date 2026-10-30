@@ -2534,17 +2534,17 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#cmp-costos").checked = true; $("#cmp-stock").checked = false;
     $("#cmp-provs").innerHTML = [...new Set(CMP.map(c => c.proveedor).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join("");
     $("#cmp-prods").innerHTML = PRODS.map(p => `<option value="${esc(p.nombre)}">`).join("");
-    ayudaStock(); pintarItems(); cmpVista(true);
+    ayudaStock(); pintarItemsCmp(); cmpVista(true);
   };
   $("#cmp-volver").onclick = () => cmpVista(false);
-  $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "" }); pintarItems(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
+  $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "" }); pintarItemsCmp(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
   function ayudaStock() {
     $("#cmp-stock-ayuda").textContent = $("#cmp-stock").checked
       ? "El stock sube con las cantidades de esta compra, solo en los productos que ya están en tu tienda. Si el costo también se guarda, se calcula el promedio con lo que ya tenías."
       : "El stock no cambia. Marca \"Sumar al stock\" solo cuando los productos todavía no estén contados en la tienda.";
   }
-  $("#cmp-stock").onchange = () => { ayudaStock(); pintarItems(); };
-  function pintarItems() {
+  $("#cmp-stock").onchange = () => { ayudaStock(); pintarItemsCmp(); };
+  function pintarItemsCmp() {
     const sumar = $("#cmp-stock").checked;
     $("#cmp-items").innerHTML = CI.map((it, i) => {
       const p = prodPorNombre(it.nombre), conModelos = sumar && p && tieneVar(p);
@@ -2619,14 +2619,14 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       const p = prodPorNombre(e.target.value);
       if (p) { // al elegir un producto de la tienda se completa su precio actual
         if (!num(CI[i].precio) && +p.precio > 0) { CI[i].precio = String(p.precio); $("#cmp-p-" + i).value = p.precio; }
-        if (tieneVar(p) && $("#cmp-stock").checked) { pintarItems(); const n = $("#cmp-n-" + i); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } return; }
+        if (tieneVar(p) && $("#cmp-stock").checked) { pintarItemsCmp(); const n = $("#cmp-n-" + i); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } return; }
       }
     }
     actualizarCmp();
   });
   $("#cmp-items").addEventListener("click", e => {
     const q = e.target.closest("[data-quitar]"); if (!q || CI.length < 2) return;
-    CI.splice(+q.dataset.quitar, 1); pintarItems();
+    CI.splice(+q.dataset.quitar, 1); pintarItemsCmp();
   });
   ["#cmp-flota", "#cmp-taxi", "#cmp-min"].forEach(s => $(s).addEventListener("input", () => {
     if (s === "#cmp-min") { try { localStorage.setItem("cmp-min", $(s).value); } catch (e) {} }
