@@ -1480,3 +1480,8 @@ input,select,textarea{max-width:100%;min-width:0}
 .tk-grid{grid-template-columns:repeat(auto-fit,minmax(150px,200px))!important;justify-content:center}@media (max-width:820px){.tk-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 /* Mayúscula inicial en todos los títulos y botones (sin forzar minúsculas) */
 .pdx-tit,.pdx-etq,.pdx-btn,.pdx-rel h2,.pdx-cinta span,.ben-tx h3,.ben-tx p,.ben-tag,.hc-tit,.hc-acc .btn,.ag-btns .btn,.cat-pill,.pdx-volver,.pdx-mas,.pdx-nota{text-transform:none!important}
+
+/* Fotos de producto: se ven COMPLETAS aunque no sean cuadradas (antes se recortaban) */
+.tarjeta .foto img,.galeria .principal img,.miniaturas img,.item img,.pop-res img{object-fit:contain!important;background:var(--rosa-claro)}
+.tarjeta .foto img.sin-foto{object-fit:contain!important}
+.galeria .principal{display:grid;place-items:center}
