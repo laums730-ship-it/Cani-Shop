@@ -2821,6 +2821,8 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const mala = usadas.find(f => !(f.cant > 0));
     if (mala) return toast(`Revisa la cantidad de "${mala.it.nombre.trim()}"`, true);
     const sumar = $("#cmp-stock").checked, costos = $("#cmp-costos").checked, b = $("#cmp-guardar");
+    const sinTienda = usadas.filter(f => !f.p).length;
+    if (sinTienda && !confirm(`${sinTienda} de estos productos TODAVÍA NO están en tu tienda.\n\nSi guardas ahora, la compra queda registrada pero no se crea ningún producto, ni se suma stock ni se guardan costos para esos.\n\nPara crearlos, toca Cancelar y luego "Crear en la tienda los que faltan".\n\n¿Guardar igual?`)) return;
     b.disabled = true; b.textContent = "Guardando…";
     const fallos = [], ed = CMP_EDIT;
     const filasItems = cid => usadas.map((f, k) => ({ compra_id: cid, producto_id: f.p ? f.p.id : null,
@@ -2828,7 +2830,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     try {
       const datosCompra = { fecha, proveedor, flota: num($("#cmp-flota").value), taxi: num($("#cmp-taxi").value), total_mercaderia: r2(merc), total_gastos: r2(gastos),
         // "ya se sumó stock" se conserva y también queda marcado si creaste productos desde esta compra (ya tienen su stock)
-        sumo_stock: !!(ed && ed.sumo_stock) || sumar || CMP_CREADOS.size > 0, actualizo_costos: !!(ed && ed.actualizo_costos) || costos };
+        sumo_stock: !!(ed && ed.sumo_stock) || (sumar && usadas.some(f => f.p)) || CMP_CREADOS.size > 0, actualizo_costos: !!(ed && ed.actualizo_costos) || (costos && usadas.some(f => f.p)) };
       if (!ed) {
         const c = await db.from("compras").insert(datosCompra).select().single();
         if (c.error) throw c.error;
