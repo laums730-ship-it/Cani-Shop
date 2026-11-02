@@ -113,7 +113,20 @@
     .cmp-card-top h3{font-size:1.05rem}
     .cmp-meta{color:var(--gris);font-size:.88rem;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:4px}
     .cmp-det{margin-top:12px;border-top:2px dashed var(--borde);padding-top:10px;display:flex;flex-direction:column;gap:6px;font-size:.9rem}
-    .cmp-det>div{display:flex;justify-content:space-between;gap:10px}
+    .cmp-tabla{overflow-x:auto}
+    .cmp-tabla table{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+    .cmp-tabla th,.cmp-tabla td{padding:7px 8px;border-bottom:1px solid var(--borde);text-align:left;vertical-align:top}
+    .cmp-tabla th{font-size:.75rem;color:var(--gris);font-weight:800;white-space:nowrap}
+    .cmp-tabla .r{text-align:right;white-space:nowrap}
+    .cmp-tabla td.mal{color:var(--rojo);font-weight:800}.cmp-tabla td.bien{color:#2e7d4f;font-weight:800}
+    .cmp-tabla .tag{margin-top:3px;display:inline-block}
+    .cmp-tot-det{margin:8px 0 0;font-size:.88rem;color:var(--gris)}
+    @media (max-width:560px){
+      .cmp-tabla table{font-size:.78rem}
+      .cmp-tabla th,.cmp-tabla td{padding:6px 3px}
+      .cmp-tabla th{font-size:.66rem;white-space:normal;line-height:1.15}
+      .cmp-tabla .tag{font-size:.62rem;padding:1px 6px}
+    }
     .cmp-acc{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
     @media (max-width:640px){.cmp-res{grid-template-columns:minmax(0,1fr)}.cmp-g3,.cmp-calc{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 
@@ -533,7 +546,7 @@
     <div id="cmp-form-vista" hidden>
       <div class="barra"><button class="btn btn-sec btn-sm" id="cmp-volver" type="button">← Volver a compras</button></div>
       <section class="caja">
-        <h2>Datos de la compra</h2>
+        <h2 id="cmp-form-tit">Datos de la compra</h2>
         <div class="fila" style="margin-top:12px">
           <div class="campo"><label for="cmp-prov">Proveedor</label><input id="cmp-prov" type="text" list="cmp-provs" autocomplete="off"><datalist id="cmp-provs"></datalist></div>
           <div class="campo"><label for="cmp-fecha">Fecha</label><input id="cmp-fecha" type="date"></div>
@@ -552,7 +565,9 @@
         <p class="cmp-ayuda">Escribe el nombre y elige el producto de tu tienda. Si no existe todavía, queda como "Falta subir".</p>
         <datalist id="cmp-prods"></datalist>
         <div class="lista" id="cmp-items" style="margin:12px 0"></div>
-        <div class="barra"><button class="btn btn-sec" id="cmp-add" type="button">＋ Agregar producto</button></div>
+        <div class="barra"><button class="btn btn-sec" id="cmp-add" type="button">＋ Agregar producto</button>
+          <button class="btn btn-sec" id="cmp-crear" type="button">Crear en la tienda los que faltan</button></div>
+        <p class="cmp-ayuda">Los productos "Falta subir" se crean en tu tienda <b>ocultos</b>, con su precio, su costo real y su stock (la cantidad comprada). Cuando les pongas foto, los activas en Productos.</p>
       </section>
 
       <section class="caja">
@@ -2608,14 +2623,33 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
           <div class="cmp-meta"><span>${items.length} producto(s)</span><span>Gastos de llegada: ${bs(c.total_gastos)}</span>
             ${c.sumo_stock ? `<span class="tag">Sumó al stock</span>` : ""}${c.actualizo_costos ? `<span class="tag costo">Guardó costos</span>` : ""}</div></div>
           <b style="font-family:var(--f-tit);font-size:1.2rem;color:var(--rosa-tinta)">${bs(total)}</b></div>
-        <div class="cmp-det" hidden>${items.map(i => `<div><span>${esc(i.nombre)} × ${i.cantidad}</span><span>${bs(i.costo_real)} c/u</span></div>`).join("")}</div>
+        <div class="cmp-det" hidden>${tablaCompra(items)}</div>
         <div class="cmp-acc"><button class="btn btn-sec btn-sm" data-cver="${esc(c.id)}" type="button">Ver detalle</button>
+          <button class="btn btn-sm" data-cedit="${esc(c.id)}" type="button">Editar compra</button>
           <button class="btn btn-peligro btn-sm" data-cdel="${esc(c.id)}" type="button">Borrar compra</button></div>
       </div>`;
     }).join("");
   }
+  // Detalle de una compra: una fila por producto con cantidad, costo real, precio de venta, ganancia y margen
+  function tablaCompra(items) {
+    const n2 = v => (Math.round(v * 100) / 100).toFixed(2).replace(".", ",");
+    const min = (() => { try { return Math.min(num(localStorage.getItem("cmp-min") || 40), 95) / 100; } catch (e) { return .4; } })();
+    let venta = 0, costo = 0;
+    const filas = items.map(i => {
+      const real = +i.costo_real || 0, precio = +i.precio || 0, cant = +i.cantidad || 0, enTienda = !!(i.producto_id && PRODS.some(p => p.id === i.producto_id));
+      const gan = precio - real, marg = precio > 0 ? gan / precio : null;
+      venta += precio * cant; costo += real * cant;
+      return `<tr><td>${esc(i.nombre)}<br><span class="tag ${enTienda ? "" : "gris"}">${enTienda ? "En la tienda" : "Falta subir"}</span></td>
+        <td class="r">${cant}</td><td class="r">${n2(real)}</td><td class="r">${precio > 0 ? n2(precio) : "—"}</td>
+        <td class="r">${precio > 0 ? n2(gan) : "—"}</td>
+        <td class="r ${marg === null ? "" : marg >= min ? "bien" : "mal"}">${marg === null ? "—" : Math.round(marg * 100) + "%"}</td></tr>`;
+    }).join("");
+    return `<p class="cmp-tot-det" style="margin:0 0 4px">Costo, precio y ganancia son en Bs, por cada unidad.</p><div class="cmp-tabla"><table><thead><tr><th>Producto</th><th class="r">Cant.</th><th class="r">Costo</th><th class="r">Precio</th><th class="r">Ganancia</th><th class="r">Margen</th></tr></thead><tbody>${filas}</tbody></table></div>
+      ${venta > 0 ? `<p class="cmp-tot-det">Si vendes todo: ${bs(venta)} · Ganancia ${bs(venta - costo)} · Margen ${Math.round((venta - costo) / venta * 100)}%</p>` : `<p class="cmp-tot-det">Toca "Editar compra" para poner el precio de venta de cada producto.</p>`}`;
+  }
   $("#cmp-hist").addEventListener("click", async e => {
-    const v = e.target.closest("[data-cver]"), d = e.target.closest("[data-cdel]");
+    const v = e.target.closest("[data-cver]"), d = e.target.closest("[data-cdel]"), ed = e.target.closest("[data-cedit]");
+    if (ed) return abrirCompra(CMP.find(c => c.id === ed.dataset.cedit));
     if (v) { const det = v.closest(".cmp-card").querySelector(".cmp-det"); det.hidden = !det.hidden; v.textContent = det.hidden ? "Ver detalle" : "Ocultar detalle"; }
     if (d) {
       if (!confirm("¿Borrar esta compra del historial?\n\nEl stock y los costos que ya se guardaron en tus productos no cambian.")) return;
@@ -2628,21 +2662,35 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   // --- Formulario de nueva compra ---
   const minimoCmp = () => Math.min(num($("#cmp-min").value), 95) / 100;
   function cmpVista(form) { $("#cmp-lista-vista").hidden = form; $("#cmp-form-vista").hidden = !form; window.scrollTo(0, 0); }
-  $("#cmp-nueva").onclick = () => {
-    CI = [{ nombre: "", cant: "", total: "", precio: "", modelo: "" }];
-    $("#cmp-prov").value = (CMP[0] && CMP[0].proveedor) || "";
-    $("#cmp-fecha").value = hoyLocal();
-    $("#cmp-flota").value = 0; $("#cmp-taxi").value = 0;
+  let CMP_EDIT = null, CMP_CREADOS = new Set();   // compra que se está editando (null = nueva) y productos creados desde este formulario
+  const prodDeIt = it => (it.pid && PRODS.find(p => p.id === it.pid)) || prodPorNombre(it.nombre);
+  const txtGuardarCmp = () => CMP_EDIT ? "Guardar cambios" : "Guardar compra";
+  // Abre el formulario: vacío (nueva compra) o con los datos de una compra ya guardada para cambiar cantidades, precios y conectar productos
+  function abrirCompra(c) {
+    CMP_EDIT = c || null; CMP_CREADOS = new Set();
+    const items = c ? (c.compras_items || []).slice().sort((a, b) => (a.orden || 0) - (b.orden || 0)) : [];
+    CI = c ? items.map(i => ({ nombre: (PRODS.find(p => p.id === i.producto_id) || {}).nombre || i.nombre, cant: String(i.cantidad), total: String(i.costo_total),
+        precio: +i.precio > 0 ? String(i.precio) : "", modelo: "", pid: i.producto_id || null }))
+      : [{ nombre: "", cant: "", total: "", precio: "", modelo: "", pid: null }];
+    $("#cmp-prov").value = c ? c.proveedor : ((CMP[0] && CMP[0].proveedor) || "");
+    $("#cmp-fecha").value = c ? c.fecha : hoyLocal();
+    $("#cmp-flota").value = c ? +c.flota || 0 : 0; $("#cmp-taxi").value = c ? +c.taxi || 0 : 0;
     try { $("#cmp-min").value = localStorage.getItem("cmp-min") || 40; } catch (e) { $("#cmp-min").value = 40; }
-    $("#cmp-costos").checked = true; $("#cmp-stock").checked = false;
-    $("#cmp-provs").innerHTML = [...new Set(CMP.map(c => c.proveedor).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join("");
+    $("#cmp-costos").checked = c ? !c.actualizo_costos : true;
+    $("#cmp-stock").checked = false; $("#cmp-stock").disabled = !!(c && c.sumo_stock);
+    $("#cmp-form-tit").textContent = c ? "Editar compra" : "Datos de la compra";
+    $("#cmp-guardar").textContent = txtGuardarCmp();
+    $("#cmp-provs").innerHTML = [...new Set(CMP.map(x => x.proveedor).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join("");
     $("#cmp-prods").innerHTML = PRODS.map(p => `<option value="${esc(p.nombre)}">`).join("");
     ayudaStock(); pintarItemsCmp(); cmpVista(true);
-  };
+  }
+  $("#cmp-nueva").onclick = () => abrirCompra(null);
   $("#cmp-volver").onclick = () => cmpVista(false);
-  $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "" }); pintarItemsCmp(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
+  $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "", pid: null }); pintarItemsCmp(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
   function ayudaStock() {
-    $("#cmp-stock-ayuda").textContent = $("#cmp-stock").checked
+    $("#cmp-stock-ayuda").textContent = $("#cmp-stock").disabled
+      ? "El stock de esta compra ya se cargó, así que no se vuelve a sumar."
+      : $("#cmp-stock").checked
       ? "El stock sube con las cantidades de esta compra, solo en los productos que ya están en tu tienda. Si el costo también se guarda, se calcula el promedio con lo que ya tenías."
       : "El stock no cambia. Marca \"Sumar al stock\" solo cuando los productos todavía no estén contados en la tienda.";
   }
@@ -2650,7 +2698,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   function pintarItemsCmp() {
     const sumar = $("#cmp-stock").checked;
     $("#cmp-items").innerHTML = CI.map((it, i) => {
-      const p = prodPorNombre(it.nombre), conModelos = sumar && p && tieneVar(p);
+      const p = prodDeIt(it), conModelos = sumar && p && tieneVar(p);
       return `<div class="cmp-item" data-i="${i}">
         <div class="cmp-cab"><div class="campo"><label for="cmp-n-${i}">Producto</label><input id="cmp-n-${i}" data-k="nombre" list="cmp-prods" autocomplete="off" value="${esc(it.nombre)}" placeholder="Escribe para buscar"></div>
           ${CI.length > 1 ? `<button type="button" class="cmp-quitar" data-quitar="${i}" aria-label="Quitar este producto">✕</button>` : ""}</div>
@@ -2669,13 +2717,13 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
         <div class="cmp-margen" id="cmp-mg-${i}"></div>
       </div>`;
     }).join("");
-    CI.forEach((it, i) => { const p = prodPorNombre(it.nombre); if (p && tieneVar(p) && !it.modelo) it.modelo = p.variantes[0].nombre; });
+    CI.forEach((it, i) => { const p = prodDeIt(it); if (p && tieneVar(p) && !it.modelo) it.modelo = p.variantes[0].nombre; });
     actualizarCmp();
   }
   // Calcula todo y devuelve las filas con sus números
   function calcCmp() {
     const gastos = num($("#cmp-flota").value) + num($("#cmp-taxi").value), min = minimoCmp();
-    const filas = CI.map(it => ({ it, p: prodPorNombre(it.nombre), cant: Math.round(num(it.cant)), total: num(it.total), precio: num(it.precio) }));
+    const filas = CI.map(it => ({ it, p: prodDeIt(it), cant: Math.round(num(it.cant)), total: num(it.total), precio: num(it.precio) }));
     const merc = filas.reduce((a, f) => a + f.total, 0);
     filas.forEach(f => {
       f.parte = merc > 0 ? gastos * f.total / merc : 0;
@@ -2720,6 +2768,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const i = +box.dataset.i; CI[i][k] = e.target.value;
     if (k === "nombre") {
       const p = prodPorNombre(e.target.value);
+      CI[i].pid = p ? p.id : null;   // se conecta con el producto de la tienda cuando el nombre coincide; si cambias el nombre, se desconecta
       if (p) { // al elegir un producto de la tienda se completa su precio actual
         if (!num(CI[i].precio) && +p.precio > 0) { CI[i].precio = String(p.precio); $("#cmp-p-" + i).value = p.precio; }
         if (tieneVar(p) && $("#cmp-stock").checked) { pintarItemsCmp(); const n = $("#cmp-n-" + i); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } return; }
@@ -2736,6 +2785,33 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     actualizarCmp();
   }));
 
+  // Crea en la tienda los productos "Falta subir": ocultos, con su precio, su costo real y stock = cantidad comprada
+  $("#cmp-crear").onclick = async () => {
+    const { filas } = calcCmp(), faltan = filas.filter(f => f.it.nombre.trim() && !f.p);
+    if (!faltan.length) return toast("Todos los productos ya están en tu tienda");
+    const sinPrecio = faltan.find(f => !(f.precio > 0)), sinCant = faltan.find(f => !(f.cant > 0));
+    if (sinPrecio) return toast(`Falta el precio de venta de "${sinPrecio.it.nombre.trim()}"`, true);
+    if (sinCant) return toast(`Revisa la cantidad de "${sinCant.it.nombre.trim()}"`, true);
+    if (!confirm(`Se crean ${faltan.length} producto(s) en tu tienda, ocultos hasta que les pongas foto.\n\nCada uno queda con su precio, su costo real y stock igual a la cantidad comprada. Los que ya estaban en tu tienda no cambian.\n\n¿Crearlos?`)) return;
+    const b = $("#cmp-crear"); b.disabled = true; b.textContent = "Creando…";
+    const usados = new Set(PRODS.map(p => p.id)), nuevos = faltan.map(f => {
+      const base = slug(f.it.nombre.trim()); let id = base, n = 1; while (usados.has(id)) id = `${base}-${++n}`; usados.add(id);
+      return { f, fila: { id, nombre: f.it.nombre.trim(), precio: f.precio, activo: false, nuevo: true, categorias: [], imagenes: [], variantes: [], stock: f.cant, orden: 0, descripcion: "" } };
+    });
+    const r = await db.from("productos").insert(nuevos.map(x => x.fila));
+    if (r.error) { b.disabled = false; b.textContent = "Crear en la tienda los que faltan"; return toast("No se pudieron crear: " + r.error.message, true); }
+    let aviso = `Se crearon ${nuevos.length} productos ocultos. Ponles foto en Productos y actívalos.`;
+    if (COSTOS) {
+      const c = await db.from("costos").upsert(nuevos.map(x => ({ id: x.fila.id, costo: r2(x.f.real) })));
+      if (c.error) aviso = `Se crearon ${nuevos.length} productos, pero sus costos no se guardaron: ` + c.error.message;
+    }
+    nuevos.forEach(x => { x.f.it.pid = x.fila.id; CMP_CREADOS.add(x.fila.id); });
+    await cargar();
+    $("#cmp-prods").innerHTML = PRODS.map(p => `<option value="${esc(p.nombre)}">`).join("");
+    b.disabled = false; b.textContent = "Crear en la tienda los que faltan";
+    pintarItemsCmp(); toast(aviso);
+  };
+
   $("#cmp-guardar").onclick = async () => {
     const proveedor = $("#cmp-prov").value.trim(), fecha = $("#cmp-fecha").value;
     if (!proveedor) return toast("Escribe el proveedor", true);
@@ -2746,14 +2822,27 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     if (mala) return toast(`Revisa la cantidad de "${mala.it.nombre.trim()}"`, true);
     const sumar = $("#cmp-stock").checked, costos = $("#cmp-costos").checked, b = $("#cmp-guardar");
     b.disabled = true; b.textContent = "Guardando…";
-    const fallos = [];
+    const fallos = [], ed = CMP_EDIT;
+    const filasItems = cid => usadas.map((f, k) => ({ compra_id: cid, producto_id: f.p ? f.p.id : null,
+      nombre: f.it.nombre.trim(), cantidad: f.cant, costo_total: r2(f.total), costo_unit: r2(f.unit), costo_real: r2(f.real), precio: r2(f.precio), orden: k }));
     try {
-      const c = await db.from("compras").insert({ fecha, proveedor, flota: num($("#cmp-flota").value), taxi: num($("#cmp-taxi").value),
-        total_mercaderia: r2(merc), total_gastos: r2(gastos), sumo_stock: sumar, actualizo_costos: costos }).select().single();
-      if (c.error) throw c.error;
-      const ins = await db.from("compras_items").insert(usadas.map((f, k) => ({ compra_id: c.data.id, producto_id: f.p ? f.p.id : null,
-        nombre: f.it.nombre.trim(), cantidad: f.cant, costo_total: r2(f.total), costo_unit: r2(f.unit), costo_real: r2(f.real), precio: r2(f.precio), orden: k })));
-      if (ins.error) { await db.from("compras").delete().eq("id", c.data.id); throw ins.error; }
+      const datosCompra = { fecha, proveedor, flota: num($("#cmp-flota").value), taxi: num($("#cmp-taxi").value), total_mercaderia: r2(merc), total_gastos: r2(gastos),
+        // "ya se sumó stock" se conserva y también queda marcado si creaste productos desde esta compra (ya tienen su stock)
+        sumo_stock: !!(ed && ed.sumo_stock) || sumar || CMP_CREADOS.size > 0, actualizo_costos: !!(ed && ed.actualizo_costos) || costos };
+      if (!ed) {
+        const c = await db.from("compras").insert(datosCompra).select().single();
+        if (c.error) throw c.error;
+        const ins = await db.from("compras_items").insert(filasItems(c.data.id));
+        if (ins.error) { await db.from("compras").delete().eq("id", c.data.id); throw ins.error; }
+      } else {
+        // se agregan los productos nuevos primero y solo después se borran los anteriores, así no se pierde nada si algo falla
+        const nuevos = await db.from("compras_items").insert(filasItems(ed.id)).select("id");
+        if (nuevos.error) throw nuevos.error;
+        const u = await db.from("compras").update(datosCompra).eq("id", ed.id);
+        if (u.error) { await db.from("compras_items").delete().in("id", (nuevos.data || []).map(x => x.id)); throw u.error; }
+        const viejos = (ed.compras_items || []).map(i => i.id);
+        if (viejos.length) { const d = await db.from("compras_items").delete().in("id", viejos); if (d.error) fallos.push("limpiar los productos anteriores de la compra (" + d.error.message + ")"); }
+      }
 
       const vinc = usadas.filter(f => f.p);
       if (costos && vinc.length) {
@@ -2769,7 +2858,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
         if (r.error) fallos.push("los costos (" + r.error.message + ")");
       }
       if (sumar) {
-        for (const f of vinc) {
+        for (const f of vinc.filter(f => !CMP_CREADOS.has(f.p.id))) {   // los productos creados desde esta compra ya tienen su stock
           const p = f.p;
           let r;
           if (tieneVar(p)) {
@@ -2785,11 +2874,11 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
         }
       }
     } catch (err) {
-      b.disabled = false; b.textContent = "Guardar compra";
+      b.disabled = false; b.textContent = txtGuardarCmp();
       return toast("No se pudo guardar la compra: " + (err.message || err) + ". ¿Ya corriste supabase-compras.sql?", true);
     }
-    b.disabled = false; b.textContent = "Guardar compra";
-    toast(fallos.length ? "Compra guardada, pero no se pudo actualizar " + fallos.join(" ni ") : "Compra guardada", !!fallos.length);
+    b.disabled = false; b.textContent = txtGuardarCmp();
+    toast(fallos.length ? (ed ? "Cambios guardados, pero no se pudo " : "Compra guardada, pero no se pudo actualizar ") + fallos.join(" ni ") : ed ? "Cambios guardados" : "Compra guardada", !!fallos.length);
     cmpVista(false); cargarCompras(); cargar();
   };
 
