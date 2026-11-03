@@ -1489,3 +1489,7 @@ input,select,textarea{max-width:100%;min-width:0}
 .pdx-ph{background:var(--rosa-claro)}
 .pdx-ph img{object-fit:contain!important}
 .pdx-ph,.pdx-ph img{max-width:100%}
+/* Página del producto: el marco se adapta al tamaño de cada foto (sin franjas rosa) */
+.pdx-ph,.pdx.una-foto .pdx-ph,.pdx:not(.una-foto) .pdx-ph:last-child:nth-child(odd){aspect-ratio:auto!important;background:transparent!important}
+.pdx-ph img{width:100%;height:auto!important;object-fit:initial!important;display:block}
+.pdx-pista{align-items:start}
