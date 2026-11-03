@@ -2524,7 +2524,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const fPago = !pagadoTodo ? "" : FP.fecha_pago.value ? ymdEs(FP.fecha_pago.value) : ED.pagado_en ? fecha(ED.pagado_en).split(",")[0] : "";
     const fPedido = FP.fecha_pedido.value ? ymdEs(FP.fecha_pedido.value) : fecha(ED.creado || new Date()).split(",")[0];
     const detalleScoop = i => i.id === "scoop" && (ED.extra || {}).tipo === "scoop"
-      ? [ED.extra.caja, (ED.extra.colores || []).length ? "Colores: " + ED.extra.colores.join(", ") : "", (ED.extra.personajes || []).length ? "Personajes: " + ED.extra.personajes.join(", ") : ""].filter(Boolean).join(" · ") : "";
+      ? [ED.extra.caja, (ED.extra.colores || []).length ? "Colores: " + ED.extra.colores.join(", ") : "", (ED.extra.personajes || []).length ? "Personajes: " + ED.extra.personajes.join(", ") : "", ED.items.some(x => x.id === "video-scoop") ? "Con video 🎥" : "Sin video"].filter(Boolean).join(" · ") : "";
     const filas = ED.items.filter(i => !i.en_scoop).map((i, k) => { const sub = [i.variante, detalleScoop(i)].filter(Boolean).map(esc).join(" · ");
       return `<tr><td class="n">${k + 1}</td><td class="p"><b>${esc(i.nombre)}</b>${sub ? `<small>${sub}</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="c">${num(i.cant)}</td>${conDesc ? `<td class="r d">${num(i.desc) ? "− " + bs(i.desc) : ""}</td>` : ""}<td class="r t">${bs(linea(i))}</td></tr>`; }).join("");
