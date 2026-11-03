@@ -68,7 +68,7 @@
     .filtro.on{background:var(--tinta);border-color:var(--tinta);color:#fff}
 
     .lista{display:flex;flex-direction:column;gap:12px}
-    .prod{background:#fff;border-radius:var(--radio);padding:14px;display:grid;grid-template-columns:76px 1fr auto;gap:14px;align-items:start}
+    .prod{background:#fff;border-radius:var(--radio);padding:14px;display:grid;grid-template-columns:76px 1fr auto auto;gap:14px;align-items:start}
     .prod.oculto{opacity:.6}
     .prod>img{width:76px;height:76px;border-radius:14px;object-fit:cover;background:var(--rosa-claro)}
     .prod h3{font-size:1.05rem}
@@ -85,6 +85,11 @@
     .st.inf{padding:4px 12px;background:#f4f9ff;border-color:#d6e6fb}
     .st.inf b{color:var(--lila)}
     .acc{display:flex;flex-direction:column;gap:6px}
+    .marcas{display:flex;flex-direction:column;gap:6px}
+    .marca{display:flex;align-items:center;gap:6px;border:2px solid var(--borde);border-radius:999px;padding:4px 12px;font-size:.85rem;font-weight:800;color:var(--gris);background:#fff;cursor:pointer;font-family:inherit}
+    .marca i{font-style:normal;width:18px;height:18px;border-radius:6px;border:2px solid var(--borde);display:grid;place-items:center;font-size:.8rem;line-height:1;color:#fff}
+    .marca.on{border-color:#2e7d4f;color:#2e7d4f;background:#eef8f1}.marca.on i{background:#2e7d4f;border-color:#2e7d4f}
+    .marca:disabled{opacity:.5;cursor:not-allowed}
     .vacio{text-align:center;color:var(--gris);padding:40px;background:#fff;border-radius:var(--radio)}
 
     /* Compras */
@@ -450,6 +455,7 @@
       .resumen{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.resumen .dato:nth-child(n+4){grid-column:span 1}
       .dato{padding:10px 12px}.dato b{font-size:1.35rem}.dato span{font-size:.75rem}
       .prod{grid-template-columns:60px 1fr}
+      .marcas{grid-column:1/-1;flex-direction:row}
       .prod>img{width:60px;height:60px}
       .acc{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
       .acc .btn{flex:1}
@@ -527,6 +533,11 @@
       <button class="filtro" data-f="pocos">Pocas unidades</button>
       <button class="filtro" data-f="ocultos">Ocultos</button>
       <button class="filtro" data-f="sinfoto">📷 Sin foto</button>
+      <button class="filtro" data-f="sinwsp">Falta WSP</button>
+      <button class="filtro" data-f="sinmkt">Falta MKT</button>
+    </div>
+    <div class="aviso-config" id="marcas-falta" hidden style="margin-bottom:16px">
+      Para usar las casillas WSP y MKT falta un pasito: copia el archivo <b>supabase-marcas-wsp-mkt.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
     </div>
     <div class="lista" id="lista"></div>
    </div>
@@ -1118,9 +1129,13 @@
     COSTOS = c.error ? null : Object.fromEntries((c.data || []).map(x => [x.id, +x.costo]));
     const m = await db.from("stock_minimos").select("id,minimo");   // existe después de correr supabase-stock-minimo.sql
     MINS = m.error ? null : Object.fromEntries((m.data || []).map(x => [x.id, +x.minimo]));
+    const mk = await db.from("marcas_producto").select("id,wsp,mkt");   // existe después de correr supabase-marcas-wsp-mkt.sql
+    MARCAS = mk.error ? null : Object.fromEntries((mk.data || []).map(x => [x.id, { wsp: !!x.wsp, mkt: !!x.mkt }]));
+    $("#marcas-falta").hidden = !!MARCAS;
     pintar();
   }
-  let COSTOS = null, MINS = null;
+  let COSTOS = null, MINS = null, MARCAS = null;
+  const marcaDe = (p, k) => !!(MARCAS && MARCAS[p.id] && MARCAS[p.id][k]);
   const costoDe = p => COSTOS && COSTOS[p.id] != null ? COSTOS[p.id] : null;
   // Stock mínimo: el que pusiste en el producto, o 3 si no pusiste ninguno
   const minDe = p => MINS && MINS[p.id] != null ? MINS[p.id] : 3;
@@ -1158,6 +1173,8 @@
     if (filtro === "pocos") l = l.filter(p => tieneVar(p) ? p.variantes.some(v => pocos(v.stock)) : pocos(p.stock));
     if (filtro === "ocultos") l = l.filter(p => !p.activo);
     if (filtro === "sinfoto") l = l.filter(p => p.activo && !(p.imagenes || []).length);
+    if (filtro === "sinwsp") l = l.filter(p => !marcaDe(p, "wsp"));
+    if (filtro === "sinmkt") l = l.filter(p => !marcaDe(p, "mkt"));
     if (!l.length) { $("#lista").innerHTML = `<div class="vacio">${PRODS.length ? "No hay productos con ese filtro." : "Todavía no tienes productos. ¡Agrega el primero! 💕"}</div>`; return; }
     $("#lista").innerHTML = l.map(p => {
       const stocks = tieneVar(p) ? p.variantes.map((v, i) => chip(p.id, i, v.nombre, v.stock)).join("") : chip(p.id, -1, "Unidades", p.stock);
@@ -1174,6 +1191,10 @@
             ${agotado(p) ? `<span class="tag rojo">Agotado</span>` : (porReponer(p) ? `<span class="tag rojo">Por reponer · quedan ${total(p)}</span>` : "")}
             ${(p.imagenes || []).length ? "" : `<span class="tag gris">📷 Sin foto</span>`}</div>
           <div class="stocks">${stocks}</div>
+        </div>
+        <div class="marcas">
+          <button class="marca ${marcaDe(p, "wsp") ? "on" : ""}" data-marca="wsp" data-id="${esc(p.id)}" type="button" ${MARCAS ? "" : "disabled"} title="Ya lo publiqué en WhatsApp"><i>${marcaDe(p, "wsp") ? "✓" : ""}</i>WSP</button>
+          <button class="marca ${marcaDe(p, "mkt") ? "on" : ""}" data-marca="mkt" data-id="${esc(p.id)}" type="button" ${MARCAS ? "" : "disabled"} title="Ya hice marketing de este producto"><i>${marcaDe(p, "mkt") ? "✓" : ""}</i>MKT</button>
         </div>
         <div class="acc">
           <button class="btn btn-sec btn-sm" data-editar="${esc(p.id)}">✏️ Editar</button>
@@ -1192,6 +1213,13 @@
   const pendientes = {};
   $("#lista").onclick = async e => {
     const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.marca) {
+      const id = b.dataset.id, k = b.dataset.marca, antes = MARCAS[id] || { wsp: false, mkt: false }, nuevo = { ...antes, [k]: !antes[k] };
+      MARCAS[id] = nuevo; pintar();
+      const { error } = await db.from("marcas_producto").upsert({ id, wsp: nuevo.wsp, mkt: nuevo.mkt });
+      if (error) { MARCAS[id] = antes; pintar(); return toast("No se pudo guardar: " + error.message, true); }
+      return;
+    }
     if (b.dataset.editar) return abrirEditor(PRODS.find(p => p.id === b.dataset.editar));
     if (b.dataset.ver) {
       const p = PRODS.find(x => x.id === b.dataset.ver); p.activo = !p.activo; pintar();
@@ -2821,6 +2849,8 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const mala = usadas.find(f => !(f.cant > 0));
     if (mala) return toast(`Revisa la cantidad de "${mala.it.nombre.trim()}"`, true);
     const sumar = $("#cmp-stock").checked, costos = $("#cmp-costos").checked, b = $("#cmp-guardar");
+    const sinTienda = usadas.filter(f => !f.p).length;
+    if (sinTienda && !confirm(`${sinTienda} de estos productos TODAVÍA NO están en tu tienda.\n\nSi guardas ahora, la compra queda registrada pero no se crea ningún producto, ni se suma stock ni se guardan costos para esos.\n\nPara crearlos, toca Cancelar y luego "Crear en la tienda los que faltan".\n\n¿Guardar igual?`)) return;
     b.disabled = true; b.textContent = "Guardando…";
     const fallos = [], ed = CMP_EDIT;
     const filasItems = cid => usadas.map((f, k) => ({ compra_id: cid, producto_id: f.p ? f.p.id : null,
@@ -2828,7 +2858,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     try {
       const datosCompra = { fecha, proveedor, flota: num($("#cmp-flota").value), taxi: num($("#cmp-taxi").value), total_mercaderia: r2(merc), total_gastos: r2(gastos),
         // "ya se sumó stock" se conserva y también queda marcado si creaste productos desde esta compra (ya tienen su stock)
-        sumo_stock: !!(ed && ed.sumo_stock) || sumar || CMP_CREADOS.size > 0, actualizo_costos: !!(ed && ed.actualizo_costos) || costos };
+        sumo_stock: !!(ed && ed.sumo_stock) || (sumar && usadas.some(f => f.p)) || CMP_CREADOS.size > 0, actualizo_costos: !!(ed && ed.actualizo_costos) || (costos && usadas.some(f => f.p)) };
       if (!ed) {
         const c = await db.from("compras").insert(datosCompra).select().single();
         if (c.error) throw c.error;
