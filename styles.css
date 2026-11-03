@@ -1485,3 +1485,7 @@ input,select,textarea{max-width:100%;min-width:0}
 .tarjeta .foto img,.galeria .principal img,.miniaturas img,.item img,.pop-res img{object-fit:contain!important;background:var(--rosa-claro)}
 .tarjeta .foto img.sin-foto{object-fit:contain!important}
 .galeria .principal{display:grid;place-items:center}
+/* Página del producto: fotos completas, sin recorte */
+.pdx-ph{background:var(--rosa-claro)}
+.pdx-ph img{object-fit:contain!important}
+.pdx-ph,.pdx-ph img{max-width:100%}
