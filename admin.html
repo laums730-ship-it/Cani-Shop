@@ -1812,7 +1812,7 @@
           <h3>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</h3>
           <div class="meta"><span>${fecha(p.creado)}</span><span>${n} producto${n === 1 ? "" : "s"}</span>
             ${p.origen === "manual" ? `<span class="tag gris">Venta manual</span>` : ""}
-            ${(p.extra || {}).tipo === "scoop" ? `<span class="tag">🍬 Scoop</span>` : ""}
+            ${(p.extra || {}).tipo === "scoop" ? `<span class="tag">🍬 Scoop</span>` : ""}${(p.extra || {}).recibe ? `<span class="tag">🎁 Para: ${esc(p.extra.recibe)}</span>` : ""}
             ${(p.extra || {}).comprobante ? `<span class="tag" style="background:#e8f8ef;color:#1d7a4c">📎 Comprobante</span>` : ""}
             ${p.entrega ? `<span>🚚 ${esc(p.entrega)}</span>` : ""}
             ${p.pagado_en ? `<span>Pagado ${fechaCorta(p.pagado_en)}</span>` : ""}${p.entregado_en ? `<span>Entregado ${fechaCorta(p.entregado_en)}</span>` : ""}
@@ -1935,6 +1935,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
         <label class="mini-campo">Caja<select id="sc-caja" ${lock ? "disabled" : ""}>${cajasDe().map(c => `<option value="${esc(c.nombre)}" ${c.nombre === (x.caja || cajasDe()[0].nombre) ? "selected" : ""}>${esc(c.nombre)}${num(c.precio) ? ` (+${bs(c.precio)})` : " (sin costo)"}</option>`).join("")}</select></label>
         <div><b>🎨 Colores</b><div class="chips-sel">${cols.map(c => chip("colores", c)).join("")}</div></div>
         <div><b>✨ Personajes</b><div class="chips-sel">${pers.map(c => chip("personajes", c)).join("")}</div></div>
+        <label class="mini-campo">🎁 Nombre de quien recibe la caja (si es para otra persona)<input id="sc-rec" maxlength="80" value="${esc(x.recibe || "")}" placeholder="Vacío = es para quien pide (${esc((FP && FP.cliente && FP.cliente.value.trim()) || "cliente")})"></label>
         <label class="mini-campo">Usuario de TikTok<input id="sc-tk" value="${esc(x.tiktok || "")}" placeholder="@usuario"></label>
         <label class="check"><input type="checkbox" id="sc-carta-on" ${ED.items.some(i => i.id === "carta-scoop") ? "checked" : ""} ${lock ? "disabled" : ""}> 💌 Carta personalizada impresa (+${bs(precioCartaDe())})</label>
         ${ED.items.some(i => i.id === "carta-scoop") || x.carta ? `<label class="mini-campo">Texto de la carta (para imprimir)<textarea id="sc-carta-txt" rows="3" maxlength="280" style="font-family:'${esc(S.fuenteCarta || "Caveat")}',cursive;font-size:1.15rem">${esc(x.carta || "")}</textarea></label>
@@ -1963,7 +1964,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       const cli = CLIS.find(c => c.tel_norm && c.tel_norm === telWa(FP.telefono.value)); if (cli && cli.tiktok && !ED.extra.tiktok) ED.extra.tiktok = cli.tiktok;
       pintarExtra(); pintarItems();
     }
-    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id) && !i.en_scoop); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id) && !i.en_scoop); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; delete ED.extra.recibe; ED.extra.video = false; pintarExtra(); pintarItems(); }
     if (b.dataset.scq !== undefined) { ED.items.splice(+b.dataset.scq, 1); pintarContScoop(); totalesPed(); return; }
     if (b.dataset.scadd) {
       const p = PRODS.find(x => x.id === b.dataset.scadd); if (!p) return;
@@ -2006,7 +2007,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       pintarExtra(); pintarItems();
     }
   });
-  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-buscar") pintarResSc(); if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
+  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-buscar") pintarResSc(); if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-rec") ED.extra.recibe = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
 
   // ---------- Transacciones y estadísticas ----------
   let TX = [], TODOS = [], TX_COLS = false, ENT_COLS = false, EST_V = "dia", EST_MET = "fact", TOP_M = "valor";
@@ -2440,7 +2441,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     if (pagoF && pagoF !== ymd(ED.pagado_en) && !(esHoy(pagoF) && !ED.pagado_en)) datos.pagado_en = ymdIso(pagoF);
     if (entF && entF !== ymd(ED.entregado_en) && !(esHoy(entF) && !ED.entregado_en)) datos.entregado_en = ymdIso(entF);
     const ex = { ...(ED.extra || {}) };
-    if (ED.items.some(i => i.id === "scoop")) { ex.tipo = "scoop"; ex.video = ED.items.some(i => i.id === "video-scoop"); } else { delete ex.tipo; delete ex.colores; delete ex.personajes; delete ex.video; }
+    if (ED.items.some(i => i.id === "scoop")) { ex.tipo = "scoop"; ex.video = ED.items.some(i => i.id === "video-scoop"); } else { delete ex.tipo; delete ex.colores; delete ex.personajes; delete ex.video; delete ex.recibe; }
     // "No descontar stock": el pedido queda registrado como Confirmado / Pagado / Entregado sin tocar el stock
     if (DESCUENTAN.includes(nuevoEstado) && !ED.stock_descontado && sinDescuento()) ex.sin_stock = true; else delete ex.sin_stock;
     datos.extra = ex;
@@ -2524,7 +2525,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const fPago = !pagadoTodo ? "" : FP.fecha_pago.value ? ymdEs(FP.fecha_pago.value) : ED.pagado_en ? fecha(ED.pagado_en).split(",")[0] : "";
     const fPedido = FP.fecha_pedido.value ? ymdEs(FP.fecha_pedido.value) : fecha(ED.creado || new Date()).split(",")[0];
     const detalleScoop = i => i.id === "scoop" && (ED.extra || {}).tipo === "scoop"
-      ? [ED.extra.caja, (ED.extra.colores || []).length ? "Colores: " + ED.extra.colores.join(", ") : "", (ED.extra.personajes || []).length ? "Personajes: " + ED.extra.personajes.join(", ") : "", ED.items.some(x => x.id === "video-scoop") ? "Con video 🎥" : "Sin video"].filter(Boolean).join(" · ") : "";
+      ? [ED.extra.caja, (ED.extra.colores || []).length ? "Colores: " + ED.extra.colores.join(", ") : "", (ED.extra.personajes || []).length ? "Personajes: " + ED.extra.personajes.join(", ") : "", ED.items.some(x => x.id === "video-scoop") ? "Con video 🎥" : "Sin video", ED.extra.recibe ? "Para: " + ED.extra.recibe : ""].filter(Boolean).join(" · ") : "";
     const filas = ED.items.filter(i => !i.en_scoop).map((i, k) => { const sub = [i.variante, detalleScoop(i)].filter(Boolean).map(esc).join(" · ");
       return `<tr><td class="n">${k + 1}</td><td class="p"><b>${esc(i.nombre)}</b>${sub ? `<small>${sub}</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="c">${num(i.cant)}</td>${conDesc ? `<td class="r d">${num(i.desc) ? "− " + bs(i.desc) : ""}</td>` : ""}<td class="r t">${bs(linea(i))}</td></tr>`; }).join("");

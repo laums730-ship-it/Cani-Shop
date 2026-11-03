@@ -819,7 +819,9 @@
         <section class="sc-paso"><div class="sc-num">${cartaOn ? 7 : 6}</div><div class="sc-cont">
           <h2>Tus datos</h2>
           <div class="form sc-datos">
-            <input name="nombre" placeholder="Tu nombre" required>
+            <input name="nombre" placeholder="Tu nombre (quien hace el pedido)" required>
+            <label class="sc-para"><input type="checkbox" id="sc-para-mi" checked> El scoop es para mí</label>
+            <input name="recibe" placeholder="Nombre de quien recibe la caja" autocomplete="off" maxlength="80" hidden>
             <input name="telefono" type="tel" inputmode="tel" placeholder="Tu WhatsApp (ej: 71234567)" required>
             ${ENT.length ? `<select name="entrega" required><option value="" disabled selected>¿Cómo quieres recibirlo?</option>${ENT.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : ""}
             ${envioHTML()}
@@ -872,6 +874,11 @@
       i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0);
     });
     const ir = sel => F.querySelector(sel).scrollIntoView({ behavior: "smooth", block: "center" });
+    F.addEventListener("change", e => {
+      if (e.target.id !== "sc-para-mi") return;
+      const r = F.querySelector("[name=recibe]"); r.hidden = e.target.checked; r.required = !e.target.checked;
+      if (e.target.checked) r.value = ""; else r.focus();
+    });
     F.addEventListener("submit", async e => {
       e.preventDefault();
       if (st.op === null) { toast("Elige tu scoop"); return ir(".sc-ops"); }
@@ -880,6 +887,7 @@
       if (st.carta && !($("#carta-txt").value || "").trim()) { toast("Escribe el mensaje de tu carta"); return ir("#carta-txt"); }
       if (!F.reportValidity()) return;
       const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
+      const recibe = F.querySelector("#sc-para-mi").checked ? "" : (f.get("recibe") || "").trim();
       const ventana = window.open("", "_blank");
       const base = SB.url ? SB.url.replace(/\/$/, "") : "", H = { apikey: SB.key, Authorization: `Bearer ${SB.key}` };
       let comp = null, numero = null; const envio = datosEnvio(f);
@@ -888,7 +896,7 @@
           const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
             body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad, direccion: envio.direccion,
               entrega: f.get("entrega") || "", comprobante: comp,
-              scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "",
+              scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "", recibe,
                 carta: st.carta, carta_texto: st.carta ? (f.get("carta") || "").trim() : "" } } }) });
           if (r.ok) numero = await r.json();
         }
@@ -896,7 +904,7 @@
       const o = ops[st.op];
       const caja = CAJAS[st.caja] || {}, tk = (f.get("tiktok") || "").trim();
       const msg = ["🌸 *NUEVO PEDIDO · LUCKY SCOOP* 🌸", numero ? `Pedido #${numero}` : null, "",
-        "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, tk ? `TikTok: ${tk.startsWith("@") ? tk : "@" + tk}` : null, "",
+        "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, recibe ? `🎁 El scoop es para: ${recibe}` : null, `WhatsApp: ${f.get("telefono")}`, tk ? `TikTok: ${tk.startsWith("@") ? tk : "@" + tk}` : null, "",
         "🛍️ *Mi Scoop*", `• ${o.nombre} — ${bs(+o.precio)}`,
         `• ${caja.nombre || "Caja blanca"} — ${+caja.precio > 0 ? bs(+caja.precio) : "sin costo"}`,
         st.video ? `• Video del armado — ${bs(pv)}` : null,
