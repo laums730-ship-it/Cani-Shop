@@ -85,6 +85,24 @@
     .st.inf{padding:4px 12px;background:#f4f9ff;border-color:#d6e6fb}
     .st.inf b{color:var(--lila)}
     .acc{display:flex;flex-direction:column;gap:6px}
+    .sc-cont{border-top:2px dashed var(--borde);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+    .sc-cont h4{margin:0;font-size:1rem}
+    #sc-buscar{border:2px solid var(--borde);border-radius:12px;padding:11px 13px;background:#fff;width:100%;font:inherit}
+    #sc-buscar:focus{outline:none;border-color:var(--rosa-fuerte)}
+    .scp select{border:2px solid var(--borde);border-radius:10px;padding:6px 8px;background:#fff;font:inherit}
+    .scp input[type=number]{border:2px solid var(--borde);border-radius:10px;padding:6px 8px;background:#fff;font:inherit}
+    .scp{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;background:#fff;border:2px solid var(--borde);border-radius:14px;padding:8px 10px}
+    .scp.sin{border-color:var(--rojo)}
+    .scp b{font-size:.92rem}.scp small{display:block;color:var(--gris);font-size:.78rem}
+    .scp .fila-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .scp input[type=number]{width:70px}
+    .scp .q{background:var(--rosa-claro);border:0;border-radius:10px;width:32px;height:32px;cursor:pointer;color:var(--rojo);font-weight:800}
+    .sc-res{border:2px solid var(--borde);border-radius:14px;background:#fff;max-height:260px;overflow-y:auto;display:flex;flex-direction:column}
+    .sc-res[hidden]{display:none}
+    .sc-res button{border:0;border-bottom:1px solid var(--borde);background:#fff;text-align:left;padding:8px 12px;cursor:pointer;font-family:inherit;font-size:.9rem;color:var(--tinta,#783746)}
+    .sc-res button small{color:var(--gris)}
+    .sc-res .vars{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}
+    .sc-res .vars button{border:2px solid var(--borde);border-radius:999px;padding:3px 10px;width:auto}
     .marcas{display:flex;flex-direction:column;gap:6px}
     .marca{display:flex;align-items:center;gap:6px;border:2px solid var(--borde);border-radius:999px;padding:4px 12px;font-size:.85rem;font-weight:800;color:var(--gris);background:#fff;cursor:pointer;font-family:inherit}
     .marca i{font-style:normal;width:18px;height:18px;border-radius:6px;border:2px solid var(--borde);display:grid;place-items:center;font-size:.8rem;line-height:1;color:#fff}
@@ -1788,7 +1806,7 @@
     if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
     if (!l.length) { $("#ped-lista").innerHTML = `<div class="vacio">${PEDS.length ? "No hay pedidos aquí." : "Todavía no llegan pedidos. Cuando alguien compre en tu tienda, aparece aquí 💕"}</div>`; return; }
     $("#ped-lista").innerHTML = l.map(p => {
-      const c = cuentas(p.items || [], p.envio, p.pagado), n = (p.items || []).reduce((a, i) => a + num(i.cant), 0);
+      const c = cuentas(p.items || [], p.envio, p.pagado), n = (p.items || []).reduce((a, i) => a + (i.en_scoop ? 0 : num(i.cant)), 0);
       return `<div class="ped-card" data-ped="${p.numero}">
         <div>
           <h3>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</h3>
@@ -1874,6 +1892,29 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   const precioCartaDe = () => { const v = SCF().precioCarta; return v === undefined || v === "" ? 4 : num(v); };
   const hayScoop = () => ED.items.some(i => i.id === "scoop");
   const cajasDe = () => { const c = (SCF().cajas || []).filter(c => c.nombre); return c.length ? c : [{ nombre: "Caja blanca", precio: 0 }, { nombre: "Caja especial", precio: 5 }]; };
+  // ----- Productos que lleva el scoop: descuentan stock y suman al costo (precio 0, no cambian lo que paga la clienta) -----
+  function pintarContScoop() {
+    const box = $("#sc-cont"); if (!box) return;
+    const lock = !!ED.stock_descontado, lista = ED.items.map((i, k) => ({ i, k })).filter(x => x.i.en_scoop);
+    const costo = lista.reduce((a, x) => a + (costoItem(x.i) || 0), 0), sinC = lista.filter(x => COSTOS && costoItem(x.i) == null).length;
+    const sc = ED.items.find(i => i.id === "scoop"), venta = sc ? num(sc.cant) * num(sc.precio) - num(sc.desc) : 0;
+    box.innerHTML = `<h4>🧺 Productos que lleva este scoop</h4>
+      <p class="ayuda" style="margin:0">Agrega lo que pusiste en el scoop. Se <b>descuentan del stock</b> y su <b>costo se suma</b> a este pedido. No cambian lo que paga la clienta.</p>
+      ${lista.map(({ i, k }) => { const p = prodDe(i), s = stockDe(i), sin = !lock && !sinDescuento() && s !== null && s < num(i.cant), c = costoItem(i);
+        const vars = p && tieneVar(p) ? `<select data-sck="${k}" data-f="variante" ${lock ? "disabled" : ""}>${p.variantes.map(v => `<option ${v.nombre === i.variante ? "selected" : ""} value="${esc(v.nombre)}">${esc(v.nombre)} (${+v.stock || 0})</option>`).join("")}</select>` : "";
+        return `<div class="scp ${sin ? "sin" : ""}"><div><b>${esc(i.nombre)}</b>${i.variante && !vars ? `<small>${esc(i.variante)}</small>` : ""}<small>${txtStock(i)}${c != null ? " · Costo " + bs(c) : (COSTOS ? " · Sin costo" : "")}</small></div>
+          ${lock ? "" : `<button type="button" class="q" data-scq="${k}" aria-label="Quitar">✕</button>`}
+          <div class="fila-n">${vars}<label>Cant. <input type="number" min="1" step="1" data-sck="${k}" data-f="cant" value="${num(i.cant)}" ${lock ? "disabled" : ""}></label></div></div>`; }).join("") || `<p class="ayuda" style="margin:0">Todavía no agregaste productos.</p>`}
+      ${lock ? "" : `<input id="sc-buscar" type="search" autocomplete="off" placeholder="🔍 Buscar producto para agregar al scoop…"><div id="sc-res" class="sc-res" hidden></div>`}
+      ${lista.length ? `<div class="aviso" style="font-weight:800">Costo de lo que lleva: ${bs(costo)}${COSTOS && venta > 0 ? ` · Ganancia del scoop: ${bs(venta - costo)} (${Math.round((venta - costo) / venta * 100)}%)` : ""}${sinC ? ` · Falta el costo de ${sinC}` : ""}</div>` : ""}`;
+  }
+  function pintarResSc() {
+    const q = ($("#sc-buscar") || {}).value || "", box = $("#sc-res"); if (!box) return;
+    if (!q.trim()) { box.hidden = true; box.innerHTML = ""; return; }
+    const l = buscarProds(q).slice(0, 12); box.hidden = false;
+    box.innerHTML = l.length ? l.map(p => `<div><button type="button" ${tieneVar(p) ? "" : `data-scadd="${esc(p.id)}"`}><b>${esc(p.nombre)}</b> <small>${total(p)} en stock${tieneVar(p) ? " · elige el modelo 👇" : ""}</small></button>
+      ${tieneVar(p) ? `<div class="vars">${p.variantes.map((v, i) => `<button type="button" data-scadd="${esc(p.id)}" data-v="${i}">${esc(v.nombre)} <b>${+v.stock || 0}</b></button>`).join("")}</div>` : ""}</div>`).join("") : `<p class="ayuda" style="margin:8px">No encontré “${esc(q)}”.</p>`;
+  }
   function pintarExtra() {
     const x = ED.extra = ED.extra || {}, S = SCF(), ops = (S.opciones || []), pv = num(S.precioVideo || 5);
     const lock = !!ED.stock_descontado;
@@ -1898,10 +1939,12 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
         <label class="check"><input type="checkbox" id="sc-carta-on" ${ED.items.some(i => i.id === "carta-scoop") ? "checked" : ""} ${lock ? "disabled" : ""}> 💌 Carta personalizada impresa (+${bs(precioCartaDe())})</label>
         ${ED.items.some(i => i.id === "carta-scoop") || x.carta ? `<label class="mini-campo">Texto de la carta (para imprimir)<textarea id="sc-carta-txt" rows="3" maxlength="280" style="font-family:'${esc(S.fuenteCarta || "Caveat")}',cursive;font-size:1.15rem">${esc(x.carta || "")}</textarea></label>
         <button type="button" class="btn btn-sec btn-sm" id="sc-carta-imp" style="align-self:flex-start">🖨️ Imprimir carta</button>` : ""}
+        <div class="sc-cont" id="sc-cont"></div>
         ${comp}
         ${lock ? "" : `<button type="button" class="btn btn-peligro btn-sm" id="sc-quitar" style="align-self:flex-start">Quitar scoop</button>`}
       </div>`;
     }
+    if (hayScoop()) pintarContScoop();
     const b = $("#ver-comp");
     if (b) b.onclick = async () => {
       const w = window.open("", "_blank");
@@ -1920,13 +1963,27 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       const cli = CLIS.find(c => c.tel_norm && c.tel_norm === telWa(FP.telefono.value)); if (cli && cli.tiktok && !ED.extra.tiktok) ED.extra.tiktok = cli.tiktok;
       pintarExtra(); pintarItems();
     }
-    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id)); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id) && !i.en_scoop); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; ED.extra.video = false; pintarExtra(); pintarItems(); }
+    if (b.dataset.scq !== undefined) { ED.items.splice(+b.dataset.scq, 1); pintarContScoop(); totalesPed(); return; }
+    if (b.dataset.scadd) {
+      const p = PRODS.find(x => x.id === b.dataset.scadd); if (!p) return;
+      const vari = tieneVar(p) ? (b.dataset.v !== undefined ? p.variantes[+b.dataset.v] : p.variantes[0]).nombre : null;
+      const ya = ED.items.find(i => i.en_scoop && i.id === p.id && (i.variante || null) === vari);
+      if (ya) ya.cant = num(ya.cant) + 1; else ED.items.push({ id: p.id, nombre: p.nombre, variante: vari, cant: 1, precio: 0, desc: 0, desc_nota: "", en_scoop: true });
+      pintarContScoop(); totalesPed(); const bs2 = $("#sc-buscar"); if (bs2) bs2.focus(); toast(`Agregado al scoop: ${p.nombre}${vari ? " – " + vari : ""}`); return;
+    }
     if (b.id === "sc-carta-imp") return imprimirCarta((ED.extra || {}).carta || "", S.fuenteCarta || "Caveat");
     if (b.dataset.g) { const arr = ED.extra[b.dataset.g] = ED.extra[b.dataset.g] || [], v = b.dataset.v, i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0); }
   });
   $("#ped-extra").addEventListener("change", e => {
     if (!ED) return;
     const S = SCF();
+    if (e.target.dataset && e.target.dataset.sck !== undefined) {
+      const it = ED.items[+e.target.dataset.sck];
+      if (it && e.target.dataset.f === "variante") { it.variante = e.target.value; pintarContScoop(); totalesPed(); }
+      if (it && e.target.dataset.f === "cant") { it.cant = Math.max(1, Math.round(num(e.target.value))); pintarContScoop(); totalesPed(); }
+      return;
+    }
     if (e.target.id === "sc-op") {
       const o = (S.opciones || []).find(o => o.nombre === e.target.value), it = ED.items.find(i => i.id === "scoop");
       if (o && it) { it.nombre = o.nombre; it.precio = num(o.precio); } pintarItems();
@@ -1949,7 +2006,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       pintarExtra(); pintarItems();
     }
   });
-  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
+  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-buscar") pintarResSc(); if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
 
   // ---------- Transacciones y estadísticas ----------
   let TX = [], TODOS = [], TX_COLS = false, ENT_COLS = false, EST_V = "dia", EST_MET = "fact", TOP_M = "valor";
@@ -2043,7 +2100,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     let fact = 0, gan = 0, unid = 0, sinCosto = 0, desc = 0;
     l.forEach(p => {
       const t = totalPed(p); fact += t; let costo = 0;
-      (p.items || []).forEach(i => { desc += num(i.desc); if (!EXTRAS.includes(i.id)) unid += num(i.cant); const c = costoItem(i); if (c == null) { if (!EXTRAS.includes(i.id)) sinCosto++; } else costo += c; });
+      (p.items || []).forEach(i => { desc += num(i.desc); if (!EXTRAS.includes(i.id) && !i.en_scoop) unid += num(i.cant); const c = costoItem(i); if (c == null) { if (!EXTRAS.includes(i.id)) sinCosto++; } else costo += c; });
       gan += t - num(p.envio) - costo;
     });
     const clis = new Set(l.map(cliKey));
@@ -2059,7 +2116,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#tx-resumen").innerHTML = `<div class="dato"><b>${bs(k.fact)}</b><span>cobrado</span></div><div class="dato"><b>${k.ventas}</b><span>transacciones</span></div><div class="dato"><b>${bs(k.ticket)}</b><span>ticket medio</span></div>`;
     if (q) l = l.filter(p => sinTilde(`#${p.numero} ${p.cliente} ${p.telefono} ${(p.items || []).map(i => i.nombre + " " + (i.variante || "")).join(" ")}`).includes(q));
     $("#tx-lista").innerHTML = l.length ? l.map(p => {
-      const d = fechaTx(p), n = (p.items || []).reduce((a, i) => a + (EXTRAS.includes(i.id) ? 0 : num(i.cant)), 0);
+      const d = fechaTx(p), n = (p.items || []).reduce((a, i) => a + (EXTRAS.includes(i.id) || i.en_scoop ? 0 : num(i.cant)), 0);
       return `<div class="tx" data-tx="${p.numero}">
         <div class="tx-fecha"><b>${d.getDate()}</b><span>${MESES[d.getMonth()].slice(0, 3)}</span></div>
         <div class="tx-info"><h4>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</h4>
@@ -2128,7 +2185,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#est-tabla").innerHTML = `<thead><tr><th>${etq}</th><th>Facturación</th><th>Ventas</th><th>Ticket medio</th><th>Ganancia</th></tr></thead><tbody>${con.map(g => `<tr class="${g === mejor ? "bien" : g === peor ? "mal" : ""}"><td>${esc(g.nom || g.et)}</td><td>${bs(g.fact)}</td><td>${g.ventas}</td><td>${bs(g.ticket)}</td><td>${bs(g.gan)}</td></tr>`).join("") || `<tr><td colspan="5" class="ayuda">Sin datos</td></tr>`}</tbody>`;
     // Productos más vendidos
     const tp = {};
-    l.forEach(p => (p.items || []).forEach(i => { if (EXTRAS.includes(i.id)) return; const key = i.nombre + (i.variante ? " – " + i.variante : ""); const v = tp[key] = tp[key] || { n: 0, t: 0, g: 0, c: true }; v.n += num(i.cant); const ing = num(i.cant) * num(i.precio) - num(i.desc); v.t += ing; const c = costoItem(i); if (c == null) v.c = false; else v.g += ing - c; }));
+    l.forEach(p => (p.items || []).forEach(i => { if (EXTRAS.includes(i.id) || i.en_scoop) return; const key = i.nombre + (i.variante ? " – " + i.variante : ""); const v = tp[key] = tp[key] || { n: 0, t: 0, g: 0, c: true }; v.n += num(i.cant); const ing = num(i.cant) * num(i.precio) - num(i.desc); v.t += ing; const c = costoItem(i); if (c == null) v.c = false; else v.g += ing - c; }));
     const top = Object.entries(tp).sort((a, b) => TOP_M === "unid" ? b[1].n - a[1].n || b[1].t - a[1].t : b[1].t - a[1].t).slice(0, 10), mx = top.length ? (TOP_M === "unid" ? top[0][1].n : top[0][1].t) : 1;
     $("#est-top").innerHTML = barras(top.map(([n, v], i) => ({ n: i + 1, t: n, d: `${v.n} u · ${bs(v.t)}`, p: (TOP_M === "unid" ? v.n : v.t) / mx * 100, sub: v.c ? `Ganancia ${bs(v.g)}` : "" })));
     // Mejores clientes
@@ -2280,6 +2337,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   function pintarItems() {
     infoStock();
     $("#ped-items").innerHTML = ED.items.length ? ED.items.map((i, k) => {
+      if (i.en_scoop) return "";   // los productos que lleva el scoop se ven dentro del cuadro del scoop
       const p = prodDe(i), s = stockDe(i), sin = !ED.stock_descontado && !sinDescuento() && s !== null && s < num(i.cant);
       const vars = p && tieneVar(p) ? `<select data-k="${k}" data-f="variante">${p.variantes.map(v => `<option ${v.nombre === i.variante ? "selected" : ""} value="${esc(v.nombre)}">${esc(v.nombre)} (${+v.stock || 0})</option>`).join("")}</select>` : (i.variante ? `<div class="st-info">${esc(i.variante)}</div>` : "");
       return `<div class="pit ${sin ? "sin" : ""}" data-pit="${k}">
@@ -2367,7 +2425,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const antes = ED.estado;
     const datos = { estado: nuevoEstado, origen: ED.origen || "manual",
       ...Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega", "nota"].map(k => [k, FP[k].value.trim()])),
-      items: ED.items.map(i => ({ id: i.id, nombre: i.nombre, variante: i.variante || null, cant: Math.max(1, Math.round(num(i.cant))), precio: num(i.precio), desc: num(i.desc), desc_nota: (i.desc_nota || "").trim() })),
+      items: ED.items.map(i => ({ id: i.id, nombre: i.nombre, variante: i.variante || null, cant: Math.max(1, Math.round(num(i.cant))), precio: num(i.precio), desc: num(i.desc), desc_nota: (i.desc_nota || "").trim(), ...(i.en_scoop ? { en_scoop: true } : {}) })),
       envio: num(FP.envio.value), pagado: num(FP.pagado.value) };
     if (TX_COLS) datos.medio_pago = FP.medio_pago.value || "QR";
     if (["pagado", "entregado"].includes(nuevoEstado) && !num(FP.pagado.value)) datos.pagado = cuentas(ED.items, FP.envio.value, 0).total;
@@ -2444,7 +2502,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const t = telWa(FP.telefono.value); if (!t) return toast("Este pedido no tiene teléfono", true);
     const c = cuentas(ED.items, FP.envio.value, FP.pagado.value);
     const msg = [`¡Hola ${FP.cliente.value.trim()}! 💕 Te escribimos de ${AJ.nombre || "Cani Shop"} por tu pedido${ED.numero ? ` #${ED.numero}` : ""}:`, "",
-      ...ED.items.map(i => `• ${num(i.cant)} x ${i.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(linea(i))}`), "",
+      ...ED.items.filter(i => !i.en_scoop).map(i => `• ${num(i.cant)} x ${i.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(linea(i))}`), "",
       num(FP.envio.value) ? `Envío: ${bs(FP.envio.value)}` : null, `Total: ${bs(c.total)}`, c.saldo && num(FP.pagado.value) ? `Saldo por pagar: ${bs(c.saldo)}` : null
     ].filter(x => x !== null).join("\n");
     window.open(`https://wa.me/${t}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -2467,7 +2525,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const fPedido = FP.fecha_pedido.value ? ymdEs(FP.fecha_pedido.value) : fecha(ED.creado || new Date()).split(",")[0];
     const detalleScoop = i => i.id === "scoop" && (ED.extra || {}).tipo === "scoop"
       ? [ED.extra.caja, (ED.extra.colores || []).length ? "Colores: " + ED.extra.colores.join(", ") : "", (ED.extra.personajes || []).length ? "Personajes: " + ED.extra.personajes.join(", ") : ""].filter(Boolean).join(" · ") : "";
-    const filas = ED.items.map((i, k) => { const sub = [i.variante, detalleScoop(i)].filter(Boolean).map(esc).join(" · ");
+    const filas = ED.items.filter(i => !i.en_scoop).map((i, k) => { const sub = [i.variante, detalleScoop(i)].filter(Boolean).map(esc).join(" · ");
       return `<tr><td class="n">${k + 1}</td><td class="p"><b>${esc(i.nombre)}</b>${sub ? `<small>${sub}</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="c">${num(i.cant)}</td>${conDesc ? `<td class="r d">${num(i.desc) ? "− " + bs(i.desc) : ""}</td>` : ""}<td class="r t">${bs(linea(i))}</td></tr>`; }).join("");
     const entrega = [v.entrega, [v.direccion, v.ciudad].filter(Boolean).join(", ")].filter(Boolean).map(esc).join(" · ") || "—";
