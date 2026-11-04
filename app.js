@@ -1279,7 +1279,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     slug: "quien-es-obakenu",
     titulo: "¿Quién es Obakenu? El fantasmita japonés que conquista a todos",
     resumen: "Conoce su historia y a sus personajes más populares en menos de un minuto.",
-    fecha: "2026-11-03", personaje: "obakenu", portada: "",
+    fecha: "2026-11-03", personaje: "obakenu", portada: "portada-obakenu.webp",
     texto: `Seguro ya lo viste en una libreta, un sticker o un llavero: un fantasmita redondito y de carita tierna. Se llama Obakenu y es uno de los personajes kawaii más queridos de Japón.
 
 Fue creado en 2020 por CRUX, una marca japonesa de papelería, con una idea muy simple: los fantasmas no tienen por qué dar miedo; pueden ser amigos de todos.
