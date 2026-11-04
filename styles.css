@@ -1603,3 +1603,10 @@ input,select,textarea{max-width:100%;min-width:0}
 .bl-per-txt b{display:block;font-family:var(--f-tit);font-weight:600;font-size:1rem;color:#ee6fae;margin:1px 0 2px}
 .bl-per-txt p{margin:0;font-size:.8rem;line-height:1.4}
 @media (max-width:420px){.bl-pers{grid-template-columns:1fr 1fr}}
+/* fotos del blog: siempre 3 cuadritos iguales, sin importar el tamaño de la foto */
+.bl-fotos{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bl-fotos a,.bl-per,.bl-card{min-width:0}
+.bl-fotos img{max-width:100%;height:auto;aspect-ratio:1/1;object-fit:cover}
+.bl-portada,.bl-card-img{position:relative}
+.bl-portada > img,.bl-card-img > img{position:absolute;inset:0;width:100%;height:100%;max-width:none}
+.bl-portada > img.bl-img-prod,.bl-card-img > img.bl-img-prod{object-fit:cover;padding:0}
