@@ -209,6 +209,7 @@
         if (r.ok) numero = await r.json();
       } catch (err) { console.warn("No se pudo guardar el pedido", err); }
     }
+    const vale = await lineaVale(f.get("telefono"));
     const lineas = items.map(i => {
       const p = PRODS.find(x => x.id === i.id);
       return `• ${i.cant} x ${p.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(p.precio * i.cant)}`;
@@ -219,7 +220,7 @@
       "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, "",
       "🚚 *Entrega*", ...envio.lineas,
       f.get("nota") ? "" : null, f.get("nota") ? `📝 *Nota:* ${f.get("nota")}` : null, "",
-      `💰 *TOTAL: ${bs(total)}*`, "",
+      `💰 *TOTAL: ${bs(total)}*`, vale ? vale : null, "",
       "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"
     ].filter(x => x !== null).join("\n");
     const url = waURL(msg);
@@ -901,6 +902,7 @@
           if (r.ok) numero = await r.json();
         }
       } catch (err) { console.warn(err); }
+      const vale = await lineaVale(f.get("telefono"));
       const o = ops[st.op];
       const caja = CAJAS[st.caja] || {}, tk = (f.get("tiktok") || "").trim();
       const msg = ["🌸 *NUEVO PEDIDO · LUCKY SCOOP* 🌸", numero ? `Pedido #${numero}` : null, "",
@@ -912,7 +914,7 @@
         st.carta ? "💌 *Mi carta*" : null, st.carta ? `"${(f.get("carta") || "").trim()}"` : null, st.carta ? "" : null,
         "🎨 *Mis preferencias*", `Colores: ${st.colores.join(", ")}`, `Personajes: ${st.personajes.join(", ")}`, "",
         "🚚 *Entrega*", ...envio.lineas, "",
-        `💰 *TOTAL: ${bs(total())}*`, "",
+        `💰 *TOTAL: ${bs(total())}*`, vale ? vale : null, "",
         "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"].filter(x => x !== null).join("\n");
       const url = waURL(msg);
       if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
@@ -1170,6 +1172,105 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     };
   }
 
+
+  // ---------- Tarjeta de sellitos ----------
+  // Cada compra pagada (desde el mínimo) suma un sellito; con la meta, la clienta gana un vale.
+  // La tienda solo recibe números (sellitos y vales), nunca datos de la clienta.
+  const SEL = Object.assign({ activo: true, minimo: 50, meta: 5, vale: 25 }, T.sellitos || {});
+  const bsc = n => Number(n) % 1 ? bs(n) : `${T.moneda} ${Number(n)}`;
+  const selOn = () => SEL.activo !== false && !!(SB.url && SB.key);
+  const telLimpio = t => { let d = String(t || "").replace(/\D/g, ""); if (/^[67]\d{7}$/.test(d)) d = "591" + d; return d; };
+  const selCache = {};
+  async function consultarSellitos(tel) {
+    const tn = telLimpio(tel); if (tn.length < 8 || !selOn()) return null;
+    if (selCache[tn]) return selCache[tn];
+    try {
+      const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/rpc/mis_sellitos`, { method: "POST",
+        headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" }, body: JSON.stringify({ tel: tn }) });
+      if (!r.ok) return null;
+      const d = await r.json(); if (!d || d.activo === false) return null;
+      return (selCache[tn] = d);
+    } catch (e) { return null; }
+  }
+  // Línea para el mensaje de WhatsApp si la clienta tiene un vale
+  const lineaVale = async tel => { const d = await Promise.race([consultarSellitos(tel), new Promise(r => setTimeout(() => r(null), 2500))]);
+    return d && d.vales > 0 ? `🎁 Tengo ${d.vales > 1 ? d.vales + " vales" : "un vale"} de sellitos de ${bsc(d.vale)}${d.vales > 1 ? " c/u" : ""}` : null; };
+  const SVG_REGALO = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/></svg>`;
+  const telGuardado = () => { try { return (JSON.parse(localStorage.getItem("datos-pedido") || "{}").telefono) || localStorage.getItem("sellitos-tel") || ""; } catch (e) { return ""; } };
+  const fichas = (d) => {
+    const n = d.meta, llenos = d.sellos;
+    return `<div class="sel-sellos" style="--n:${n}">${Array.from({ length: n }, (_, i) => i < llenos
+      ? `<span class="sel-sello ok" style="--i:${i}"><img src="estrella-rosa.svg" alt=""></span>`
+      : i === n - 1 ? `<span class="sel-sello regalo">${SVG_REGALO}</span>` : `<span class="sel-sello">${i + 1}</span>`).join("")}</div>`;
+  };
+  function tarjetaSellitos(d) {
+    const falta = d.meta - d.sellos, llena = d.vales > 0;
+    const globo = llena ? `¡lo lograste! te ganaste ${d.vales > 1 ? d.vales + " vales" : "un vale"} de ${bsc(d.vale)}`
+      : d.sellos === 0 ? `todavía no tienes sellitos. tu primera compra de ${bsc(d.minimo)} o más te da el primero`
+      : falta === 1 ? "¡te falta solo 1 comprita para tu vale!"
+      : d.sellos >= d.meta / 2 ? `¡vas súper bien! solo ${falta} compritas más para tu vale de ${bsc(d.vale)}`
+      : `¡qué lindo verte! llevas ${d.sellos} ${d.sellos === 1 ? "sellito" : "sellitos"}, sigue así`;
+    return `<div class="sel-tarjeta ${llena ? "llena" : ""}">
+      ${llena ? `<div class="sel-confeti" aria-hidden="true">${Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i * .13) % 2.6}s;background:${["#fd95c8", "#cca1e8", "#fce3ee"][i % 3]}"></i>`).join("")}</div>` : ""}
+      <div class="sel-charla"><img src="${llena ? "cani-charla.webp" : "cani-sentado.webp"}" alt=""><p class="sel-globo">${esc(globo)}</p></div>
+      ${fichas({ ...d, sellos: llena ? d.meta : d.sellos })}
+      <div class="sel-barra"><i style="width:${(llena ? 1 : d.sellos / d.meta) * 100}%"></i></div>
+      <div class="sel-cuenta"><span>${llena ? d.meta : d.sellos} de ${d.meta} sellitos</span><span>${llena ? "¡tarjeta llena!" : `faltan ${falta}`}</span></div>
+      ${llena ? `<div class="sel-premio"><b>vale de ${bsc(d.vale)}</b><span>se descuenta de tu próximo pedido hecho con este mismo WhatsApp. al enviarlo, nos avisa solito</span></div>
+        <a class="btn sel-btn lila" href="#/catalogo">elegir mis cositas</a>` : ""}
+      ${d.extra > 0 ? `<p class="sel-nota">y ya llevas ${d.extra} ${d.extra === 1 ? "sellito" : "sellitos"} para tu próxima tarjeta</p>` : ""}
+    </div>`;
+  }
+  function sellitos() {
+    if (!selOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">La tarjeta de sellitos no está disponible por ahora.</p>`; return; }
+    const tel0 = telGuardado();
+    app.innerHTML = `<section class="seccion sel-pag">
+      <div class="sel-cab"><h1>mis sellitos</h1>
+        <p>cada compra de ${bsc(SEL.minimo)} o más te da un sellito. junta ${SEL.meta} y te ganas un vale de ${bsc(SEL.vale)}</p></div>
+      <div class="sel-caja" id="sel-caja">
+        <form class="sel-tarjeta sel-form" id="sel-form">
+          <div class="sel-charla"><img src="cani-charla.webp" alt=""><p class="sel-globo">¡hola! escribe tu WhatsApp y te muestro cuántos sellitos llevas</p></div>
+          <label for="sel-tel">tu WhatsApp</label>
+          <input id="sel-tel" class="sel-campo" type="tel" inputmode="tel" placeholder="ej: 71234567" value="${esc(tel0)}" required>
+          <button class="btn sel-btn" type="submit">ver mi tarjeta</button>
+          <p class="sel-nota">no necesitas cuenta ni contraseña</p>
+        </form>
+      </div>
+      <ol class="sel-pasos">
+        <li><span>1</span><div><b>compras</b><p>haz tu pedido en la tienda o arma tu Scoop, con tu número de WhatsApp.</p></div></li>
+        <li><span>2</span><div><b>sumas un sellito</b><p>cuando confirmamos tu pago, se suma solito si tu compra es de ${bsc(SEL.minimo)} o más (sin contar el envío).</p></div></li>
+        <li><span>3</span><div><b>ganas tu vale</b><p>con ${SEL.meta} sellitos te ganas ${bsc(SEL.vale)} de descuento para tu siguiente pedido.</p></div></li>
+      </ol>
+    </section>`;
+    const F = $("#sel-form");
+    F.onsubmit = async e => {
+      e.preventDefault();
+      const tel = $("#sel-tel").value, tn = telLimpio(tel);
+      if (tn.length < 8) { toast("Revisa tu número de WhatsApp"); return $("#sel-tel").focus(); }
+      const b = F.querySelector("button"); b.disabled = true; b.textContent = "buscando…";
+      const d = await consultarSellitos(tel);
+      b.disabled = false; b.textContent = "ver mi tarjeta";
+      if (!d) return toast("No pudimos ver tu tarjeta, intenta otra vez");
+      try { localStorage.setItem("sellitos-tel", tel); } catch (e) {}
+      $("#sel-caja").innerHTML = tarjetaSellitos(d) + `<button class="sel-otro" id="sel-otro" type="button">ver otro número</button>`;
+      $("#sel-otro").onclick = sellitos;
+    };
+  }
+  // En el carrito y en Arma tu Scoop: al escribir el WhatsApp, Cani le cuenta sus sellitos
+  { let tSel;
+    document.addEventListener("input", e => {
+      const inp = e.target; if (inp.name !== "telefono" || !inp.closest("#form-pedido, #sc-form") || !selOn()) return;
+      clearTimeout(tSel);
+      tSel = setTimeout(async () => {
+        let h = inp.parentElement.querySelector(".sel-aviso");
+        const d = await consultarSellitos(inp.value);
+        if (!d || (!d.sellos && !d.vales)) { if (h) h.remove(); return; }
+        if (!h) { h = document.createElement("a"); h.className = "sel-aviso"; h.href = "#/sellitos"; inp.after(h); }
+        h.innerHTML = `<img src="estrella-rosa.svg" alt=""><span>${d.vales > 0 ? `¡tienes un vale de ${bsc(d.vale)}! te lo descontamos en este pedido` : `llevas ${d.sellos} de ${d.meta} sellitos`}</span>`;
+      }, 500);
+    });
+  }
+
   // ---------- Rutas ----------
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
@@ -1178,7 +1279,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops, sellitos }[sec] || inicio)();
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
@@ -1233,5 +1334,6 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
 
   // (franja antes del pie eliminada a pedido)
   { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega(T.avisoCarrito || AVISO_CARRITO_DEF)); }
+  if (selOn()) document.querySelectorAll("#menu-sellitos, .pie-sellitos").forEach(a => a.hidden = false);
   pintarCarrito(); ruta();
 })();
