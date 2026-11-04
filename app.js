@@ -1271,6 +1271,115 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     });
   }
 
+
+  // ---------- Blog ----------
+  // Las notas se escriben en el panel (Mi tienda → Blog). Formato del texto:
+  // párrafos separados por una línea vacía, "## " para un subtítulo y "> " para lo que dice Cani.
+  const BLOG_DEF = [{
+    slug: "quien-es-obakenu",
+    titulo: "¿Quién es Obakenu? El fantasmita japonés que conquista a todos",
+    resumen: "Conoce su historia y a sus personajes más populares en menos de un minuto.",
+    fecha: "2026-11-03", personaje: "obakenu", portada: "",
+    texto: `Seguro ya lo viste en una libreta, un sticker o un llavero: un fantasmita redondito y de carita tierna. Se llama Obakenu y es uno de los personajes kawaii más queridos de Japón.
+
+Fue creado en 2020 por CRUX, una marca japonesa de papelería, con una idea muy simple: los fantasmas no tienen por qué dar miedo; pueden ser amigos de todos.
+
+[fotos]
+
+## Más de 50 personajes
+El universo Obakenu está organizado en familias, y cada personaje tiene su propia personalidad. Estos son algunos de los favoritos:
+- Fantasmas: Obakenu, el clásico, adora asustar aunque en el fondo es bastante miedoso. Ochibinu es su versión bebé.
+- Gatitos: Nyankonu es puro entusiasmo. Kuronekonu prefiere parecer misterioso.
+- Animalitos: Usaginu, una conejita responsable que siempre organiza el picnic, y Pandinu, un panda con alma de líder.
+- Del agua: Samenu, un tiburón que muerde… pero solo como muestra de cariño.
+- Comiditas: Purinu, un flan suave y delicado, y Onigirinu, una bolita de arroz con un relleno distinto cada día.
+- Fantasía: Tenshinu, un angelito amable, y Akumānu, un diablito travieso.
+
+[fotos]
+
+## ¿Con cuál te identificas?
+¿Eres miedosa como Obakenu, misteriosa como Kuronekonu o siempre tienes antojo como Odebinu? Elige a tu favorito y llévalo contigo en tu escritorio, tu mochila o como regalo.
+
+> Escríbenos por WhatsApp y cuéntanos cuál es tu Obakenu favorito. Nos encantará saberlo.`
+  }];
+  const BLOG = () => (Array.isArray(T.blog) && T.blog.filter(b => b && b.titulo).length ? T.blog.filter(b => b && b.titulo) : BLOG_DEF)
+    .map(b => ({ ...b, slug: b.slug || String(b.titulo).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") }))
+    .filter(b => b.visible !== false);
+  const fechaBlog = f => { const d = new Date(String(f || "") + "T12:00:00"); return isNaN(d) ? "" : d.toLocaleDateString("es-BO", { day: "numeric", month: "long", year: "numeric" }); };
+  const minLectura = t => Math.max(1, Math.round(String(t || "").split(/\s+/).length / 180));
+  // Busca el nombre del personaje en tus productos y sus modelos (con o sin tildes) y usa esa foto
+  const sinTilde = t => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ū/g, "u").replace(/ō/g, "o");
+  const fotoPersonaje = nombre => {
+    const n = sinTilde(nombre); if (n.length < 3) return null;
+    for (const p of PRODS) {
+      if (!hayStock(p)) continue;
+      const v = (p.variantes || []).find(v => sinTilde(v.nombre).includes(n) && v.imagen);
+      if (v) return { id: p.id, img: v.imagen };
+      if (sinTilde(p.nombre).includes(n) && p.imagenes && p.imagenes[0]) return { id: p.id, img: p.imagenes[0] };
+    }
+    return null;
+  };
+  const fotosDe = b => { const c = b.personaje && CATS.find(x => x.id === b.personaje); return c ? PRODS.filter(p => (p.categorias || []).includes(c.id) && hayStock(p) && p.imagenes && p.imagenes[0]) : []; };
+  const portadaBlog = b => { const f = b.portada || ((fotosDe(b)[0] || {}).imagenes || [])[0]; return f ? `<img class="${b.portada ? "" : "bl-img-prod"}" src="${esc(f)}" alt="">`
+    : `<div class="bl-port-def"><img src="cani-charla.webp" alt=""><img class="bl-est e1" src="estrella-rosa.svg" alt=""><img class="bl-est e2" src="estrella-rosa.svg" alt=""></div>`; };
+  const textoBlog = (t, fotos = []) => { let nf = 0; return String(t || "").replace(/\r/g, "").split("\n").map(l => l.trim()).reduce((out, l) => {
+      const u = out[out.length - 1];
+      if (!l) out.push(null);
+      else if (l.startsWith("## ")) out.push({ h: l.slice(3) }, null);
+      else if (l.startsWith("> ")) out.push({ c: l.slice(2) }, null);
+      else if (/^\[fotos?\]$/i.test(l)) out.push({ f: true }, null);
+      else if (/^[-•] /.test(l)) { if (u && u.li) u.li.push(l.slice(2)); else out.push({ li: [l.slice(2)] }); }
+      else if (u && u.p !== undefined) u.p += " " + l; else out.push({ p: l });
+      return out;
+    }, []).filter(Boolean).map(x => x.h !== undefined ? `<h2>${esc(x.h)}</h2>`
+      : x.c !== undefined ? `<div class="bl-cani"><img src="cani-sentado.webp" alt=""><p>${esc(x.c)}</p></div>`
+      : x.li ? (() => {
+          const items = x.li.map(i => { const k = i.indexOf(": "); if (k < 1 || k > 40) return { t: i }; const cab = i.slice(0, k), m = cab.match(/^(.*?)\s*\(([^)]+)\)$/); return { n: m ? m[1] : cab, fam: m ? m[2] : "", t: i.slice(k + 2) }; });
+          if (!items.some(i => i.fam)) return `<ul class="bl-ul">${items.map(i => `<li>${i.n ? `<b>${esc(i.n)}</b> ` : ""}${esc(i.t)}</li>`).join("")}</ul>`;
+          return `<div class="bl-pers">${items.map(i => { const f = fotoPersonaje(i.n || ""); return `<${f ? `a href="#/producto/${esc(f.id)}"` : "div"} class="bl-per">
+              <div class="bl-per-img">${f ? `<img src="${esc(f.img)}" alt="" loading="lazy">` : `<img class="bl-per-def" src="estrella-rosa.svg" alt="">`}</div>
+              <div class="bl-per-txt">${i.fam ? `<small>${esc(i.fam)}</small>` : ""}<b>${esc(i.n || "")}</b><p>${esc(i.t.replace(/^./, c => c.toUpperCase()))}</p></div></${f ? "a" : "div"}>`; }).join("")}</div>`;
+        })()
+      : x.f ? (() => { const l = fotos.slice(nf * 3, nf * 3 + 3); nf++; return l.length ? `<div class="bl-fotos">${l.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"><span>${esc(sinEmoji(p.nombre))}</span></a>`).join("")}</div>` : ""; })()
+      : `<p>${esc(x.p)}</p>`).join(""); };
+  function blog(slug) {
+    const L = BLOG();
+    if (slug) {
+      const b = L.find(x => x.slug === slug);
+      if (!b) { app.innerHTML = `<section class="seccion"><p class="vacio">No encontramos esa nota.</p><p style="text-align:center"><a class="btn" href="#/blog">Ver el blog</a></p></section>`; return; }
+      const cat = b.personaje ? CATS.find(c => c.id === b.personaje) : null;
+      const prods = fotosDe(b).slice(0, 4);
+      const otras = L.filter(x => x !== b).slice(0, 2);
+      document.title = `${sinEmoji(b.titulo)} · ${T.nombre}`;
+      app.innerHTML = `<article class="seccion bl-nota">
+        <a class="bl-volver" href="#/blog"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg> El blog de Cani</a>
+        <h1>${esc(b.titulo)}</h1>
+        <p class="bl-meta">${fechaBlog(b.fecha)}${b.fecha ? " · " : ""}${minLectura(b.texto)} min de lectura</p>
+        <div class="bl-portada">${portadaBlog(b)}</div>
+        <div class="bl-texto">${textoBlog(b.texto, fotosDe(b).slice(b.portada ? 0 : 1))}</div>
+      </article>
+      ${prods.length ? `<section class="seccion bl-prods"><div class="titulo"><h2>Cositas de ${esc(cat.nombre)}</h2><a class="ver-todo" href="#/catalogo/${esc(cat.id)}">Ver todo</a></div>${grilla(prods)}</section>` : ""}
+      ${otras.length ? `<section class="seccion bl-mas"><h2>Más notas</h2><div class="bl-lista">${otras.map(tarjetaBlog).join("")}</div></section>` : ""}`;
+      // Botones para saltar a cada parte, si la nota es larga
+      const hs = [...app.querySelectorAll(".bl-texto h2")].filter(h => /^La familia /i.test(h.textContent));
+      if (hs.length >= 4) {
+        const ind = document.createElement("div"); ind.className = "bl-indice";
+        ind.innerHTML = hs.map((h, i) => `<button type="button" data-h="${i}">${esc(h.textContent.replace(/^La familia (del |de )?/i, "").replace(/^./, c => c.toUpperCase()))}</button>`).join("");
+        ind.onclick = e => { const b = e.target.closest("[data-h]"); if (b) hs[+b.dataset.h].scrollIntoView({ behavior: "smooth" }); };
+        hs[0].before(ind);
+      }
+      return;
+    }
+    app.innerHTML = `<section class="seccion bl-pag">
+      <div class="bl-cab"><img src="cani-charla.webp" alt=""><div><h1>El blog de Cani</h1><p>Historias de tus personajes favoritos, ideas para regalar y novedades de la tienda.</p></div></div>
+      <div class="bl-lista">${L.map(tarjetaBlog).join("")}</div>
+    </section>`;
+  }
+  const tarjetaBlog = b => `<a class="bl-card" href="#/blog/${esc(b.slug)}">
+      <div class="bl-card-img">${portadaBlog(b)}</div>
+      <div class="bl-card-txt"><small>${fechaBlog(b.fecha)}</small><h3>${esc(b.titulo)}</h3><p>${esc(b.resumen || "")}</p><span class="bl-leer">Leer nota <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </a>`;
+
   // ---------- Rutas ----------
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
@@ -1279,7 +1388,7 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops, sellitos }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops, sellitos, blog: () => blog(arg) }[sec] || inicio)();
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
