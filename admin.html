@@ -888,7 +888,7 @@
 
     <section class="caja">
       <h2>🎬 Videos de TikTok</h2>
-      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga más rápido que TikTok. La portada se saca sola del primer cuadro (puedes cambiarla tocando el círculo). El enlace de TikTok es solo una opción alternativa.</p>
+      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga más rápido que TikTok. La portada se saca sola del primer cuadro, y la cambias con <b>🖼️ Cambiar portada</b>. Si eliges un producto, el video muestra abajo su tarjeta con un botón para verlo.</p>
       <div id="aj-vids" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="aj-addvid" style="margin-top:10px;align-self:flex-start">＋ Agregar video</button>
     </section>
@@ -1081,7 +1081,7 @@
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
     <div class="campo" id="campo-frase"><label>Frase en movimiento</label><input name="frase" maxlength="90" placeholder="Ej: ¡felicidades, graduada! ✦ regalo perfecto ✦ snoopy"><p class="ayuda">Se desliza debajo de las fotos. Separa las frases con ✦ o con una coma. Si lo dejas vacío, se arma sola con el personaje y la categoría.</p></div>
     <div class="campo" id="campo-videos"><label>🎬 Videos de TikTok de este producto</label>
-      <p class="ayuda">Salen en la ficha del producto como círculos. <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga rápido y sin lag. La portada se saca sola del primer cuadro.</p>
+      <p class="ayuda">Salen en la ficha del producto como círculos. <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga rápido y sin lag. La portada se saca sola del primer cuadro y la cambias con <b>🖼️ Cambiar portada</b>. Al verlo, sale abajo la tarjeta de este producto con el botón <b>Agregar al carrito</b>.</p>
       <div id="ed-vids" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="ed-addvid" style="margin-top:8px;align-self:flex-start">＋ Agregar video</button></div>
     <p class="ayuda" id="aviso-videos" hidden style="color:var(--rojo)">Para poner videos en los productos, primero corre <b>supabase-videos-producto.sql</b> en Supabase (SQL Editor).</p>
@@ -1580,6 +1580,8 @@
         <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-${p}img="${i}"></label>
         <div class="scopf-campos"><input data-${p}="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
           <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">${v.video ? "✔ Video subido · cambiar" : "📹 Subir video (MP4)"}<input type="file" accept="video/*" hidden data-${p}vid="${i}"></label>
+          <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">🖼️ Cambiar portada<input type="file" accept="image/*" hidden data-${p}img="${i}"></label>
+          ${p === "vd" ? `<select data-vd="${i}" data-f="producto" title="Producto que sale en la tarjeta del video"><option value="">Sin tarjeta de producto</option>${PRODS.map(x => `<option value="${esc(x.id)}" ${x.id === v.producto ? "selected" : ""}>${esc(x.nombre)}</option>`).join("")}</select>` : ""}
           <input data-${p}="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="…o enlace de TikTok (opcional)" inputmode="url"></div>
         <div class="bt"><button type="button" data-${p}sube="${i}" aria-label="Subir">↑</button><button type="button" data-${p}baja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-${p}borra="${i}" aria-label="Quitar">✕</button></div></div>`;
   let vids = [];
@@ -1792,6 +1794,7 @@
     if (u) { cajasSc[i].imagen = u; pintarCajas(); toast("Listo, ahora toca Guardar cambios"); }
   });
   $("#aj-cajas").addEventListener("click", e => { const b = e.target.closest("[data-cjborra]"); if (b && confirm(`¿Quitar "${cajasSc[b.dataset.cjborra].nombre}"?`)) { cajasSc.splice(+b.dataset.cjborra, 1); pintarCajas(); } });
+  $("#aj-vids").addEventListener("change", e => { const { vd, f } = e.target.dataset; if (vd !== undefined && f === "producto") vids[vd].producto = e.target.value; });
   $("#aj-vids").addEventListener("input", e => { const { vd, f } = e.target.dataset; if (vd !== undefined) vids[vd][f] = e.target.value; });
   $("#aj-vids").addEventListener("change", async e => {
     const iv = e.target.dataset.vdvid;
@@ -1897,7 +1900,7 @@
       historia: { titulo: A.hist_titulo.value.trim(), texto: A.hist_texto.value.trim(), imagenes: ["hist1", "hist2", "hist3"].map(k => imgs[k]).filter(Boolean) },
       opiniones: A.opiniones.value.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const k = l.indexOf("|"); return k < 0 ? { nombre: "", texto: l } : { nombre: l.slice(0, k).trim(), texto: l.slice(k + 1).trim() }; }).filter(o => o.texto),
       quiz: { activo: A.quiz_activo.checked, titulo: A.quiz_titulo.value.trim() },
-      videos: vids.filter(v => v.video || (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: (v.url || "").trim(), video: v.video || "", imagen: v.imagen || "" })),
+      videos: vids.filter(v => v.video || (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: (v.url || "").trim(), video: v.video || "", imagen: v.imagen || "", ...(v.producto ? { producto: v.producto } : {}) })),
       sellitos: { activo: A.sel_activo.checked, minimo: A.sel_minimo.value === "" ? 50 : num(A.sel_minimo.value), meta: Math.max(1, Math.round(num(A.sel_meta.value) || 5)),
         vale: A.sel_vale.value === "" ? 25 : num(A.sel_vale.value), desde: A.sel_desde.value || "" },
       categorias: (() => {
