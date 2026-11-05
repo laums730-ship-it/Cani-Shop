@@ -86,6 +86,7 @@
     .st.inf b{color:var(--lila)}
     .acc{display:flex;flex-direction:column;gap:6px}
     .sc-cont{border-top:2px dashed var(--borde);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+    .desc-modo{border:2px solid var(--borde);border-radius:8px;background:#fff;font:inherit;font-size:.72rem;padding:1px 2px;margin-left:4px;color:var(--gris)}
     .sc-cont h4{margin:0;font-size:1rem}
     .scp{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;background:#fff;border:2px solid var(--borde);border-radius:16px;padding:8px}
     .scp.sin{border-color:var(--rojo)}
@@ -1785,6 +1786,9 @@
   const ymdEs = v => v.split("-").reverse().join("/");
   const fechaCorta = c => ymd(c) ? ymdEs(ymd(c)) : "";
   const linea = i => num(i.cant) * num(i.precio) - num(i.desc);
+  // Descuento: "por unidad" (se multiplica por la cantidad) o "total" (monto fijo de la línea). Lo guardado en `desc` siempre es el total.
+  const modoDesc = i => i.modo_desc || (num(i.desc) > 0 ? "t" : "u");
+  const txtDesc = i => modoDesc(i) === "u" && num(i.desc) > 0 ? `Descuento: ${num(i.cant)} × ${bs(num(i.desc_u))} = ${bs(num(i.desc))}` : "";
   const cuentas = (items, envio, pagado) => {
     const sub = items.reduce((a, i) => a + num(i.cant) * num(i.precio), 0);
     const desc = items.reduce((a, i) => a + num(i.desc), 0);
@@ -2383,12 +2387,14 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       const vars = p && tieneVar(p) ? `<select data-k="${k}" data-f="variante">${p.variantes.map(v => `<option ${v.nombre === i.variante ? "selected" : ""} value="${esc(v.nombre)}">${esc(v.nombre)} (${+v.stock || 0})</option>`).join("")}</select>` : (i.variante ? `<div class="st-info">${esc(i.variante)}</div>` : "");
       return `<div class="pit ${sin ? "sin" : ""}" data-pit="${k}">
         <div><h4>${esc(i.nombre)}</h4>${vars}
-          <div class="st-info" data-sti="${k}">${txtStock(i)}</div></div>
+          <div class="st-info" data-sti="${k}">${txtStock(i)}</div>
+          <div class="st-info" style="color:var(--rosa-tinta,#c04a7a);font-weight:800" data-dh="${k}">${txtDesc(i)}</div></div>
         <div style="display:flex;gap:8px;align-items:flex-start"><span class="linea" data-linea="${k}">${bs(linea(i))}</span><button type="button" class="q" data-quitar="${k}" aria-label="Quitar">✕</button></div>
         <div class="nums">
           <label>Cant.<input type="number" min="1" step="1" data-k="${k}" data-f="cant" value="${num(i.cant)}"></label>
           <label>Precio unit.<input type="number" min="0" step="0.5" data-k="${k}" data-f="precio" value="${num(i.precio)}"></label>
-          <label>Descuento Bs<input type="number" min="0" step="0.5" data-k="${k}" data-f="desc" value="${num(i.desc) || ""}" placeholder="0"></label>
+          <label>Descuento Bs <select class="desc-modo" data-k="${k}" data-f="modo_desc" aria-label="Tipo de descuento"><option value="u" ${modoDesc(i) === "u" ? "selected" : ""}>por unidad</option><option value="t" ${modoDesc(i) === "t" ? "selected" : ""}>en total</option></select>
+            <input type="number" min="0" step="0.5" data-k="${k}" data-f="descv" value="${(modoDesc(i) === "u" ? num(i.desc_u) : num(i.desc)) || ""}" placeholder="0"></label>
           <label>Motivo<input data-k="${k}" data-f="desc_nota" value="${esc(i.desc_nota || "")}" placeholder="Ej: TikTok live"></label>
         </div></div>`;
     }).join("") : `<p class="ayuda" style="margin:0">Sin productos todavía.</p>`;
@@ -2415,8 +2421,12 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   }
   $("#ped-items").addEventListener("input", e => {
     const { k, f } = e.target.dataset; if (k === undefined) return;
-    ED.items[k][f] = ["cant", "precio", "desc"].includes(f) ? num(e.target.value) : e.target.value;
-    if (f === "cant" && ED.items[k].cant < 1) ED.items[k].cant = 1;
+    const it0 = ED.items[k];
+    if (f === "descv") { const m = modoDesc(it0), v = Math.max(0, num(e.target.value)); it0.modo_desc = m; if (m === "u") { it0.desc_u = v; it0.desc = Math.round(v * num(it0.cant) * 100) / 100; } else it0.desc = v; }
+    else it0[f] = ["cant", "precio", "desc"].includes(f) ? num(e.target.value) : e.target.value;
+    if (f === "cant" && it0.cant < 1) it0.cant = 1;
+    if (f === "cant" && modoDesc(it0) === "u" && it0.desc_u !== undefined) it0.desc = Math.round(num(it0.desc_u) * num(it0.cant) * 100) / 100;
+    const dh = document.querySelector(`[data-dh="${k}"]`); if (dh) dh.textContent = txtDesc(it0);
     const l = document.querySelector(`[data-linea="${k}"]`); if (l) l.textContent = bs(linea(ED.items[k]));
     if (f === "cant") {
       const it = ED.items[k], s = stockDe(it);
@@ -2426,6 +2436,11 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     totalesPed();
   });
   $("#ped-items").addEventListener("change", e => {
+    if (e.target.dataset.f === "modo_desc") {
+      const it = ED.items[e.target.dataset.k], m = e.target.value, cant = Math.max(1, num(it.cant));
+      if (m === "u") { it.desc_u = Math.round(num(it.desc) / cant * 100) / 100; it.desc = Math.round(it.desc_u * cant * 100) / 100; } else { delete it.desc_u; }
+      it.modo_desc = m; pintarItems(); return;
+    }
     if (e.target.dataset.f === "variante") { ED.items[e.target.dataset.k].variante = e.target.value; pintarItems(); }
   });
   $("#ped-items").addEventListener("click", e => { const b = e.target.closest("[data-quitar]"); if (b) { ED.items.splice(+b.dataset.quitar, 1); pintarItems(); } });
@@ -2466,7 +2481,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const antes = ED.estado;
     const datos = { estado: nuevoEstado, origen: ED.origen || "manual",
       ...Object.fromEntries(["cliente", "telefono", "ciudad", "direccion", "entrega", "nota"].map(k => [k, FP[k].value.trim()])),
-      items: ED.items.map(i => ({ id: i.id, nombre: i.nombre, variante: i.variante || null, cant: Math.max(1, Math.round(num(i.cant))), precio: num(i.precio), desc: num(i.desc), desc_nota: (i.desc_nota || "").trim(), ...(i.en_scoop ? { en_scoop: true } : {}) })),
+      items: ED.items.map(i => ({ id: i.id, nombre: i.nombre, variante: i.variante || null, cant: Math.max(1, Math.round(num(i.cant))), precio: num(i.precio), desc: num(i.desc), desc_nota: (i.desc_nota || "").trim(), ...(i.en_scoop ? { en_scoop: true } : {}), ...(modoDesc(i) === "u" && num(i.desc) > 0 ? { modo_desc: "u", desc_u: num(i.desc_u) } : {}) })),
       envio: num(FP.envio.value), pagado: num(FP.pagado.value) };
     if (TX_COLS) datos.medio_pago = FP.medio_pago.value || "QR";
     if (["pagado", "entregado"].includes(nuevoEstado) && !num(FP.pagado.value)) datos.pagado = cuentas(ED.items, FP.envio.value, 0).total;
