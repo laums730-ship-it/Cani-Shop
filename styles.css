@@ -1640,3 +1640,6 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .pdx-vids{justify-content:flex-start!important;margin:6px 0 14px!important;padding:2px 2px 8px!important;gap:12px!important}
 .pdx-vids .circ{width:68px!important}
 .pdx-vids .marca-nom{font-size:.72rem!important;max-width:72px}
+
+.vid-item .circ video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.vid-caja video{flex:1;width:100%;min-height:0;background:#000;object-fit:contain}

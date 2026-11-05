@@ -337,25 +337,28 @@
   };
   // ---------- Videos de TikTok (círculos como historias) ----------
   const vidId = url => (String(url || "").match(/\/video\/(\d{8,})/) || [])[1] || "";
+  const vidOk = v => !!(v && (v.video || vidId(v.url)));
   function abrirVideo(v) {
-    const id = vidId(v.url); if (!id) return;
+    const id = vidId(v.url); if (!id && !v.video) return;
     const ov = document.createElement("div"); ov.className = "vid-modal";
     ov.innerHTML = `<div class="vid-caja" role="dialog" aria-modal="true" aria-label="${esc(v.titulo || "Video")}">
       <button type="button" class="vid-x" aria-label="Cerrar">✕</button>
-      <iframe src="https://www.tiktok.com/embed/v2/${id}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen loading="eager" title="${esc(v.titulo || "Video de Cani Shop")}"></iframe>
-      <a class="vid-link" href="${esc(v.url)}" target="_blank" rel="noopener">Ver en TikTok</a></div>`;
-    const cerrar = () => { ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", tecla); };
+      ${v.video
+        ? `<video src="${esc(v.video)}" ${v.imagen ? `poster="${esc(v.imagen)}"` : ""} controls autoplay loop playsinline preload="auto"></video>`
+        : `<iframe src="https://www.tiktok.com/embed/v2/${id}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen loading="eager" title="${esc(v.titulo || "Video de Cani Shop")}"></iframe>`}
+      ${!v.video && v.url ? `<a class="vid-link" href="${esc(v.url)}" target="_blank" rel="noopener">Ver en TikTok</a>` : ""}</div>`;
+    const cerrar = () => { const vd = ov.querySelector("video"); if (vd) { vd.pause(); vd.removeAttribute("src"); vd.load(); } ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", tecla); };
     const tecla = e => { if (e.key === "Escape") cerrar(); };
     ov.addEventListener("click", e => { if (e.target === ov || e.target.closest(".vid-x")) cerrar(); });
     document.addEventListener("keydown", tecla);
     document.body.appendChild(ov); document.body.style.overflow = "hidden";
   }
-  const circulosVideo = lista => lista.map((v, i) => `<button type="button" class="marca-item vid-item" data-vid="${i}" aria-label="Ver video: ${esc(v.titulo || "Cani Shop")}"><div class="circ">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" loading="lazy">` : ""}<span class="vid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span></div><span class="marca-nom">${esc(v.titulo || "Video")}</span></button>`).join("");
+  const circulosVideo = lista => lista.map((v, i) => `<button type="button" class="marca-item vid-item" data-vid="${i}" aria-label="Ver video: ${esc(v.titulo || "Cani Shop")}"><div class="circ">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" loading="lazy">` : v.video ? `<video src="${esc(v.video)}#t=0.6" preload="metadata" muted playsinline></video>` : ""}<span class="vid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span></div><span class="marca-nom">${esc(v.titulo || "Video")}</span></button>`).join("");
   function activarVideos(lista, root = app, conClick = true) {
     root.querySelectorAll("[data-vid]").forEach(b => {
       const v = lista[+b.dataset.vid]; if (!v) return;
       if (conClick) b.addEventListener("click", () => abrirVideo(v));
-      if (!v.imagen) {   // sin portada subida: intenta la de TikTok; si no se puede, queda el círculo rosa con ▶
+      if (!v.imagen && !v.video && v.url) {   // sin portada subida: intenta la de TikTok; si no se puede, queda el círculo rosa con ▶
         fetch("https://www.tiktok.com/oembed?url=" + encodeURIComponent(v.url)).then(r => r.ok ? r.json() : null).then(j => {
           if (j && j.thumbnail_url && b.isConnected) { const im = new Image(); im.alt = ""; im.src = j.thumbnail_url; im.onload = () => b.querySelector(".circ").prepend(im); }
         }).catch(() => {});
@@ -374,7 +377,7 @@
     const VAL_VIEJOS = ["Productos kawaii | Papelería, regalos y cositas adorables", "Envíos a toda Bolivia | Desde Santa Cruz hasta tu departamento", "Punto de entrega | Consulta por nuestro punto de entrega en Santa Cruz"];
     const valGuardados = (Array.isArray(T.valores) ? T.valores.filter(Boolean) : []).map((v, i) => v.trim() === VAL_VIEJOS[i] ? VAL_DEF[i] : v);
     const VAL = (valGuardados.some(v => v.includes("|")) ? valGuardados : VAL_DEF).slice(0, 3).map(v => { const [t, d = "", e = ""] = v.split("|").map(x => x.trim()); return { t, d, e }; });
-    const VIDS = (Array.isArray(T.videos) ? T.videos : []).filter(v => v && vidId(v.url));
+    const VIDS = (Array.isArray(T.videos) ? T.videos : []).filter(vidOk);
     const HIST = T.historia || {};
     const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : ["historia.webp"];
     const OPS = (T.opiniones || []).filter(o => o && o.texto);
@@ -560,7 +563,7 @@
       const pista = $("#pdx-pista");
       pista.onscroll = () => { const k = Math.round(pista.scrollLeft / pista.clientWidth); document.querySelectorAll(".pdx-puntos i").forEach((d, n) => d.classList.toggle("on", n === k)); };
     };
-    const PV = (Array.isArray(p.videos) ? p.videos : []).filter(v => v && vidId(v.url));
+    const PV = (Array.isArray(p.videos) ? p.videos : []).filter(vidOk);
     let falta = false;
     const pocas = (p, v) => { const n = maxDe(p, v); return n > 0 && n <= 3 && (v || !tieneVar(p)) ? n : 0; };
     const pintarPan = () => {
