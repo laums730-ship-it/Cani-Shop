@@ -613,12 +613,12 @@
         ${resto.length ? `<button type="button" class="pdx-mas" id="pdx-mas" aria-expanded="${abierto}">${abierto ? "Ocultar detalles" : "Ver detalles"}</button>
           <div class="pdx-det" ${abierto ? "" : "hidden"}>${resto.map(l => `<p>${esc(l)}</p>`).join("")}</div>` : ""}
         <div class="pdx-precio">${bs(p.precio)}</div>
-        ${tieneVar(p) ? `<div class="pdx-etq">Modelo: <b>${esc(vari || "elige uno 👇")}</b></div>
+        ${tieneVar(p) ? `<div class="pdx-etq">Modelo: <b>${esc(vari || "elige uno")}</b></div>
           <div class="pdx-mods ${falta ? "falta" : ""}" id="pdx-mods">${p.variantes.map(v => `<button type="button" class="pdx-mod ${v.nombre === vari ? "on" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
         ${dispo ? `<div class="pdx-fila">
             <div class="pdx-cant"><button type="button" data-c="-1" aria-label="Menos">−</button><span>${cant}</span><button type="button" data-c="1" aria-label="Más">+</button></div>
             <button type="button" class="pdx-btn ${sinElegir ? "pide" : ""}" id="agregar">${sinElegir ? "Elige un modelo" : "Agregar al carrito"}</button></div>
-        ${pocas(p, vari) ? `<small class="pdx-pocas">¡Quedan solo ${pocas(p, vari)}!</small>` : ""}`
+        `
           : `<button type="button" class="pdx-btn" disabled>Agotado</button>`}
         <small class="pdx-nota">Envíos a toda Bolivia. El costo del envío y el pago con QR los coordinamos contigo por WhatsApp al finalizar tu pedido.</small>
         ${PV.length ? `<div class="pdx-vids marcas-fila">${circulosVideo(PV)}</div>` : ""}`;
