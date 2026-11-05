@@ -508,7 +508,7 @@
     let cant = 1, vari = tieneVar(p) ? (p.variantes.find(v => disp(v.stock)) || {}).nombre : null, abierto = false;
     const base = (p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)]).slice();
     (p.variantes || []).forEach(v => { if (v.imagen && !base.includes(v.imagen)) base.push(v.imagen); });
-    const fotos = () => { const v = (p.variantes || []).find(x => x.nombre === vari); return v && v.imagen ? [v.imagen, ...base.filter(u => u !== v.imagen)] : base; };
+    const fotos = () => base;   // el orden de las fotos es siempre el que subiste: la primera se ve primero
     const lineas = sinEmoji(p.descripcion || "").split("\n").map(l => l.trim()).filter(Boolean);
     const frase = lineas[0] || "", resto = lineas.slice(1);
     const per = personajeDe(p);
@@ -580,7 +580,12 @@
     app.onclick = e => {
       const b = e.target.closest("button"); if (!b) return;
       if (b.id === "pdx-mas") { abierto = !abierto; pintarPan(); }
-      else if (b.dataset.var) { vari = b.dataset.var; pintarPan(); pintarFotos(); }
+      else if (b.dataset.var) {
+        vari = b.dataset.var; pintarPan();
+        // al elegir un modelo, la galería se desplaza a la foto de ese modelo (sin cambiar el orden)
+        const v = (p.variantes || []).find(x => x.nombre === vari), k = v && v.imagen ? base.indexOf(v.imagen) : -1, ph = k >= 0 ? document.querySelectorAll("#pdx-pista .pdx-ph")[k] : null;
+        if (ph) ph.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+      }
       else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintarPan(); }
       else if (b.id === "agregar") agregar(p.id, vari, cant);
     };
