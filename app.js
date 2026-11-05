@@ -335,6 +335,33 @@
       : /peluch/.test(n) ? "peluche" : /sticker|pegat/.test(n) ? "sticker" : /bols|mochil|cartuch|estuche|billeter/.test(n) ? "bolso" : /taza|termo|vaso|botell/.test(n) ? "taza" : "corazon";
     return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_CAT[k]}</svg>`;
   };
+  // ---------- Videos de TikTok (círculos como historias) ----------
+  const vidId = url => (String(url || "").match(/\/video\/(\d{8,})/) || [])[1] || "";
+  function abrirVideo(v) {
+    const id = vidId(v.url); if (!id) return;
+    const ov = document.createElement("div"); ov.className = "vid-modal";
+    ov.innerHTML = `<div class="vid-caja" role="dialog" aria-modal="true" aria-label="${esc(v.titulo || "Video")}">
+      <button type="button" class="vid-x" aria-label="Cerrar">✕</button>
+      <iframe src="https://www.tiktok.com/embed/v2/${id}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen loading="eager" title="${esc(v.titulo || "Video de Cani Shop")}"></iframe>
+      <a class="vid-link" href="${esc(v.url)}" target="_blank" rel="noopener">Ver en TikTok</a></div>`;
+    const cerrar = () => { ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", tecla); };
+    const tecla = e => { if (e.key === "Escape") cerrar(); };
+    ov.addEventListener("click", e => { if (e.target === ov || e.target.closest(".vid-x")) cerrar(); });
+    document.addEventListener("keydown", tecla);
+    document.body.appendChild(ov); document.body.style.overflow = "hidden";
+  }
+  function activarVideos(lista) {
+    app.querySelectorAll("[data-vid]").forEach(b => {
+      const v = lista[+b.dataset.vid];
+      b.addEventListener("click", () => abrirVideo(v));
+      if (!v.imagen) {   // sin portada subida: intenta la de TikTok; si no se puede, queda el círculo rosa con ▶
+        fetch("https://www.tiktok.com/oembed?url=" + encodeURIComponent(v.url)).then(r => r.ok ? r.json() : null).then(j => {
+          if (j && j.thumbnail_url && b.isConnected) { const im = new Image(); im.alt = ""; im.src = j.thumbnail_url; im.onload = () => b.querySelector(".circ").prepend(im); }
+        }).catch(() => {});
+      }
+    });
+  }
+
   function inicio() {
     const bans = (T.banners || []).filter(b => b && b.imagen);
     const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
@@ -346,6 +373,7 @@
     const VAL_VIEJOS = ["Productos kawaii | Papelería, regalos y cositas adorables", "Envíos a toda Bolivia | Desde Santa Cruz hasta tu departamento", "Punto de entrega | Consulta por nuestro punto de entrega en Santa Cruz"];
     const valGuardados = (Array.isArray(T.valores) ? T.valores.filter(Boolean) : []).map((v, i) => v.trim() === VAL_VIEJOS[i] ? VAL_DEF[i] : v);
     const VAL = (valGuardados.some(v => v.includes("|")) ? valGuardados : VAL_DEF).slice(0, 3).map(v => { const [t, d = "", e = ""] = v.split("|").map(x => x.trim()); return { t, d, e }; });
+    const VIDS = (Array.isArray(T.videos) ? T.videos : []).filter(v => v && vidId(v.url));
     const HIST = T.historia || {};
     const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : ["historia.webp"];
     const OPS = (T.opiniones || []).filter(o => o && o.texto);
@@ -374,6 +402,8 @@
       </section>` : ""}
 
       ${pers.length ? `<section class="seccion pers-fila"><h2 class="fila-tit">Personajes</h2><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
+
+      ${VIDS.length ? `<section class="seccion pers-fila vid-fila"><h2 class="fila-tit">Videos</h2><div class="marcas-fila">${VIDS.map((v, i) => `<button type="button" class="marca-item vid-item" data-vid="${i}" aria-label="Ver video: ${esc(v.titulo || "Cani Shop")}"><div class="circ">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" loading="lazy">` : ""}<span class="vid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span></div><span class="marca-nom">${esc(v.titulo || "Video")}</span></button>`).join("")}</div></section>` : ""}
 
       <h2 class="fila-tit">Categorías</h2>
       <section class="seccion cat-pills">${categs.map((c, i) => `<a class="cat-pill cp${i % 3}" href="#/catalogo/${c.id}"><span class="cp-ico">${iconoCat(c.nombre)}</span>${esc(c.nombre)}</a>`).join("")}</section>
@@ -410,6 +440,7 @@
         <div class="op-fila">${OPS.map(o => `<figure class="op">${ESTRELLAS}<blockquote>${esc(o.texto)}</blockquote><figcaption>${esc(o.nombre || "")}</figcaption></figure>`).join("")}</div></section>` : ""}
 
       ${seccionTikTok()}`;
+    activarVideos(VIDS);
     if (bans.length > 1) carrusel(bans.length);
     if (ttUser) cargarTikTok();
     // Lucky Scoops: explotan estrellitas al llegar (solo celular)
