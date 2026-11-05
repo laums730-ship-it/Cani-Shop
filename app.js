@@ -506,7 +506,9 @@
   function producto(id) {
     const p = PRODS.find(x => x.id === id);
     if (!p) return catalogo();
-    let cant = 1, vari = tieneVar(p) ? (p.variantes.find(v => disp(v.stock)) || {}).nombre : null, abierto = false;
+    let cant = 1, vari = null, abierto = false;
+    // Con varios modelos disponibles NO se elige ninguno solo: la clienta tiene que escoger. Si hay uno solo, va elegido.
+    if (tieneVar(p)) { const libres = p.variantes.filter(v => disp(v.stock)); if (libres.length === 1) vari = libres[0].nombre; }
     const base = (p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)]).slice();
     (p.variantes || []).forEach(v => { if (v.imagen && !base.includes(v.imagen)) base.push(v.imagen); });
     const fotos = () => base;   // el orden de las fotos es siempre el que subiste: la primera se ve primero
@@ -525,8 +527,10 @@
       const pista = $("#pdx-pista");
       pista.onscroll = () => { const k = Math.round(pista.scrollLeft / pista.clientWidth); document.querySelectorAll(".pdx-puntos i").forEach((d, n) => d.classList.toggle("on", n === k)); };
     };
+    let falta = false;
+    const pocas = (p, v) => { const n = maxDe(p, v); return n > 0 && n <= 3 && (v || !tieneVar(p)) ? n : 0; };
     const pintarPan = () => {
-      const dispo = tieneVar(p) ? !!vari : hayStock(p);
+      const dispo = hayStock(p), sinElegir = tieneVar(p) && !vari;
       const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
       $("#pdx-pan").innerHTML = `
         <a class="pdx-volver" href="#/catalogo">← Volver</a>
@@ -536,21 +540,21 @@
         ${resto.length ? `<button type="button" class="pdx-mas" id="pdx-mas" aria-expanded="${abierto}">${abierto ? "Ocultar detalles" : "Ver detalles"}</button>
           <div class="pdx-det" ${abierto ? "" : "hidden"}>${resto.map(l => `<p>${esc(l)}</p>`).join("")}</div>` : ""}
         <div class="pdx-precio">${bs(p.precio)}</div>
-        ${tieneVar(p) ? `<div class="pdx-etq">Modelo: <b>${esc(vari || "elige uno")}</b></div>
-          <div class="pdx-mods">${p.variantes.map(v => `<button type="button" class="pdx-mod ${v.nombre === vari ? "on" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
+        ${tieneVar(p) ? `<div class="pdx-etq">Modelo: <b>${esc(vari || "elige uno 👇")}</b></div>
+          <div class="pdx-mods ${falta ? "falta" : ""}" id="pdx-mods">${p.variantes.map(v => `<button type="button" class="pdx-mod ${v.nombre === vari ? "on" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
         ${dispo ? `<div class="pdx-fila">
             <div class="pdx-cant"><button type="button" data-c="-1" aria-label="Menos">−</button><span>${cant}</span><button type="button" data-c="1" aria-label="Más">+</button></div>
-            <button type="button" class="pdx-btn" id="agregar">Agregar al carrito</button></div>
-`
+            <button type="button" class="pdx-btn ${sinElegir ? "pide" : ""}" id="agregar">${sinElegir ? "Elige un modelo" : "Agregar al carrito"}</button></div>
+        ${pocas(p, vari) ? `<small class="pdx-pocas">¡Quedan solo ${pocas(p, vari)}!</small>` : ""}`
           : `<button type="button" class="pdx-btn" disabled>Agotado</button>`}
-        <small class="pdx-nota">Envíos a toda Bolivia · Pago con QR</small>`;
+        <small class="pdx-nota">Envíos a toda Bolivia. El costo del envío y el pago con QR los coordinamos contigo por WhatsApp al finalizar tu pedido.</small>`;
     };
     pintarFotos(); pintarPan(); window.scrollTo(0, 0);
     // Barra fija abajo (celular) con precio y "agregar": aparece cuando el botón grande no se ve
     {
-      app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">Agregar al carrito</button></div>`);
+      app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">${tieneVar(p) && !vari ? "Elige un modelo" : "Agregar al carrito"}</button></div>`);
       const barra = $("#pdx-barra");
-      const vigilar = () => { const a = $("#agregar"), r = a ? a.getBoundingClientRect() : null; const fuera = !r || r.bottom < 70 || r.top > innerHeight; barra.classList.toggle("ver", !!a && fuera && barra.isConnected); $("#pdx-b-var").textContent = vari || ""; };
+      const vigilar = () => { const a = $("#agregar"), r = a ? a.getBoundingClientRect() : null; const fuera = !r || r.bottom < 70 || r.top > innerHeight; barra.classList.toggle("ver", !!a && fuera && barra.isConnected); $("#pdx-b-var").textContent = vari ? "Modelo: " + vari : (tieneVar(p) ? "Elige un modelo" : ""); };
       const ab = new AbortController();
       addEventListener("scroll", () => { if (!barra.isConnected) return ab.abort(); vigilar(); }, { passive: true, signal: ab.signal });
       setTimeout(vigilar, 300);
@@ -563,9 +567,9 @@
       const pn = per ? per.nombre : "", cn = cat ? cat.nombre : "";
       const propia = String(p.frase || "").split(/[✦·|]/).map(x => x.trim()).filter(Boolean);
       const partes = (propia.length ? propia
-        : p.nuevo ? ["Recién llegado", "Novedad Cani", pn || cn]
-        : pn ? [pn, cn, "Cani Shop"]
-        : cn ? [cn, "Cositas kawaii", "Cani Shop"] : ["Cositas kawaii", "Cani Shop"]).filter(Boolean).map(x => sinEmoji(x));
+        : p.nuevo ? ["Recién llegado", pn || cn, "Envíos a toda Bolivia"]
+        : pn ? [pn, cn, "Envíos a toda Bolivia"]
+        : cn ? [cn, "Cositas kawaii", "Envíos a toda Bolivia"] : ["Cositas kawaii", "Envíos a toda Bolivia"]).filter(Boolean).map(x => sinEmoji(x));
       const serie = Array(Math.max(3, Math.ceil(12 / partes.length))).fill(partes).flat().map(x => `<span>${esc(x)}</span><i aria-hidden="true">✦</i>`).join("");
       document.querySelector(".pdx").insertAdjacentHTML("beforeend", `<div class="pdx-cinta" aria-label="${esc(partes.join(", "))}"><div class="pdx-cinta-pista" aria-hidden="true"><div>${serie}</div><div>${serie}</div></div></div>`);
     }
@@ -582,13 +586,16 @@
       const b = e.target.closest("button"); if (!b) return;
       if (b.id === "pdx-mas") { abierto = !abierto; pintarPan(); }
       else if (b.dataset.var) {
-        vari = b.dataset.var; pintarPan();
+        vari = b.dataset.var; falta = false; pintarPan();
         // al elegir un modelo, la galería se desplaza a la foto de ese modelo (sin cambiar el orden)
         const v = (p.variantes || []).find(x => x.nombre === vari), k = v && v.imagen ? base.indexOf(v.imagen) : -1, ph = k >= 0 ? document.querySelectorAll("#pdx-pista .pdx-ph")[k] : null;
         if (ph) ph.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
       }
       else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintarPan(); }
-      else if (b.id === "agregar") agregar(p.id, vari, cant);
+      else if (b.id === "agregar") {
+        if (tieneVar(p) && !vari) { falta = true; pintarPan(); const m = $("#pdx-mods"); if (m) m.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+        agregar(p.id, vari, cant);
+      }
     };
   }
 
