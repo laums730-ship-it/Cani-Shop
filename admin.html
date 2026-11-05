@@ -58,6 +58,114 @@
     .ped-sel.vale{background:#f3e9fb}
     .ped-sel.vale .btn{background:var(--lila);box-shadow:0 3px 0 #b386d3}
     @media (max-width:520px){.ped-sel{flex-wrap:wrap}.ped-sel .btn{width:100%}}
+
+    /* ===== Menú lateral (compu) y barra de abajo (celular) ===== */
+    #v-panel:not([hidden]){display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+    .lado{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;background:#fff;border-right:1px solid var(--borde);padding:16px 12px;overflow-y:auto;z-index:11}
+    .lado-logo{padding:2px 10px 12px}
+    .lado-logo img{height:50px}
+    .menu{display:flex;flex-direction:column;gap:2px}
+    .menu .grupo{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);padding:14px 12px 5px}
+    .menu button,.mitem{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;font-size:.9rem;color:var(--cafe);text-align:left;text-decoration:none;cursor:pointer;position:relative}
+    .menu button:hover,.mitem:hover{background:var(--rosa-claro)}
+    .menu button.on{background:var(--rosa)}
+    .menu .badge{margin-left:auto;position:static;transform:none}
+    .mi{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .lado-pie{margin-top:auto;border-top:1px solid var(--borde);padding-top:10px;display:grid;gap:2px}
+    #v-panel main{max-width:1180px;width:100%;margin:0 auto}
+    .top-cel,.menu-cel,.mas-velo{display:none}
+    @media (max-width:860px){
+      #v-panel:not([hidden]){display:block}
+      .lado{display:none}
+      .top-cel{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:var(--rosa);padding:8px 14px}
+      .top-cel img{height:38px}
+      .top-cel b{font-family:var(--f-tit);font-weight:600;font-size:1.05rem}
+      #v-panel main{padding-bottom:110px}
+      .menu-cel{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:15;background:#fff;border-top:1px solid var(--borde);padding:6px 4px calc(8px + env(safe-area-inset-bottom))}
+      .menu-cel button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font:inherit;font-size:.66rem;font-weight:800;color:var(--gris);padding:4px 0;position:relative;cursor:pointer}
+      .menu-cel button .mi{width:36px;height:28px;padding:3px 7px;border-radius:12px}
+      .menu-cel button.on{color:var(--cafe)}
+      .menu-cel button.on .mi{background:var(--rosa)}
+      .menu-cel .badge{position:absolute;top:0;left:56%;font-style:normal;transform:scale(.85)}
+      .mas-velo:not([hidden]){display:block;position:fixed;inset:0;z-index:16;background:rgba(120,55,70,.28)}
+      .mas-hoja{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;padding:10px 12px calc(84px + env(safe-area-inset-bottom));display:grid;gap:2px}
+      .mas-raya{width:44px;height:5px;border-radius:9px;background:var(--borde);margin:0 auto 8px}
+      .mas-hoja button,.mas-hoja a{display:flex;align-items:center;gap:12px;border:0;background:none;border-radius:12px;padding:13px 12px;font:inherit;font-weight:700;font-size:.95rem;color:var(--cafe);text-decoration:none;text-align:left;cursor:pointer}
+      #mas-velo .mas-hoja button,#mas-velo .mas-hoja a{background:none;box-shadow:none}
+      #mas-velo .mas-hoja button.on{background:var(--rosa)}
+    }
+
+    /* ===== Inicio ===== */
+    .ini-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+    .ini-cab h1{font-size:1.75rem}
+    .ini-cab p{margin:4px 0 0;color:var(--gris);font-size:.88rem}
+    .ini-acc{display:flex;gap:10px;flex-wrap:wrap}
+    .ini-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+    .ini-kpi{background:#fff;border:1px solid var(--borde);border-radius:18px;padding:16px;min-width:0;text-align:left;font:inherit;color:var(--cafe);cursor:pointer}
+    .ini-kpi small{display:flex;align-items:center;gap:7px;font-size:.76rem;font-weight:800;color:var(--gris)}
+    .ini-kpi small .mi{width:16px;height:16px;color:var(--rosa-tinta)}
+    .ini-kpi b{display:block;font-family:var(--f-tit);font-weight:600;font-size:1.65rem;margin-top:8px;line-height:1.1}
+    .ini-kpi span{display:block;font-size:.74rem;font-weight:700;margin-top:4px}
+    .ini-kpi.dest{background:var(--cafe);border-color:var(--cafe);color:#fff}
+    .ini-kpi.dest small,.ini-kpi.dest small .mi{color:#f8cfe2}
+    .sube{color:#2f8a55}.baja{color:var(--rojo)}
+    .ini-dos{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+    .ini-col{display:grid;gap:16px;min-width:0}
+    .ini-caja{background:#fff;border:1px solid var(--borde);border-radius:20px;padding:16px 18px;min-width:0}
+    .ini-caja-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .ini-caja-cab h2{font-size:1.02rem}
+    .ini-caja-cab button{border:0;background:none;font:inherit;font-size:.78rem;font-weight:800;color:var(--cafe);text-decoration:underline;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
+    .ini-ped{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;border-top:1px solid var(--rosa);cursor:pointer}
+    .ini-ped:first-child{border-top:0}
+    .ini-av{width:36px;height:36px;border-radius:50%;background:var(--rosa);display:grid;place-items:center;font-family:var(--f-tit);font-weight:600}
+    .ini-ped b{display:block;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ini-ped small{display:block;color:var(--gris);font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ini-ped .der{text-align:right;display:grid;gap:4px;justify-items:end}
+    .ini-ped .der strong{font-family:var(--f-tit);font-weight:600}
+    .ini-graf{display:flex;align-items:flex-end;gap:8px;height:140px}
+    .ini-graf div{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;font-size:.68rem;font-weight:800;color:var(--gris);min-width:0}
+    .ini-graf i{display:block;width:100%;max-width:34px;min-height:4px;background:var(--rosa);border-radius:8px 8px 4px 4px}
+    .ini-graf div.hoy i{background:var(--rosa-fuerte)}
+    .ini-graf div.hoy{color:var(--cafe)}
+    .ini-graf em{font-style:normal;font-size:.62rem;color:var(--cafe);white-space:nowrap}
+    .ini-rep{display:flex;align-items:center;gap:10px;padding:7px 0;cursor:pointer}
+    .ini-rep img,.ini-rep .sinf{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--rosa);flex:none}
+    .ini-rep div{flex:1;min-width:0}
+    .ini-rep b{display:block;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ini-rep .tb{height:6px;background:var(--rosa);border-radius:9px;margin-top:5px;overflow:hidden}
+    .ini-rep .tb i{display:block;height:100%;background:#e0798d;border-radius:9px}
+    .ini-rep em{font-style:normal;font-weight:800;font-size:.76rem;white-space:nowrap}
+    .ini-vacio{color:var(--gris);font-size:.85rem;padding:10px 0}
+    @media (max-width:1000px){.ini-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ini-dos{grid-template-columns:minmax(0,1fr)}}
+    @media (max-width:860px){.ini-cab h1{font-size:1.4rem}.ini-acc{width:100%}.ini-acc .btn{flex:1}.ini-kpis{gap:10px}.ini-kpi{padding:13px}.ini-kpi b{font-size:1.3rem}}
+
+    /* ===== Pedidos: vista tablero ===== */
+    .vistas{display:inline-flex;background:#fff;border:2px solid var(--borde);border-radius:999px;padding:3px;flex:none}
+    .vistas button{display:flex;align-items:center;gap:6px;border:0;background:none;border-radius:999px;padding:7px 13px;font:inherit;font-weight:800;font-size:.8rem;color:var(--cafe);cursor:pointer}
+    .vistas button .mi{width:16px;height:16px}
+    .vistas button.on{background:var(--rosa)}
+    .kan{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:8px}
+    .kan-col{background:#f8eef3;border-radius:18px;padding:10px 8px 8px;min-width:0}
+    .kan-col h3{display:flex;align-items:center;justify-content:space-between;font-size:.95rem;padding:2px 8px 10px}
+    .kan-col h3 span{font-family:var(--f-txt,inherit);font-size:.72rem;font-weight:800;background:#fff;border-radius:999px;padding:2px 9px}
+    .kan-zona{display:grid;gap:8px;min-height:50px;border-radius:12px;transition:background .15s}
+    .kan-zona.sobre{background:rgba(253,149,200,.22)}
+    .kan-t{background:#fff;border-radius:14px;padding:11px 12px;box-shadow:0 1px 0 rgba(120,55,70,.15);cursor:pointer;border:2px solid transparent;transition:border-color .12s,opacity .12s}
+    .kan-t:hover{border-color:var(--rosa-fuerte)}
+    .kan-t.arrastrando{opacity:.4}
+    .kan-t.moviendo{opacity:.55;pointer-events:none}
+    .kan-t .r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+    .kan-t b{min-width:0;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .kan-t strong{font-family:var(--f-tit);font-weight:600;font-size:.92rem;white-space:nowrap}
+    .kan-t small{display:block;color:var(--gris);font-size:.72rem;margin-top:3px}
+    .kan-t .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+    .kan-t .chips em{font-style:normal;font-size:.66rem;font-weight:800;background:var(--rosa);border-radius:6px;padding:2px 7px}
+    .kan-t .chips em.l{background:#efe2f9}
+    .kan-t .chips em.r{background:#fde4e6;color:var(--rojo)}
+    .kan-vacio{font-size:.75rem;color:var(--gris);text-align:center;padding:12px 4px}
+    .kan-nota{font-size:.78rem;color:var(--gris);margin:10px 2px 0}
+    body.mover-silencioso #ped,body.mover-silencioso #ped-velo{visibility:hidden}
+    @media (max-width:860px){.kan{grid-template-columns:repeat(4,78vw)}#ped-vistas{order:3}}
     .aviso-config{background:#fff8e1;border:2px dashed #f2c94c;border-radius:16px;padding:16px;text-align:left;line-height:1.5}
 
     /* Panel */
@@ -433,7 +541,7 @@
     .ped-card .der{text-align:right}
     .ped-card .der b{font-family:var(--f-tit);font-size:1.25rem;color:var(--rosa-tinta);display:block}
     .est{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:800}
-    .est-nuevo{background:#f3e8fc;color:#7a4aa0}.est-confirmado{background:#e8f8ef;color:#1d7a4c}.est-pagado{background:#fff4d6;color:#9a6a00}
+    .est-nuevo{background:#f3e8fc;color:#7a4aa0}.est-confirmado{background:#e8f8ef;color:#1d7a4c}.est-pagado{background:#fce3ee;color:#a03a6c}
     .est-entregado{background:#eee;color:#555}.est-cancelado{background:#fdecee;color:var(--rojo)}
     .falta{color:var(--rojo);font-weight:800;font-size:.85rem}
     .editor-ancho{width:min(720px,100%)}
@@ -548,23 +656,62 @@
 
 <!-- ===== Panel ===== -->
 <div id="v-panel" hidden>
-  <header class="top">
-    <img src="logo.png" alt="" onerror="this.remove()">
-    <nav class="tabs" id="tabs">
-      <button class="on" data-tab="productos">🛍️ Productos</button>
-      <button data-tab="pedidos">🧾 Pedidos<span class="badge" id="badge-ped" hidden></span></button>
-      <button data-tab="compras">Compras</button>
-      <button data-tab="transacciones">Transacciones</button>
-      <button data-tab="estadisticas">Estadísticas</button>
-      <button data-tab="clientes">👥 Clientes</button>
-      <button data-tab="tienda">🎀 Mi tienda</button>
+  <aside class="lado">
+    <div class="lado-logo"><img src="logo.png" alt="Cani Shop" onerror="this.remove()"></div>
+    <nav class="menu" id="tabs">
+      <button class="on" data-tab="inicio"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></button>
+      <div class="grupo">Ventas</div>
+      <button data-tab="pedidos"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Pedidos</span><span class="badge" id="badge-ped" hidden></span></button>
+      <button data-tab="clientes"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.6.2 4.7 2 5.5 5.4"/></svg><span>Clientes</span></button>
+      <div class="grupo">Catálogo</div>
+      <button data-tab="productos"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Productos</span></button>
+      <button data-tab="compras"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M3 7l3-4h12l3 4M10 11h4"/></svg><span>Compras</span></button>
+      <div class="grupo">Números</div>
+      <button data-tab="estadisticas"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Estadísticas</span></button>
+      <button data-tab="transacciones"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"/></svg><span>Transacciones</span></button>
+      <div class="grupo">Ajustes</div>
+      <button data-tab="tienda"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10l1.5-5h13L20 10"/><path d="M4 10v10h16V10"/><path d="M4 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 2 3s2-1.3 2-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M10 20v-4h4v4"/></svg><span>Mi tienda</span></button>
     </nav>
-    <span class="esp"></span>
-    <a href="./" target="_blank">Ver tienda ↗</a>
-    <button class="btn btn-sec btn-sm" id="b-salir">Salir</button>
-  </header>
+    <div class="lado-pie">
+      <a class="mitem" href="./" target="_blank"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"/></svg><span>Ver tienda</span></a>
+      <button class="mitem" type="button" id="b-salir"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3"/></svg><span>Salir</span></button>
+    </div>
+  </aside>
+  <header class="top-cel"><img src="logo.png" alt="Cani Shop" onerror="this.remove()"><b id="top-cel-tit">Inicio</b></header>
+  <nav class="menu-cel" id="tabs-cel">
+    <button class="on" data-ir="inicio"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></button>
+    <button data-ir="pedidos"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span>Pedidos</span><em class="badge" id="badge-ped-cel" hidden></em></button>
+    <button data-ir="productos"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span>Productos</span></button>
+    <button data-ir="clientes"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.6.2 4.7 2 5.5 5.4"/></svg><span>Clientes</span></button>
+    <button data-mas="1"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Más</span></button>
+  </nav>
+  <div class="mas-velo" id="mas-velo" hidden>
+    <div class="mas-hoja">
+      <div class="mas-raya"></div>
+      <button data-ir="compras"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M3 7l3-4h12l3 4M10 11h4"/></svg><span>Compras</span></button>
+      <button data-ir="estadisticas"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Estadísticas</span></button>
+      <button data-ir="transacciones"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"/></svg><span>Transacciones</span></button>
+      <button data-ir="tienda"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10l1.5-5h13L20 10"/><path d="M4 10v10h16V10"/><path d="M4 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 2 3s2-1.3 2-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M10 20v-4h4v4"/></svg><span>Mi tienda</span></button>
+      <a href="./" target="_blank"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"/></svg><span>Ver tienda</span></a>
+      <button data-salir="1"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3"/></svg><span>Salir</span></button>
+    </div>
+  </div>
   <main>
-   <div id="t-productos">
+   <div id="t-inicio">
+    <div class="ini-cab">
+      <div><h1 id="ini-hola">¡Hola!</h1><p id="ini-fecha"></p></div>
+      <div class="ini-acc"><button class="btn btn-sec" type="button" data-rapido="producto">＋ Nuevo producto</button><button class="btn" type="button" data-rapido="pedido">＋ Nuevo pedido</button></div>
+    </div>
+    <div class="ini-kpis" id="ini-kpis"></div>
+    <div class="ini-dos">
+      <div class="ini-caja"><div class="ini-caja-cab"><h2>Últimos pedidos</h2><button type="button" data-ir-tab="pedidos">Ver todos</button></div><div id="ini-peds"></div></div>
+      <div class="ini-col">
+        <div class="ini-caja"><div class="ini-caja-cab"><h2>Ventas de los últimos 7 días</h2><button type="button" data-ir-tab="estadisticas">Estadísticas</button></div><div class="ini-graf" id="ini-graf"></div></div>
+        <div class="ini-caja"><div class="ini-caja-cab"><h2>Por reponer</h2><button type="button" data-ir-tab="productos" data-filtro-rep="1">Ver productos</button></div><div id="ini-rep"></div></div>
+      </div>
+    </div>
+   </div>
+   <div id="t-productos" hidden>
     <div class="resumen">
       <div class="dato"><b id="r-total">0</b><span>productos</span></div>
       <div class="dato"><b id="r-unid">0</b><span>unidades en stock</span></div>
@@ -663,6 +810,7 @@
    <div id="t-pedidos" hidden>
     <div class="barra">
       <input id="ped-buscar" type="search" placeholder="Buscar por cliente, número o teléfono…">
+      <div class="vistas" id="ped-vistas"><button type="button" class="on" data-vista="lista"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Lista</button><button type="button" data-vista="tablero"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h5v16H4zM10 4h5v10h-5zM16 4h4v13h-4z"/></svg>Tablero</button></div>
       <button class="btn" id="ped-nuevo">＋ Nuevo pedido</button>
     </div>
     <div class="barra" id="ped-filtros">
@@ -678,6 +826,8 @@
       Para usar los pedidos falta un pasito: copia el archivo <b>supabase-pedidos.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.
     </div>
     <div class="lista" id="ped-lista"></div>
+    <div class="kan" id="ped-tablero" hidden></div>
+    <p class="kan-nota" id="ped-tablero-nota" hidden></p>
    </div>
 
    <!-- ===== Transacciones ===== -->
@@ -887,8 +1037,8 @@
     </section>
 
     <section class="caja">
-      <h2>🎬 Videos de TikTok</h2>
-      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga más rápido que TikTok. La portada se saca sola del primer cuadro, y la cambias con <b>🖼️ Cambiar portada</b>. Si eliges un producto, el video muestra abajo su tarjeta con un botón para verlo.</p>
+      <h2>Videos</h2>
+      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga más rápido que TikTok. La portada se saca sola del primer cuadro, y la cambias con <b>Cambiar portada</b>. Si eliges un producto, el video muestra abajo su tarjeta con un botón para verlo.</p>
       <div id="aj-vids" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="aj-addvid" style="margin-top:10px;align-self:flex-start">＋ Agregar video</button>
     </section>
@@ -1080,8 +1230,8 @@
     <div class="campo"><label>Categorías</label><div class="checks" id="ed-cats"></div></div>
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
     <div class="campo" id="campo-frase"><label>Frase en movimiento</label><input name="frase" maxlength="90" placeholder="Ej: ¡felicidades, graduada! ✦ regalo perfecto ✦ snoopy"><p class="ayuda">Se desliza debajo de las fotos. Separa las frases con ✦ o con una coma. Si lo dejas vacío, se arma sola con el personaje y la categoría.</p></div>
-    <div class="campo" id="campo-videos"><label>🎬 Videos de TikTok de este producto</label>
-      <p class="ayuda">Salen en la ficha del producto como círculos. <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga rápido y sin lag. La portada se saca sola del primer cuadro y la cambias con <b>🖼️ Cambiar portada</b>. Al verlo, sale abajo la tarjeta de este producto con el botón <b>Agregar al carrito</b>.</p>
+    <div class="campo" id="campo-videos"><label>Videos de este producto</label>
+      <p class="ayuda">Salen en la ficha del producto como círculos. <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga rápido y sin lag. La portada se saca sola del primer cuadro y la cambias con <b>Cambiar portada</b>. Al verlo, sale abajo la tarjeta de este producto con el botón <b>Agregar al carrito</b>.</p>
       <div id="ed-vids" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="ed-addvid" style="margin-top:8px;align-self:flex-start">＋ Agregar video</button></div>
     <p class="ayuda" id="aviso-videos" hidden style="color:var(--rojo)">Para poner videos en los productos, primero corre <b>supabase-videos-producto.sql</b> en Supabase (SQL Editor).</p>
@@ -1537,7 +1687,12 @@
   $("#tabs").onclick = e => {
     const b = e.target.closest("[data-tab]"); if (!b) return;
     document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
-    ["productos", "tienda", "pedidos", "clientes", "compras", "transacciones", "estadisticas"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    ["inicio", "productos", "tienda", "pedidos", "clientes", "compras", "transacciones", "estadisticas"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    document.querySelectorAll("#tabs-cel [data-ir], #mas-velo [data-ir]").forEach(x => x.classList.toggle("on", x.dataset.ir === b.dataset.tab));
+    const masB = $("#tabs-cel [data-mas]"); if (masB) masB.classList.toggle("on", ["compras", "estadisticas", "transacciones", "tienda"].includes(b.dataset.tab));
+    $("#top-cel-tit").textContent = (b.querySelector("span") || b).textContent.trim();
+    $("#mas-velo").hidden = true;
+    if (b.dataset.tab === "inicio") { pintarInicio(); if (!PEDS.length) cargarPedidos(true); }
     if (b.dataset.tab === "compras") cargarCompras();
     if (b.dataset.tab === "transacciones" || b.dataset.tab === "estadisticas") cargarTx();
     if (b.dataset.tab === "clientes") { cargarClientes(); if (!PEDS.length) cargarPedidos(true); }
@@ -1545,6 +1700,63 @@
     if (b.dataset.tab === "tienda" && !ajCargados) cargarAjustes();
     window.scrollTo(0, 0);
   };
+
+  // ---------- Menú del celular ----------
+  const irA = t => { const b = document.querySelector(`#tabs [data-tab="${t}"]`); if (b) b.click(); };
+  document.addEventListener("click", e => {
+    const ir = e.target.closest("[data-ir]"); if (ir && ir.closest("#tabs-cel, #mas-velo")) return irA(ir.dataset.ir);
+    if (e.target.closest("#tabs-cel [data-mas]")) { $("#mas-velo").hidden = !$("#mas-velo").hidden; return; }
+    if (e.target.id === "mas-velo") { $("#mas-velo").hidden = true; return; }
+    if (e.target.closest("#mas-velo [data-salir]")) { $("#mas-velo").hidden = true; return $("#b-salir").click(); }
+    const it = e.target.closest("[data-ir-tab]");
+    if (it) { irA(it.dataset.irTab); if (it.dataset.filtroRep) { const f = $("#f-reponer"); if (f) f.click(); } return; }
+    const r = e.target.closest("[data-rapido]");
+    if (r) { if (r.dataset.rapido === "pedido") { irA("pedidos"); $("#ped-nuevo").click(); } else { irA("productos"); $("#b-nuevo").click(); } return; }
+    const ip = e.target.closest("[data-ini-ped]"); if (ip) { irA("pedidos"); abrirPedido(PEDS.find(p => p.numero == ip.dataset.iniPed)); return; }
+    const ipr = e.target.closest("[data-ini-prod]"); if (ipr) { irA("productos"); const pr = PRODS.find(p => p.id === ipr.dataset.iniProd); if (pr) abrirEditor(pr); return; }
+  });
+
+  // ---------- Inicio ----------
+  const ICK = { ped: '<svg class="mi" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/></svg>', sube: '<svg class="mi" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
+    est: '<svg class="mi" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>', rep: '<svg class="mi" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M12 12v3M12 18h.01"/></svg>' };
+  const ESTADO_CORTO = { nuevo: "Nuevo", confirmado: "Confirmado", pagado: "Pagado", entregado: "Entregado", cancelado: "Cancelado" };
+  const diaDe = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+  const cuandoVendio = p => p.pagado_en || p.entregado_en || p.creado;
+  function pintarInicio() {
+    if ($("#t-inicio").hidden) return;
+    const hoy = new Date(), h0 = diaDe(hoy), DIA = 864e5;
+    const nombre = (AJ && AJ.duena) || "Laura";
+    $("#ini-hola").textContent = `¡Hola, ${nombre}!`;
+    $("#ini-fecha").textContent = hoy.toLocaleDateString("es-BO", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase()) + " · así va tu tienda hoy";
+    const ventas = PEDS.filter(p => ["pagado", "entregado"].includes(p.estado));
+    const enRango = (p, a, b) => { const t = diaDe(cuandoVendio(p)); return t > h0 - a * DIA && t <= h0 - b * DIA; };
+    const sem = ventas.filter(p => enRango(p, 7, 0)), ant = ventas.filter(p => enRango(p, 14, 7));
+    const tot = l => l.reduce((a, p) => a + cuentas(p.items || [], p.envio, p.pagado).total, 0);
+    const vSem = tot(sem), vAnt = tot(ant);
+    const cambio = vAnt ? Math.round((vSem - vAnt) / vAnt * 100) : null;
+    const gan = COSTOS ? sem.reduce((a, p) => a + gananciaPed(p.items || []).gan, 0) : null;
+    const nN = PEDS.filter(p => p.estado === "nuevo").length, nC = PEDS.filter(p => p.estado === "confirmado").length, nP = PEDS.filter(p => p.estado === "pagado").length;
+    const rep = PRODS.filter(porReponer).sort((a, b) => total(a) - total(b)), nAg = rep.filter(agotado).length;
+    $("#ini-kpis").innerHTML = `
+      <button type="button" class="ini-kpi dest" data-ir-tab="pedidos"><small>${ICK.ped}Por atender</small><b>${nN + nC + nP} pedido${nN + nC + nP === 1 ? "" : "s"}</b><span>${[nN && `${nN} nuevo${nN === 1 ? "" : "s"}`, nC && `${nC} confirmado${nC === 1 ? "" : "s"}`, nP && `${nP} por entregar`].filter(Boolean).join(" · ") || "¡Todo al día!"}</span></button>
+      <button type="button" class="ini-kpi" data-ir-tab="estadisticas"><small>${ICK.sube}Ventas de la semana</small><b>${bs(vSem)}</b><span class="${cambio === null ? "" : cambio >= 0 ? "sube" : "baja"}">${cambio === null ? `${sem.length} venta${sem.length === 1 ? "" : "s"}` : `${cambio >= 0 ? "+" : ""}${cambio}% que la semana anterior`}</span></button>
+      <button type="button" class="ini-kpi" data-ir-tab="estadisticas"><small>${ICK.est}Ganancia de la semana</small><b>${gan === null ? "—" : bs(gan)}</b><span class="${gan === null ? "" : "sube"}">${gan === null ? "Carga los costos para verla" : vSem ? `${Math.round(gan / vSem * 100)}% de lo vendido` : "Aún sin ventas esta semana"}</span></button>
+      <button type="button" class="ini-kpi" data-ir-tab="productos" data-filtro-rep="1"><small>${ICK.rep}Por reponer</small><b>${rep.length} producto${rep.length === 1 ? "" : "s"}</b><span class="${nAg ? "baja" : ""}">${nAg ? `${nAg} agotado${nAg === 1 ? "" : "s"}` : rep.length ? "Con pocas unidades" : "Stock al día"}</span></button>`;
+    const ult = PEDS.filter(p => p.estado !== "cancelado").slice(0, 6);
+    $("#ini-peds").innerHTML = ult.length ? ult.map(p => {
+      const n = (p.items || []).reduce((a, i) => a + (i.en_scoop ? 0 : num(i.cant)), 0), d = diaDe(p.creado);
+      const cuando = d === h0 ? "Hoy" : d === h0 - DIA ? "Ayer" : fechaCorta(p.creado);
+      return `<div class="ini-ped" data-ini-ped="${p.numero}"><span class="ini-av">${esc((p.cliente || "?").trim().charAt(0).toUpperCase())}</span>
+        <div><b>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</b><small>${cuando} · ${(p.extra || {}).tipo === "scoop" ? "Scoop" : `${n} producto${n === 1 ? "" : "s"}`}${p.entrega ? " · " + esc(p.entrega) : ""}</small></div>
+        <div class="der"><strong>${bs(cuentas(p.items || [], p.envio, p.pagado).total)}</strong><span class="est est-${p.estado}">${ESTADO_CORTO[p.estado] || p.estado}</span></div></div>`;
+    }).join("") : `<p class="ini-vacio">Todavía no hay pedidos.</p>`;
+    const dias = Array.from({ length: 7 }, (_, k) => h0 - (6 - k) * DIA);
+    const porDia = dias.map(d => tot(ventas.filter(p => diaDe(cuandoVendio(p)) === d)));
+    const max = Math.max(1, ...porDia);
+    $("#ini-graf").innerHTML = dias.map((d, k) => `<div class="${k === 6 ? "hoy" : ""}" title="${bs(porDia[k])}">${porDia[k] ? `<em>${Math.round(porDia[k])}</em>` : ""}<i style="height:${Math.max(3, porDia[k] / max * 100)}px"></i>${k === 6 ? "Hoy" : new Date(d).toLocaleDateString("es-BO", { weekday: "short" }).replace(".", "")}</div>`).join("");
+    $("#ini-rep").innerHTML = rep.length ? rep.slice(0, 5).map(p => { const st = total(p), mn = Math.max(1, minDe(p)); return `<div class="ini-rep" data-ini-prod="${esc(p.id)}">${(p.imagenes || [])[0] ? `<img src="${esc(p.imagenes[0])}" alt="">` : `<span class="sinf"></span>`}
+        <div><b>${esc(p.nombre)}</b><div class="tb"><i style="width:${Math.min(100, st / mn * 100)}%"></i></div></div><em class="${st ? "" : "baja"}">${st ? st + " u." : "Agotado"}</em></div>`; }).join("") : `<p class="ini-vacio">Nada por reponer. ¡Bien ahí!</p>`;
+  }
 
   // ---------- Mi tienda ----------
   const A = $("#t-tienda");
@@ -1579,8 +1791,8 @@
   const filaVideo = (v, i, p) => `<div class="scopf">
         <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-${p}img="${i}"></label>
         <div class="scopf-campos"><input data-${p}="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
-          <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">${v.video ? "✔ Video subido · cambiar" : "📹 Subir video (MP4)"}<input type="file" accept="video/*" hidden data-${p}vid="${i}"></label>
-          <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">🖼️ Cambiar portada<input type="file" accept="image/*" hidden data-${p}img="${i}"></label>
+          <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">${v.video ? "Video subido · cambiar" : "Subir video (MP4)"}<input type="file" accept="video/*" hidden data-${p}vid="${i}"></label>
+          <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">Cambiar portada<input type="file" accept="image/*" hidden data-${p}img="${i}"></label>
           ${p === "vd" ? `<select data-vd="${i}" data-f="producto" title="Producto que sale en la tarjeta del video"><option value="">Sin tarjeta de producto</option>${PRODS.map(x => `<option value="${esc(x.id)}" ${x.id === v.producto ? "selected" : ""}>${esc(x.nombre)}</option>`).join("")}</select>` : ""}
           <input data-${p}="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="…o enlace de TikTok (opcional)" inputmode="url"></div>
         <div class="bt"><button type="button" data-${p}sube="${i}" aria-label="Subir">↑</button><button type="button" data-${p}baja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-${p}borra="${i}" aria-label="Quitar">✕</button></div></div>`;
@@ -1964,13 +2176,60 @@
     if (PEDS.length) { TX_COLS = "pagado_en" in PEDS[0]; ENT_COLS = "entregado_en" in PEDS[0]; }
     const nuevos = PEDS.filter(p => p.estado === "nuevo").length;
     $("#badge-ped").hidden = !nuevos; $("#badge-ped").textContent = nuevos;
+    $("#badge-ped-cel").hidden = !nuevos; $("#badge-ped-cel").textContent = nuevos;
     if (silencioso && nNuevosAntes !== null && nuevos > nNuevosAntes) toast("🛍️ ¡Llegó un pedido nuevo!");
     nNuevosAntes = nuevos;
     if (!$("#t-pedidos").hidden) pintarPedidos();
+    pintarInicio();
   }
 
+  let pvista = (() => { try { return localStorage.getItem("ped-vista") || "lista"; } catch (e) { return "lista"; } })();
+  const COLS = [["nuevo", "Nuevos"], ["confirmado", "Confirmados"], ["pagado", "Pagados"], ["entregado", "Entregados"]];
+  function pintarTablero(q) {
+    let l = PEDS; if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
+    const DIA = 864e5, limite = Date.now() - 30 * DIA;
+    $("#ped-tablero").innerHTML = COLS.map(([e, t]) => {
+      let c = l.filter(p => p.estado === e);
+      if (e === "entregado" && !q) c = c.filter(p => new Date(p.entregado_en || p.creado).getTime() >= limite);
+      return `<section class="kan-col"><h3>${t}<span>${c.length}</span></h3><div class="kan-zona" data-zona="${e}">${c.length ? c.map(p => {
+        const ex = p.extra || {}, n = (p.items || []).reduce((a, i) => a + (i.en_scoop ? 0 : num(i.cant)), 0);
+        const vale = (p.items || []).some(i => /vale sellitos/i.test(i.desc_nota || "")), carta = (p.items || []).some(i => /carta/i.test(i.id || "") || /carta/i.test(i.nombre || ""));
+        return `<div class="kan-t" draggable="true" data-kped="${p.numero}"><div class="r"><b>#${p.numero} · ${esc(p.cliente || "Sin nombre")}</b><strong>${bs(cuentas(p.items || [], p.envio, p.pagado).total)}</strong></div>
+          <small>${fechaCorta(p.creado)}${p.entrega ? " · " + esc(p.entrega) : ""}</small>
+          <div class="chips"><em>${ex.tipo === "scoop" ? "Scoop" : `${n} producto${n === 1 ? "" : "s"}`}</em>${vale ? `<em class="l">Vale sellitos</em>` : ""}${carta ? `<em class="l">Con carta</em>` : ""}${ex.recibe ? `<em class="l">Regalo</em>` : ""}${faltaEn(p) ? `<em class="r">Falta stock</em>` : ""}</div></div>`;
+      }).join("") : `<p class="kan-vacio">Sin pedidos</p>`}</div></section>`;
+    }).join("");
+    const nCan = l.filter(p => p.estado === "cancelado").length;
+    const nota = $("#ped-tablero-nota");
+    nota.hidden = false;
+    nota.textContent = (matchMedia("(hover:hover)").matches ? "Arrastra un pedido a otra columna para cambiar su estado. " : "Toca un pedido para cambiar su estado. ") + (q ? "" : "En Entregados ves los últimos 30 días. ") + (nCan ? `Hay ${nCan} cancelado${nCan === 1 ? "" : "s"}: los ves en la vista Lista.` : "");
+  }
+  // Mover un pedido de columna usa exactamente el mismo guardado del pedido (stock, pagos y fechas)
+  async function moverPedido(numero, estado) {
+    const p = PEDS.find(x => x.numero == numero); if (!p || p.estado === estado) return;
+    const card = document.querySelector(`[data-kped="${numero}"]`), zona = document.querySelector(`[data-zona="${estado}"]`);
+    if (card && zona) { zona.prepend(card); card.classList.add("moviendo"); }
+    document.body.classList.add("mover-silencioso");
+    abrirPedido(p);
+    const r = FP.querySelector(`[name=estado][value="${estado}"]`); if (r) { r.checked = true; r.dispatchEvent(new Event("change", { bubbles: true })); }
+    try { await $("#ped-guardar").onclick(); } finally { document.body.classList.remove("mover-silencioso"); }
+    const np = PEDS.find(x => x.numero == numero);
+    if (np && np.estado === estado) cerrarPed();
+    pintarPedidos();
+  }
+  let kArr = null;
+  $("#ped-tablero").addEventListener("dragstart", e => { const t = e.target.closest("[data-kped]"); if (!t) return; kArr = t.dataset.kped; t.classList.add("arrastrando"); try { e.dataTransfer.setData("text/plain", kArr); e.dataTransfer.effectAllowed = "move"; } catch (x) {} });
+  $("#ped-tablero").addEventListener("dragend", () => { document.querySelectorAll(".arrastrando,.sobre").forEach(n => n.classList.remove("arrastrando", "sobre")); });
+  $("#ped-tablero").addEventListener("dragover", e => { const z = e.target.closest(".kan-col"); if (!z || !kArr) return; e.preventDefault(); document.querySelectorAll(".sobre").forEach(n => n.classList.remove("sobre")); z.querySelector(".kan-zona").classList.add("sobre"); });
+  $("#ped-tablero").addEventListener("drop", e => { const z = e.target.closest(".kan-col"); if (!z || !kArr) return; e.preventDefault(); const n = kArr; kArr = null; moverPedido(n, z.querySelector(".kan-zona").dataset.zona); });
+  $("#ped-tablero").addEventListener("click", e => { const t = e.target.closest("[data-kped]"); if (t && !t.classList.contains("moviendo")) abrirPedido(PEDS.find(p => p.numero == t.dataset.kped)); });
+  $("#ped-vistas").onclick = e => { const b = e.target.closest("[data-vista]"); if (!b) return; pvista = b.dataset.vista; try { localStorage.setItem("ped-vista", pvista); } catch (x) {} pintarPedidos(); };
   function pintarPedidos() {
     const q = $("#ped-buscar").value.trim().toLowerCase();
+    const tab = pvista === "tablero";
+    document.querySelectorAll("#ped-vistas [data-vista]").forEach(x => x.classList.toggle("on", x.dataset.vista === pvista));
+    $("#ped-filtros").hidden = tab; $("#ped-lista").hidden = tab; $("#ped-tablero").hidden = !tab; if (!tab) $("#ped-tablero-nota").hidden = true;
+    if (tab) return pintarTablero(q);
     let l = PEDS.filter(p => pfiltro === "todos" ? true : pfiltro === "activos" ? ACTIVOS.includes(p.estado) : p.estado === pfiltro);
     if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
     if (!l.length) { $("#ped-lista").innerHTML = `<div class="vacio">${PEDS.length ? "No hay pedidos aquí." : "Todavía no llegan pedidos. Cuando alguien compre en tu tienda, aparece aquí 💕"}</div>`; return; }
