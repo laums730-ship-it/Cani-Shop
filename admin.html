@@ -888,7 +888,7 @@
 
     <section class="caja">
       <h2>🎬 Videos de TikTok</h2>
-      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). Al tocar uno, la clienta ve el video sin salir de tu página. Abre el video en TikTok, toca <b>Compartir → Copiar enlace</b> y pégalo aquí. <b>Usa el enlace largo</b> (el que dice <i>/video/</i> con muchos números), no el corto de vm.tiktok.com. La portada es opcional: si no subes una, intento usar la del video, y si no se puede se ve un círculo rosa con ▶.</p>
+      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga más rápido que TikTok. La portada se saca sola del primer cuadro (puedes cambiarla tocando el círculo). El enlace de TikTok es solo una opción alternativa.</p>
       <div id="aj-vids" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="aj-addvid" style="margin-top:10px;align-self:flex-start">＋ Agregar video</button>
     </section>
@@ -1081,7 +1081,7 @@
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
     <div class="campo" id="campo-frase"><label>Frase en movimiento</label><input name="frase" maxlength="90" placeholder="Ej: ¡felicidades, graduada! ✦ regalo perfecto ✦ snoopy"><p class="ayuda">Se desliza debajo de las fotos. Separa las frases con ✦ o con una coma. Si lo dejas vacío, se arma sola con el personaje y la categoría.</p></div>
     <div class="campo" id="campo-videos"><label>🎬 Videos de TikTok de este producto</label>
-      <p class="ayuda">Salen en la ficha del producto como círculos. Pega el enlace <b>largo</b> de TikTok (con /video/ y muchos números).</p>
+      <p class="ayuda">Salen en la ficha del producto como círculos. <b>Sube el video directo (MP4, máximo 50 MB)</b>: carga rápido y sin lag. La portada se saca sola del primer cuadro.</p>
       <div id="ed-vids" class="cats-ed"></div>
       <button type="button" class="btn btn-sec btn-sm" id="ed-addvid" style="margin-top:8px;align-self:flex-start">＋ Agregar video</button></div>
     <p class="ayuda" id="aviso-videos" hidden style="color:var(--rojo)">Para poner videos en los productos, primero corre <b>supabase-videos-producto.sql</b> en Supabase (SQL Editor).</p>
@@ -1149,11 +1149,7 @@
   const TIENE_VIDEOS = () => PRODS.some(p => p && Object.prototype.hasOwnProperty.call(p, "videos"));
   let pvids = [];
   function pintarPVids() {
-    $("#ed-vids").innerHTML = pvids.map((v, i) => `<div class="scopf">
-        <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-pvimg="${i}"></label>
-        <div class="scopf-campos"><input data-pv="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
-          <input data-pv="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="Enlace de TikTok (…/video/1234567890)" inputmode="url"></div>
-        <div class="bt"><button type="button" data-pvsube="${i}" aria-label="Subir">↑</button><button type="button" data-pvbaja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-pvborra="${i}" aria-label="Quitar">✕</button></div></div>`).join("");
+    $("#ed-vids").innerHTML = pvids.map((v, i) => filaVideo(v, i, "pv")).join("");
   }
   const TIENE_FRASE = () => PRODS.some(p => p && Object.prototype.hasOwnProperty.call(p, "frase"));
 
@@ -1466,6 +1462,8 @@
 
   $("#ed-vids").addEventListener("input", e => { const { pv, f } = e.target.dataset; if (pv !== undefined) pvids[pv][f] = e.target.value; });
   $("#ed-vids").addEventListener("change", async e => {
+    const iv = e.target.dataset.pvvid;
+    if (iv !== undefined && e.target.files[0]) { toast("Subiendo video… puede tardar un poco, no cierres la página"); const r = await subirVideoArchivo(e.target.files[0]); if (r) { pvids[iv].video = r.video; if (r.imagen) pvids[iv].imagen = r.imagen; pintarPVids(); toast("Video listo, ahora toca Guardar"); } return; }
     const i = e.target.dataset.pvimg; if (i === undefined || !e.target.files[0]) return;
     toast("Subiendo…"); const u = await subirArchivo(e.target.files[0], "videos", 500);
     if (u) { pvids[i].imagen = u; pintarPVids(); toast("Listo, ahora toca Guardar"); }
@@ -1487,13 +1485,13 @@
       const [, n, s] = d.querySelectorAll("input"); return { nombre: n.value.trim(), stock: Math.max(0, parseInt(s.value) || 0), ...(d.dataset.img ? { imagen: d.dataset.img } : {}) };
     }).filter(v => v.nombre) : [];
     if (conVar && !variantes.length) return toast("Agrega al menos un modelo con nombre", true);
-    if (TIENE_VIDEOS() && pvids.find(v => (v.url || "").trim() && !/\/video\/\d{8,}/.test(v.url))) return toast("Un enlace de video no sirve. Usa el enlace largo de TikTok (tiene /video/ y muchos números).", true);
+    if (TIENE_VIDEOS() && pvids.find(v => !v.video && (v.url || "").trim() && !/\/video\/\d{8,}/.test(v.url))) return toast("Un enlace de video no sirve. Usa el enlace largo de TikTok (tiene /video/ y muchos números).", true);
     const datos = {
       nombre: F.nombre.value.trim(),
       precio: parseFloat(F.precio.value) || 0,
       orden: parseInt(F.orden.value) || 0,
       descripcion: F.descripcion.value.trim(),
-      ...(TIENE_VIDEOS() ? { videos: pvids.filter(v => (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: v.url.trim(), imagen: v.imagen || "" })) } : {}),
+      ...(TIENE_VIDEOS() ? { videos: pvids.filter(v => v.video || (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: (v.url || "").trim(), video: v.video || "", imagen: v.imagen || "" })) } : {}),
       ...(TIENE_FRASE() ? { frase: F.frase.value.replace(/,/g, " ✦ ").replace(/\s+/g, " ").trim() } : {}),
       nuevo: F.nuevo.checked, activo: F.activo.checked,
       categorias: [...document.querySelectorAll("#ed-cats input:checked")].map(i => i.value),
@@ -1554,13 +1552,39 @@
   const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos", "valores"];
   const tipoC = c => c.tipo || (c.marca ? "personaje" : "categoria");
   const TEXTOS = ["avisoEntrega", "pieTexto", "franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
+  // Sube el video al almacenamiento (mismo bucket de fotos) y saca la portada del primer cuadro
+  async function subirVideoArchivo(file) {
+    if (!/^video\//.test(file.type)) { toast("Eso no es un video. Sube un archivo MP4.", true); return null; }
+    if (file.size > 50 * 1024 * 1024) { toast(`Ese video pesa ${(file.size / 1048576).toFixed(0)} MB. El máximo es 50 MB: acórtalo o comprímelo (por ejemplo con CapCut, exportando en 720p).`, true); return null; }
+    const ext = (file.name.split(".").pop() || "mp4").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp4";
+    const ruta = `videos/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const { error } = await db.storage.from("fotos").upload(ruta, file, { contentType: file.type || "video/mp4", cacheControl: "31536000" });
+    if (error) { toast("No se pudo subir el video: " + error.message, true); return null; }
+    const video = db.storage.from("fotos").getPublicUrl(ruta).data.publicUrl;
+    let imagen = "";
+    try {   // portada automática: primer cuadro del video
+      const u = URL.createObjectURL(file), vd = document.createElement("video");
+      vd.muted = true; vd.playsInline = true; vd.preload = "auto"; vd.src = u;
+      await new Promise((ok, mal) => { vd.onloadeddata = ok; vd.onerror = mal; setTimeout(mal, 8000); });
+      vd.currentTime = Math.min(0.6, (vd.duration || 1) / 2);
+      await new Promise(ok => { vd.onseeked = ok; setTimeout(ok, 3000); });
+      const k = Math.min(1, 480 / Math.max(vd.videoWidth, vd.videoHeight)), c = document.createElement("canvas");
+      c.width = Math.round(vd.videoWidth * k); c.height = Math.round(vd.videoHeight * k);
+      c.getContext("2d").drawImage(vd, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .8)); URL.revokeObjectURL(u);
+      if (blob) imagen = await subirArchivo(new File([blob], "portada.jpg", { type: "image/jpeg" }), "videos", 480) || "";
+    } catch (e) { console.warn("No se pudo sacar la portada", e); }
+    return { video, imagen };
+  }
+  const filaVideo = (v, i, p) => `<div class="scopf">
+        <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-${p}img="${i}"></label>
+        <div class="scopf-campos"><input data-${p}="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
+          <label class="btn btn-sec btn-sm" style="text-align:center;cursor:pointer">${v.video ? "✔ Video subido · cambiar" : "📹 Subir video (MP4)"}<input type="file" accept="video/*" hidden data-${p}vid="${i}"></label>
+          <input data-${p}="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="…o enlace de TikTok (opcional)" inputmode="url"></div>
+        <div class="bt"><button type="button" data-${p}sube="${i}" aria-label="Subir">↑</button><button type="button" data-${p}baja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-${p}borra="${i}" aria-label="Quitar">✕</button></div></div>`;
   let vids = [];
   function pintarVids() {
-    $("#aj-vids").innerHTML = vids.map((v, i) => `<div class="scopf">
-        <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-vdimg="${i}"></label>
-        <div class="scopf-campos"><input data-vd="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
-          <input data-vd="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="Enlace de TikTok (…/video/1234567890)" inputmode="url"></div>
-        <div class="bt"><button type="button" data-vdsube="${i}" aria-label="Subir">↑</button><button type="button" data-vdbaja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-vdborra="${i}" aria-label="Quitar">✕</button></div></div>`).join("") || `<p class="ayuda">Todavía no hay videos.</p>`;
+    $("#aj-vids").innerHTML = vids.map((v, i) => filaVideo(v, i, "vd")).join("") || `<p class="ayuda">Todavía no hay videos.</p>`;
   }
   let cajasSc = [];
   function pintarCajas() {
@@ -1770,6 +1794,8 @@
   $("#aj-cajas").addEventListener("click", e => { const b = e.target.closest("[data-cjborra]"); if (b && confirm(`¿Quitar "${cajasSc[b.dataset.cjborra].nombre}"?`)) { cajasSc.splice(+b.dataset.cjborra, 1); pintarCajas(); } });
   $("#aj-vids").addEventListener("input", e => { const { vd, f } = e.target.dataset; if (vd !== undefined) vids[vd][f] = e.target.value; });
   $("#aj-vids").addEventListener("change", async e => {
+    const iv = e.target.dataset.vdvid;
+    if (iv !== undefined && e.target.files[0]) { toast("Subiendo video… puede tardar un poco, no cierres la página"); const r = await subirVideoArchivo(e.target.files[0]); if (r) { vids[iv].video = r.video; if (r.imagen) vids[iv].imagen = r.imagen; pintarVids(); toast("Video listo, ahora toca Guardar cambios"); } return; }
     const i = e.target.dataset.vdimg; if (i === undefined || !e.target.files[0]) return;
     toast("Subiendo…"); const u = await subirArchivo(e.target.files[0], "videos", 500);
     if (u) { vids[i].imagen = u; pintarVids(); toast("Listo, ahora toca Guardar cambios"); }
@@ -1871,7 +1897,7 @@
       historia: { titulo: A.hist_titulo.value.trim(), texto: A.hist_texto.value.trim(), imagenes: ["hist1", "hist2", "hist3"].map(k => imgs[k]).filter(Boolean) },
       opiniones: A.opiniones.value.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const k = l.indexOf("|"); return k < 0 ? { nombre: "", texto: l } : { nombre: l.slice(0, k).trim(), texto: l.slice(k + 1).trim() }; }).filter(o => o.texto),
       quiz: { activo: A.quiz_activo.checked, titulo: A.quiz_titulo.value.trim() },
-      videos: vids.filter(v => (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: v.url.trim(), imagen: v.imagen || "" })),
+      videos: vids.filter(v => v.video || (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: (v.url || "").trim(), video: v.video || "", imagen: v.imagen || "" })),
       sellitos: { activo: A.sel_activo.checked, minimo: A.sel_minimo.value === "" ? 50 : num(A.sel_minimo.value), meta: Math.max(1, Math.round(num(A.sel_meta.value) || 5)),
         vale: A.sel_vale.value === "" ? 25 : num(A.sel_vale.value), desde: A.sel_desde.value || "" },
       categorias: (() => {
@@ -1885,7 +1911,7 @@
         });
       })()
     };
-    const malVid = vids.find(v => (v.url || "").trim() && !/\/video\/\d{8,}/.test(v.url));
+    const malVid = vids.find(v => !v.video && (v.url || "").trim() && !/\/video\/\d{8,}/.test(v.url));
     if (malVid) return toast("Un enlace de video no sirve. Usa el enlace largo de TikTok (tiene /video/ y muchos números), no el corto.", true);
     const b = $("#aj-guardar"); b.disabled = true; b.textContent = "Guardando…";
     const { error } = await db.from("ajustes").upsert({ id: "tienda", datos, editado: new Date().toISOString() });
