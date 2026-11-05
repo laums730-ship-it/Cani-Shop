@@ -166,6 +166,97 @@
     .kan-nota{font-size:.78rem;color:var(--gris);margin:10px 2px 0}
     body.mover-silencioso #ped,body.mover-silencioso #ped-velo{visibility:hidden}
     @media (max-width:860px){.kan{grid-template-columns:repeat(4,78vw)}#ped-vistas{order:3}}
+
+    /* ===== Calendario de contenido ===== */
+    .cal-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .cal-nav{display:flex;align-items:center;gap:6px}
+    .cal-nav h1{font-size:1.5rem;min-width:190px;text-align:center;text-transform:capitalize}
+    .cal-flecha{width:36px;height:36px;border-radius:50%;border:0;background:#fff;box-shadow:0 0 0 2px var(--borde) inset;display:grid;place-items:center;color:var(--cafe);cursor:pointer}
+    .cal-flecha .mi{width:18px;height:18px}
+    .cal-acc{display:flex;gap:8px;flex-wrap:wrap}
+    .cal-tipos{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+    .cal-tipos button{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:6px 11px;font:inherit;font-size:.76rem;font-weight:800;color:var(--cafe);background:#fff;box-shadow:0 0 0 1.5px var(--borde) inset;cursor:pointer}
+    .cal-tipos button i{width:10px;height:10px;border-radius:3px;display:block}
+    .cal-tipos button.off{opacity:.4}
+    .cal-dos{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+    .cal-main{background:#fff;border:1px solid var(--borde);border-radius:18px;overflow:hidden;min-width:0}
+    .cal-sem,.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+    .cal-sem div{padding:8px 10px;font-size:.7rem;font-weight:800;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--borde)}
+    .cal-dia{min-height:118px;border-right:1px solid var(--rosa);border-bottom:1px solid var(--rosa);padding:6px 6px 8px;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:background .12s;min-width:0}
+    .cal-dia:nth-child(7n){border-right:0}
+    .cal-dia:hover{background:#fffafc}
+    .cal-dia.fuera{background:#fdf8fa}
+    .cal-dia.fuera .cal-n{opacity:.4}
+    .cal-dia.sobre{background:var(--rosa)}
+    .cal-n{font-size:.75rem;font-weight:800;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;align-self:flex-end}
+    .cal-dia.hoy .cal-n{background:var(--rosa-fuerte)}
+    .cal-it{display:flex;align-items:center;gap:5px;border-radius:7px;padding:3px 6px;font-size:.7rem;font-weight:800;color:var(--cafe);line-height:1.25;cursor:grab;min-width:0;border-left:3px solid transparent}
+    .cal-it span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cal-it .ok{flex:none;width:12px;height:12px}
+    .cal-it.publicado{opacity:.6}
+    .cal-it.publicado span{text-decoration:line-through}
+    .cal-mas{font-size:.68rem;font-weight:800;color:var(--gris);padding:0 4px}
+    .papel{position:relative;padding:12px 12px 14px;border-radius:4px 4px 14px 4px;font-size:.8rem;line-height:1.4;font-weight:700;color:var(--cafe);box-shadow:0 3px 8px rgba(120,55,70,.14);cursor:grab;white-space:pre-wrap;word-break:break-word}
+    .papel::before{content:"";position:absolute;top:-7px;left:50%;width:44px;height:14px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,255,255,.7);border-radius:2px;box-shadow:0 1px 2px rgba(120,55,70,.08)}
+    .papeles{display:grid;gap:14px;padding-top:6px}
+    .papeles .papel:nth-child(odd){transform:rotate(-1.5deg)}.papeles .papel:nth-child(even){transform:rotate(1.2deg)}
+    .cal-dia .papel{font-size:.68rem;padding:7px 7px 8px;box-shadow:0 2px 4px rgba(120,55,70,.14);transform:rotate(-1.5deg)}
+    .cal-dia .papel::before{width:26px;height:8px;top:-4px}
+    .p-rosa{background:#ffd9ea}.p-lila{background:#eadcfb}.p-crema{background:#fdf1e7}.p-menta{background:#d9f2e4}
+    .cal-vacio{font-size:.8rem;color:var(--gris)}
+    .cal-lado{display:grid;gap:16px;min-width:0}
+    .papeles{padding:6px 4px 4px;overflow:hidden}
+    #t-contenido{overflow-x:clip}
+    .cal-caja{background:#fff;border:1px solid var(--borde);border-radius:18px;padding:14px 16px;min-width:0}
+    .cal-caja-cab{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .cal-caja-cab h2{font-size:1rem}
+    .seg-num b{font-family:var(--f-tit);font-weight:600;font-size:1.8rem;display:block}
+    .seg-num span{font-size:.76rem;font-weight:800}
+    .seg-graf{height:70px;margin:8px 0 10px}
+    .seg-graf svg{width:100%;height:100%;overflow:visible}
+    .seg-form{display:flex;gap:6px}
+    .seg-form input{flex:1 1 0;width:0;min-width:0;border:2px solid var(--borde);border-radius:12px;padding:8px 10px;font:inherit;font-size:16px;color:var(--cafe)}
+    .cal-agenda{display:none}
+    .cal-velo:not([hidden]){position:fixed;inset:0;z-index:40;background:rgba(60,25,35,.4);display:flex;align-items:flex-start;justify-content:center;padding:6vh 14px;overflow-y:auto}
+    .cal-modal{position:relative;width:min(600px,100%);background:#fff;border-radius:20px;padding:22px 22px 18px;box-shadow:0 12px 40px rgba(60,25,35,.25)}
+    .cal-modal.es-papel{background:var(--pcol,#ffd9ea)}
+    .cal-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.7);color:var(--cafe);cursor:pointer}
+    .cal-tit{width:100%;border:0;background:transparent;font-family:var(--f-tit);font-weight:600;font-size:1.5rem;color:var(--cafe);padding:4px 40px 8px 0;outline:none}
+    .cal-props{display:grid;gap:8px;margin:4px 0 14px}
+    .cal-props label{display:grid;grid-template-columns:90px minmax(0,1fr);align-items:center;gap:8px;font-size:.82rem;font-weight:800}
+    .cal-props label span{color:var(--gris)}
+    .cal-props select,.cal-props input{border:2px solid var(--borde);border-radius:10px;padding:7px 9px;font:inherit;font-size:16px;color:var(--cafe);background:#fff;max-width:240px}
+    .cal-colores{display:flex;gap:6px}
+    .cal-colores button{width:28px;height:28px;border-radius:8px;border:2px solid transparent;cursor:pointer}
+    .cal-colores button.on{border-color:var(--cafe)}
+    .cal-modal textarea{width:100%;min-height:200px;border:0;border-top:1px solid var(--borde);padding:14px 2px 6px;font:inherit;font-size:.95rem;line-height:1.6;color:var(--cafe);background:transparent;resize:vertical;outline:none}
+    .cal-modal.es-papel textarea{border-top-color:rgba(120,55,70,.15)}
+    .cal-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .cal-borrar{border:0;background:none;font:inherit;font-weight:800;font-size:.8rem;color:var(--rojo);text-decoration:underline;cursor:pointer}
+    @media (max-width:1000px){.cal-dos{grid-template-columns:minmax(0,1fr)}.cal-lado{grid-template-columns:1fr 1fr}}
+    @media (max-width:700px){
+      .cal-sem,.cal-grid{display:none}
+      .cal-agenda{display:block}
+      .cal-lado{grid-template-columns:minmax(0,1fr)}
+      .cal-nav h1{font-size:1.2rem;min-width:0;flex:1}
+      .cal-nav{width:100%}
+      .cal-acc{width:100%}.cal-acc .btn{flex:1}
+      .ag-dia{display:grid;grid-template-columns:46px minmax(0,1fr);gap:10px;padding:10px 12px;border-bottom:1px solid var(--rosa)}
+      .ag-dia.hoy{background:#fffafc}
+      .ag-dia.vacio{padding:5px 12px;align-items:center}
+      .ag-dia.vacio .ag-f b{font-size:1rem}
+      .ag-dia.vacio .ag-f small{font-size:.6rem}
+      .ag-dia{scroll-margin-top:70px}
+      .ag-f{text-align:center}
+      .ag-f b{display:block;font-family:var(--f-tit);font-weight:600;font-size:1.3rem;line-height:1}
+      .ag-f small{font-size:.66rem;font-weight:800;color:var(--gris);text-transform:uppercase}
+      .ag-dia.hoy .ag-f b{color:var(--rosa-tinta)}
+      .ag-l{display:grid;gap:5px;min-width:0}
+      .ag-l .cal-it{font-size:.8rem;padding:6px 8px}
+      .ag-l .papel{font-size:.78rem;transform:none}
+      .ag-add{border:0;background:none;text-align:left;font:inherit;font-size:.75rem;font-weight:800;color:var(--gris);padding:2px 0;cursor:pointer}
+      .cal-props label{grid-template-columns:70px minmax(0,1fr)}
+    }
     .aviso-config{background:#fff8e1;border:2px dashed #f2c94c;border-radius:16px;padding:16px;text-align:left;line-height:1.5}
 
     /* Panel */
@@ -717,6 +808,8 @@
       <div class="grupo">Números</div>
       <button data-tab="estadisticas"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Estadísticas</span></button>
       <button data-tab="transacciones"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"/></svg><span>Transacciones</span></button>
+      <div class="grupo">Marketing</div>
+      <button data-tab="contenido"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M8 17h6"/></svg><span>Contenido</span></button>
       <div class="grupo">Organización</div>
       <button data-tab="tareas"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M8 4v16M3.5 9h17"/><path d="M11.5 13.5h6M11.5 16.5h4"/></svg><span>Tareas</span></button>
       <div class="grupo">Ajustes</div>
@@ -741,6 +834,7 @@
       <button data-ir="compras"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M3 7l3-4h12l3 4M10 11h4"/></svg><span>Compras</span></button>
       <button data-ir="estadisticas"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Estadísticas</span></button>
       <button data-ir="transacciones"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h13l-3-3M17 17H4l3 3"/></svg><span>Transacciones</span></button>
+      <button data-ir="contenido"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M8 17h6"/></svg><span>Contenido</span></button>
       <button data-ir="tareas"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M8 4v16M3.5 9h17"/><path d="M11.5 13.5h6M11.5 16.5h4"/></svg><span>Tareas</span></button>
       <button data-ir="tienda"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10l1.5-5h13L20 10"/><path d="M4 10v10h16V10"/><path d="M4 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 2 3s2-1.3 2-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M10 20v-4h4v4"/></svg><span>Mi tienda</span></button>
       <a href="./" target="_blank"><svg class="mi" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7M10 14L21 3M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"/></svg><span>Ver tienda</span></a>
@@ -761,6 +855,44 @@
         <div class="ini-caja"><div class="ini-caja-cab"><h2>Por reponer</h2><button type="button" data-ir-tab="productos" data-filtro-rep="1">Ver productos</button></div><div id="ini-rep"></div></div>
       </div>
     </div>
+   </div>
+   <div id="t-contenido" hidden>
+    <div class="cal-cab">
+      <div class="cal-nav"><button type="button" class="cal-flecha" data-cal-mes="-1" aria-label="Mes anterior"><svg class="mi" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="cal-titulo">Calendario</h1><button type="button" class="cal-flecha" data-cal-mes="1" aria-label="Mes siguiente"><svg class="mi" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button><button type="button" class="btn btn-sec btn-sm" data-cal-hoy="1">Hoy</button></div>
+      <div class="cal-acc"><button type="button" class="btn btn-sec" data-cal-papel="1">＋ Papelito</button><button type="button" class="btn" data-cal-nuevo="1">＋ Nuevo contenido</button></div>
+    </div>
+    <div class="aviso-config" id="cal-falta" hidden style="margin-bottom:16px">Para usar el calendario falta un pasito: copia el archivo <b>supabase-calendario.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b> y recarga esta página.</div>
+    <div class="cal-tipos" id="cal-tipos"></div>
+    <div class="cal-dos">
+      <div class="cal-main">
+        <div class="cal-sem" id="cal-sem"></div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-agenda" id="cal-agenda"></div>
+      </div>
+      <aside class="cal-lado">
+        <div class="cal-caja"><div class="cal-caja-cab"><h2>Seguidores de TikTok</h2></div>
+          <div class="seg-num" id="seg-num"></div>
+          <div class="seg-graf" id="seg-graf"></div>
+          <form class="seg-form" id="seg-form"><input name="n" type="number" min="0" step="1" inputmode="numeric" placeholder="Seguidores de hoy" required><button class="btn btn-sm" type="submit">Anotar</button></form>
+          <p class="ayuda" style="margin:8px 0 0">Anótalos cada lunes desde tu perfil de TikTok.</p>
+        </div>
+        <div class="cal-caja"><div class="cal-caja-cab"><h2>Papelitos</h2><span class="ayuda">Arrástralos a un día</span></div><div class="papeles" id="cal-papeles"></div></div>
+      </aside>
+    </div>
+   </div>
+   <div class="cal-velo" id="cal-velo" hidden>
+    <form class="cal-modal" id="cal-form" autocomplete="off">
+      <button type="button" class="cal-x" data-cal-cerrar="1" aria-label="Cerrar">✕</button>
+      <input class="cal-tit" name="titulo" placeholder="Título" required>
+      <div class="cal-props">
+        <label><span>Tipo</span><select name="tipo"></select></label>
+        <label><span>Fecha</span><input name="fecha" type="date"></label>
+        <label class="cal-estado-l"><span>Estado</span><select name="estado"><option value="idea">Idea</option><option value="grabado">Grabado</option><option value="publicado">Publicado</option></select></label>
+        <label class="cal-color-l"><span>Color</span><div class="cal-colores" id="cal-colores"></div></label>
+      </div>
+      <textarea name="texto" placeholder="Escribe aquí: idea del video, el copy, los hashtags…"></textarea>
+      <div class="cal-pie"><button type="button" class="cal-borrar" data-cal-borrar="1">Eliminar</button><div style="display:flex;gap:8px"><button type="button" class="btn btn-sec" data-cal-copiar="1">Copiar texto</button><button class="btn" type="submit">Guardar</button></div></div>
+    </form>
    </div>
    <div id="t-productos" hidden>
     <div class="resumen">
@@ -1838,9 +1970,10 @@
   $("#tabs").onclick = e => {
     const b = e.target.closest("[data-tab]"); if (!b) return;
     document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
-    ["inicio", "productos", "tienda", "pedidos", "clientes", "compras", "transacciones", "estadisticas", "tareas"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    ["inicio", "productos", "tienda", "pedidos", "clientes", "compras", "transacciones", "estadisticas", "contenido", "tareas"].forEach(t => $("#t-" + t).hidden = b.dataset.tab !== t);
+    if (b.dataset.tab === "contenido") cargarContenido();
     document.querySelectorAll("#tabs-cel [data-ir], #mas-velo [data-ir]").forEach(x => x.classList.toggle("on", x.dataset.ir === b.dataset.tab));
-    const masB = $("#tabs-cel [data-mas]"); if (masB) masB.classList.toggle("on", ["compras", "estadisticas", "transacciones", "tienda", "tareas"].includes(b.dataset.tab));
+    const masB = $("#tabs-cel [data-mas]"); if (masB) masB.classList.toggle("on", ["compras", "estadisticas", "transacciones", "tienda", "contenido", "tareas"].includes(b.dataset.tab));
     $("#top-cel-tit").textContent = (b.querySelector("span") || b).textContent.trim();
     $("#mas-velo").hidden = true;
     if (b.dataset.tab === "inicio") { pintarInicio(); if (!PEDS.length) cargarPedidos(true); }
@@ -1867,6 +2000,124 @@
     const ip = e.target.closest("[data-ini-ped]"); if (ip) { irA("pedidos"); abrirPedido(PEDS.find(p => p.numero == ip.dataset.iniPed)); return; }
     const ipr = e.target.closest("[data-ini-prod]"); if (ipr) { irA("productos"); const pr = PRODS.find(p => p.id === ipr.dataset.iniProd); if (pr) abrirEditor(pr); return; }
   });
+
+
+  // ---------- Calendario de contenido ----------
+  const TIPOS_C = { antojo: ["#AntojoDelDía", "#fd95c8", "#ffe3ef"], detras: ["Detrás de escena", "#b386d3", "#f1e6fb"], clientas: ["Clientas", "#d3a27f", "#fbeee3"],
+    entretener: ["Entretener", "#5fb58a", "#e1f4ea"], live: ["Live", "#783746", "#f3e3e7"], campana: ["Campaña", "#e8578a", "#ffd9e6"], papelito: ["Papelito", "#c9a0b0", "#ffd9ea"] };
+  const PCOL = { rosa: "#ffd9ea", lila: "#eadcfb", crema: "#fdf1e7", menta: "#d9f2e4" };
+  const MESES_C = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  let CONT = [], calMes = new Date(), calOff = new Set(), calEd = null, calArr = null, calCargado = false;
+  calMes.setDate(1);
+  const ymdL = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const IC_OK = '<svg class="mi ok" viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>';
+  async function cargarContenido() {
+    const { data, error } = await db.from("contenido").select("*").order("fecha", { ascending: true });
+    if (error) { $("#cal-falta").hidden = false; CONT = []; } else { $("#cal-falta").hidden = true; CONT = data || []; calCargado = true; }
+    pintarCal();
+  }
+  const itemCal = c => c.tipo === "papelito"
+    ? `<div class="papel p-${esc(c.color || "rosa")}" draggable="true" data-cid="${c.id}">${esc(c.titulo)}</div>`
+    : `<div class="cal-it ${c.estado === "publicado" ? "publicado" : ""}" draggable="true" data-cid="${c.id}" style="background:${(TIPOS_C[c.tipo] || TIPOS_C.antojo)[2]};border-left-color:${(TIPOS_C[c.tipo] || TIPOS_C.antojo)[1]}">${c.estado === "publicado" ? IC_OK : ""}<span>${esc(c.titulo || "Sin título")}</span></div>`;
+  function pintarCal() {
+    $("#cal-titulo").textContent = `${MESES_C[calMes.getMonth()]} ${calMes.getFullYear()}`;
+    $("#cal-tipos").innerHTML = Object.entries(TIPOS_C).map(([k, v]) => `<button type="button" data-cal-tipo="${k}" class="${calOff.has(k) ? "off" : ""}"><i style="background:${v[1]}"></i>${v[0]}</button>`).join("");
+    const vis = CONT.filter(c => c.tipo !== "seguidores" && !calOff.has(c.tipo));
+    const porDia = {}; vis.filter(c => c.fecha).forEach(c => (porDia[c.fecha] = porDia[c.fecha] || []).push(c));
+    const ini = new Date(calMes), off = (ini.getDay() + 6) % 7; ini.setDate(1 - off);
+    const hoy = ymdL(new Date()), dias = [];
+    for (let i = 0; i < 42; i++) { const d = new Date(ini); d.setDate(ini.getDate() + i); dias.push(d); }
+    const usar = dias[35].getMonth() !== calMes.getMonth() ? dias.slice(0, 35) : dias;
+    $("#cal-sem").innerHTML = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => `<div>${d}</div>`).join("");
+    $("#cal-grid").innerHTML = usar.map(d => { const k = ymdL(d), l = porDia[k] || [];
+      return `<div class="cal-dia ${d.getMonth() !== calMes.getMonth() ? "fuera" : ""} ${k === hoy ? "hoy" : ""}" data-dia="${k}"><span class="cal-n">${d.getDate()}</span>${l.slice(0, 4).map(itemCal).join("")}${l.length > 4 ? `<span class="cal-mas">+${l.length - 4} más</span>` : ""}</div>`; }).join("");
+    const delMes = usar.filter(d => d.getMonth() === calMes.getMonth());
+    $("#cal-agenda").innerHTML = delMes.map(d => { const k = ymdL(d), l = porDia[k] || [];
+      return `<div class="ag-dia ${k === hoy ? "hoy" : ""} ${l.length ? "" : "vacio"}" data-dia="${k}"><div class="ag-f"><b>${d.getDate()}</b><small>${["dom", "lun", "mar", "mié", "jue", "vie", "sáb"][d.getDay()]}</small></div><div class="ag-l">${l.map(itemCal).join("")}<button type="button" class="ag-add" data-ag-add="${k}">＋ Agregar</button></div></div>`; }).join("");
+    const pap = CONT.filter(c => c.tipo === "papelito" && !c.fecha);
+    $("#cal-papeles").innerHTML = pap.length ? pap.map(itemCal).join("") : `<p class="cal-vacio">Pega aquí tus ideas sueltas con "＋ Papelito".</p>`;
+    pintarSeg();
+    if (!pintarCal.listo && matchMedia("(max-width:700px)").matches) { pintarCal.listo = true; const h = document.querySelector(`.ag-dia[data-dia="${hoy}"]`); if (h) setTimeout(() => h.scrollIntoView({ block: "start" }), 50); }
+  }
+  function pintarSeg() {
+    const l = CONT.filter(c => c.tipo === "seguidores" && c.fecha).map(c => ({ f: c.fecha, n: +c.titulo || 0 })).sort((a, b) => a.f < b.f ? -1 : 1);
+    if (!l.length) { $("#seg-num").innerHTML = `<span class="ayuda">Todavía no anotaste tus seguidores.</span>`; $("#seg-graf").innerHTML = ""; return; }
+    const u = l[l.length - 1], a = l.length > 1 ? l[l.length - 2] : null, dif = a ? u.n - a.n : null;
+    $("#seg-num").innerHTML = `<b>${u.n.toLocaleString("es-BO")}</b><span class="${dif === null ? "" : dif >= 0 ? "sube" : "baja"}">${dif === null ? `Anotado el ${ymdEs(u.f)}` : `${dif >= 0 ? "+" : ""}${dif.toLocaleString("es-BO")} desde el ${ymdEs(a.f)}`}</span>`;
+    if (l.length < 2) { $("#seg-graf").innerHTML = `<p class="ayuda" style="margin:0">Cuando anotes otra semana, aquí verás cómo crecen.</p>`; return; }
+    const pts = l.slice(-10), mn = Math.min(...pts.map(x => x.n)), mx = Math.max(...pts.map(x => x.n)), W = 240, H = 60;
+    const xy = pts.map((p, i) => [pts.length === 1 ? W / 2 : i / (pts.length - 1) * W, H - (mx === mn ? H / 2 : (p.n - mn) / (mx - mn) * H)]);
+    $("#seg-graf").innerHTML = `<svg viewBox="0 -6 ${W} ${H + 12}" preserveAspectRatio="none"><polyline points="${xy.map(p => p.join(",")).join(" ")}" fill="none" stroke="#fd95c8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>${xy.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#fff" stroke="#e8578a" stroke-width="2" vector-effect="non-scaling-stroke"/>`).join("")}</svg>`;
+  }
+  function abrirCal(c) {
+    calEd = c ? { ...c } : { tipo: "antojo", titulo: "", texto: "", estado: "idea", fecha: ymdL(new Date()), color: null };
+    const F = $("#cal-form"), esP = calEd.tipo === "papelito";
+    F.tipo.innerHTML = Object.entries(TIPOS_C).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join("");
+    F.titulo.value = calEd.titulo || ""; F.texto.value = calEd.texto || ""; F.tipo.value = calEd.tipo; F.estado.value = calEd.estado || "idea"; F.fecha.value = calEd.fecha || "";
+    pintarColores(); modoPapel();
+    $("#cal-form [data-cal-borrar]").hidden = !calEd.id;
+    $("#cal-velo").hidden = false; setTimeout(() => (esP ? F.titulo : F.titulo).focus(), 30);
+  }
+  function pintarColores() { $("#cal-colores").innerHTML = Object.entries(PCOL).map(([k, v]) => `<button type="button" data-pcol="${k}" class="${(calEd.color || "rosa") === k ? "on" : ""}" style="background:${v}" aria-label="${k}"></button>`).join(""); }
+  function modoPapel() {
+    const F = $("#cal-form"), esP = F.tipo.value === "papelito";
+    F.classList.toggle("es-papel", esP); F.style.setProperty("--pcol", PCOL[calEd.color || "rosa"]);
+    $(".cal-color-l").hidden = !esP; $(".cal-estado-l").hidden = esP;
+    F.titulo.placeholder = esP ? "Escribe tu nota…" : "Título";
+  }
+  const cerrarCal = () => { $("#cal-velo").hidden = true; calEd = null; };
+  async function guardarCont(datos, id) {
+    const r = id ? await db.from("contenido").update(datos).eq("id", id) : await db.from("contenido").insert(datos);
+    if (r.error) { toast("No se pudo guardar: " + r.error.message, true); return false; }
+    await cargarContenido(); return true;
+  }
+  $("#cal-form").onsubmit = async e => {
+    e.preventDefault(); const F = e.target;
+    const datos = { titulo: F.titulo.value.trim(), texto: F.texto.value, tipo: F.tipo.value, estado: F.estado.value, fecha: F.fecha.value || null, color: F.tipo.value === "papelito" ? (calEd.color || "rosa") : null };
+    if (!datos.titulo) return F.titulo.focus();
+    if (await guardarCont(datos, calEd && calEd.id)) { cerrarCal(); toast("Guardado"); }
+  };
+  $("#cal-form").addEventListener("change", e => { if (e.target.name === "tipo") modoPapel(); });
+  $("#cal-velo").addEventListener("click", async e => {
+    if (e.target.id === "cal-velo" || e.target.closest("[data-cal-cerrar]")) return cerrarCal();
+    const pc = e.target.closest("[data-pcol]"); if (pc) { calEd.color = pc.dataset.pcol; pintarColores(); modoPapel(); return; }
+    if (e.target.closest("[data-cal-copiar]")) { const F = $("#cal-form"); try { await navigator.clipboard.writeText(F.texto.value || F.titulo.value); toast("Texto copiado"); } catch (x) { F.texto.select(); toast("Selecciónalo y cópialo"); } return; }
+    if (e.target.closest("[data-cal-borrar]") && calEd && calEd.id) {
+      if (!confirm("¿Eliminar este contenido?")) return;
+      const r = await db.from("contenido").delete().eq("id", calEd.id); if (r.error) return toast(r.error.message, true);
+      cerrarCal(); cargarContenido(); toast("Eliminado");
+    }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#cal-velo").hidden) cerrarCal(); });
+  $("#t-contenido").addEventListener("click", e => {
+    const m = e.target.closest("[data-cal-mes]"); if (m) { calMes.setMonth(calMes.getMonth() + +m.dataset.calMes); return pintarCal(); }
+    if (e.target.closest("[data-cal-hoy]")) { calMes = new Date(); calMes.setDate(1); return pintarCal(); }
+    if (e.target.closest("[data-cal-nuevo]")) return abrirCal(null);
+    if (e.target.closest("[data-cal-papel]")) return abrirCal({ tipo: "papelito", titulo: "", texto: "", estado: "idea", fecha: null, color: "rosa" });
+    const tp = e.target.closest("[data-cal-tipo]"); if (tp) { const k = tp.dataset.calTipo; calOff.has(k) ? calOff.delete(k) : calOff.add(k); return pintarCal(); }
+    const it = e.target.closest("[data-cid]"); if (it) return abrirCal(CONT.find(c => c.id === it.dataset.cid));
+    const ag = e.target.closest("[data-ag-add]"); if (ag) return abrirCal({ tipo: "antojo", titulo: "", texto: "", estado: "idea", fecha: ag.dataset.agAdd });
+    const d = e.target.closest(".cal-dia"); if (d && !e.target.closest(".cal-mas")) return abrirCal({ tipo: "antojo", titulo: "", texto: "", estado: "idea", fecha: d.dataset.dia });
+    const mas = e.target.closest(".cal-mas"); if (mas) { const k = mas.closest(".cal-dia").dataset.dia; const l = CONT.filter(c => c.fecha === k && c.tipo !== "seguidores"); toast(l.map(c => c.titulo).join(" · ")); }
+  });
+  // Arrastrar contenido o papelitos a otro día (en compu)
+  $("#t-contenido").addEventListener("dragstart", e => { const t = e.target.closest("[data-cid]"); if (!t) return; calArr = t.dataset.cid; try { e.dataTransfer.setData("text/plain", calArr); e.dataTransfer.effectAllowed = "move"; } catch (x) {} });
+  $("#t-contenido").addEventListener("dragover", e => { const d = e.target.closest(".cal-dia, #cal-papeles"); if (!d || !calArr) return; e.preventDefault(); document.querySelectorAll(".cal-dia.sobre").forEach(n => n.classList.remove("sobre")); if (d.classList.contains("cal-dia")) d.classList.add("sobre"); });
+  $("#t-contenido").addEventListener("dragend", () => { document.querySelectorAll(".cal-dia.sobre").forEach(n => n.classList.remove("sobre")); calArr = null; });
+  $("#t-contenido").addEventListener("drop", async e => {
+    const d = e.target.closest(".cal-dia, #cal-papeles"); if (!d || !calArr) return; e.preventDefault();
+    const c = CONT.find(x => x.id === calArr); calArr = null; if (!c) return;
+    const fecha = d.id === "cal-papeles" ? null : d.dataset.dia;
+    if (d.id === "cal-papeles" && c.tipo !== "papelito") return toast("Solo los papelitos se guardan sin día", true);
+    if (c.fecha === fecha) return;
+    c.fecha = fecha; pintarCal();
+    guardarCont({ fecha }, c.id);
+  });
+  $("#seg-form").onsubmit = async e => {
+    e.preventDefault(); const n = Math.round(+e.target.n.value); if (!(n >= 0)) return;
+    const hoyK = ymdL(new Date()), ya = CONT.find(c => c.tipo === "seguidores" && c.fecha === hoyK);
+    if (await guardarCont({ tipo: "seguidores", titulo: String(n), texto: "Seguidores de TikTok", estado: "publicado", fecha: hoyK }, ya && ya.id)) { e.target.reset(); toast("¡Anotado!"); }
+  };
 
   // ---------- Inicio ----------
   const ICK = { ped: '<svg class="mi" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/></svg>', sube: '<svg class="mi" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>',
