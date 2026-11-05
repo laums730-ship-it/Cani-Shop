@@ -958,6 +958,7 @@
       <div class="campo"><label>Entrega</label><input name="entrega" list="ped-entregas"><datalist id="ped-entregas"></datalist></div>
     </div>
     <div class="campo"><label>Dirección</label><input name="direccion"></div>
+    <a class="btn btn-sec btn-sm" id="ped-mapa" target="_blank" rel="noopener" style="align-self:flex-start;margin:-6px 0 10px" hidden>📍 Abrir en Google Maps</a>
     <div class="campo"><label>Nota</label><textarea name="nota" rows="2"></textarea></div>
 
     <div id="ped-extra"></div>
@@ -1863,7 +1864,7 @@
     FP.fecha_pago.value = ymd(ED.pagado_en); FP.fecha_entrega.value = ymd(ED.entregado_en);
     $("#ped-sinstock").checked = !!(ED.extra || {}).sin_stock && !ED.stock_descontado;
     ajustarEstado();
-    pintarExtra(); pintarItems();
+    pintarExtra(); pintarItems(); actualizarMapaPed();
     $("#ped-velo").hidden = $("#ped").hidden = false;
   }
   // Muestra solo lo que corresponde al estado elegido: fecha de pago (Pagado/Entregado), fecha de entrega (Entregado) y la opción de no descontar stock
@@ -1888,6 +1889,33 @@
   $("#ped-sinstock").addEventListener("change", () => { if (ED) pintarItems(); });
   // Detalles del scoop (editable) + comprobante
   const SCF = () => AJ.scoops || {};
+  // Ubicación: si en la dirección hay un link (lo pone la tienda como "· Mapa: https://…") se abre ese; si no, se busca la dirección en Google Maps
+  const URL_MAPA = /https?:\/\/\S+/i;
+  const sinMapa = d => String(d || "").replace(/\s*·?\s*Mapa:\s*https?:\/\/\S+/i, "").replace(URL_MAPA, "").trim();
+  const mapaUrl = (d, c) => { const m = String(d || "").match(URL_MAPA); if (m) return m[0]; const q = [sinMapa(d), c].filter(Boolean).join(", "); return q ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q) : ""; };
+  function actualizarMapaPed() { const a = $("#ped-mapa"); if (!a) return; const u = mapaUrl(FP.direccion.value, FP.ciudad.value); a.hidden = !u; if (u) a.href = u; }
+  // Carta como imagen (A6 apaisado, 300 dpi): sirve para compartir, guardar o imprimir desde el celular
+  async function cartaImagen(txt, f) {
+    const W = 1748, H = 1240, z = { "Caveat": 1.25, "Mali": .88, "Dancing Script": 1.22 }[f] || 1;
+    try { await document.fonts.load(`80px "${f}"`, txt); } catch (e) {}
+    const marco = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = new URL("carta-marco.webp", location.href).href; });
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+    const r = Math.max(W / marco.width, H / marco.height); g.drawImage(marco, (W - marco.width * r) / 2, (H - marco.height * r) / 2, marco.width * r, marco.height * r);
+    const bx = W * .17, bw = W * .66, by = H * .20, bh = H * .59; let px = 8.3 / 25.4 * 300 * z, lineas = [];
+    const partir = () => { g.font = `${px}px "${f}", cursive`; lineas = []; txt.trim().split("\n").forEach(par => { let ln = ""; par.split(/\s+/).forEach(w => { const t = ln ? ln + " " + w : w; if (g.measureText(t).width > bw && ln) { lineas.push(ln); ln = w; } else ln = t; }); lineas.push(ln); }); };
+    partir(); while (lineas.length * px * 1.35 > bh && px > 20) { px *= .95; partir(); }
+    g.fillStyle = "#783746"; g.textAlign = "center"; g.textBaseline = "middle";
+    const y0 = by + bh / 2 - (lineas.length - 1) * px * 1.35 / 2; lineas.forEach((l, k) => g.fillText(l, W / 2, y0 + k * px * 1.35));
+    return await new Promise(ok => cv.toBlob(ok, "image/png"));
+  }
+  async function compartirCarta(txt, f) {
+    if (!txt.trim()) return toast("La carta no tiene texto", true);
+    try {
+      const blob = await cartaImagen(txt, f), file = new File([blob], "carta-cani-shop.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Carta Cani Shop" }); return; }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "carta-cani-shop.png"; document.body.appendChild(a); a.click(); a.remove(); toast("Carta guardada como imagen 💌");
+    } catch (e) { if (e && e.name === "AbortError") return; console.warn(e); toast("No pude crear la imagen de la carta", true); }
+  }
   function imprimirCarta(txt, f) {
     if (!txt.trim()) return toast("La carta no tiene texto", true);
     const w = window.open("", "_blank"); if (!w) return toast("Permite las ventanas emergentes para imprimir", true);
@@ -1994,7 +2022,8 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
         <label class="mini-campo">Usuario de TikTok<input id="sc-tk" value="${esc(x.tiktok || "")}" placeholder="@usuario"></label>
         <label class="check"><input type="checkbox" id="sc-carta-on" ${ED.items.some(i => i.id === "carta-scoop") ? "checked" : ""} ${lock ? "disabled" : ""}> 💌 Carta personalizada impresa (+${bs(precioCartaDe())})</label>
         ${ED.items.some(i => i.id === "carta-scoop") || x.carta ? `<label class="mini-campo">Texto de la carta (para imprimir)<textarea id="sc-carta-txt" rows="3" maxlength="280" style="font-family:'${esc(S.fuenteCarta || "Caveat")}',cursive;font-size:1.15rem">${esc(x.carta || "")}</textarea></label>
-        <button type="button" class="btn btn-sec btn-sm" id="sc-carta-imp" style="align-self:flex-start">🖨️ Imprimir carta</button>` : ""}
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-sm" id="sc-carta-cel">📱 Compartir / guardar carta (celular)</button>
+        <button type="button" class="btn btn-sec btn-sm" id="sc-carta-imp">🖨️ Imprimir carta</button></div>` : ""}
         <div class="sc-cont" id="sc-cont"></div>
         ${comp}
         ${lock ? "" : `<button type="button" class="btn btn-peligro btn-sm" id="sc-quitar" style="align-self:flex-start">Quitar scoop</button>`}
@@ -2022,6 +2051,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id) && !i.en_scoop); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; delete ED.extra.recibe; ED.extra.video = false; pintarExtra(); pintarItems(); }
     if (b.dataset.scm !== undefined) { const it = ED.items[+b.dataset.scm]; if (it) { cambiarEnScoop({ id: it.id, nombre: it.nombre }, it.variante, +b.dataset.d); pintarContScoop(); } return; }
     if (b.id === "sc-abrir") return abrirPickerScoop();
+    if (b.id === "sc-carta-cel") return compartirCarta((ED.extra || {}).carta || "", SCF().fuenteCarta || "Caveat");
     if (b.id === "sc-carta-imp") return imprimirCarta((ED.extra || {}).carta || "", S.fuenteCarta || "Caveat");
     if (b.dataset.g) { const arr = ED.extra[b.dataset.g] = ED.extra[b.dataset.g] || [], v = b.dataset.v, i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0); }
   });
@@ -2445,6 +2475,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   });
   $("#ped-items").addEventListener("click", e => { const b = e.target.closest("[data-quitar]"); if (b) { ED.items.splice(+b.dataset.quitar, 1); pintarItems(); } });
   FP.envio.oninput = FP.pagado.oninput = totalesPed;
+  FP.direccion.addEventListener("input", actualizarMapaPed); FP.ciudad.addEventListener("input", actualizarMapaPed);
   // Buscador de productos del pedido: resultados con foto y modelos, un toque para agregar
   function pintarRes() {
     const q = $("#ped-add").value, box = $("#ped-res");
@@ -2584,7 +2615,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const filas = ED.items.filter(i => !i.en_scoop).map((i, k) => { const sub = [i.variante, detalleScoop(i)].filter(Boolean).map(esc).join(" · ");
       return `<tr><td class="n">${k + 1}</td><td class="p"><b>${esc(i.nombre)}</b>${sub ? `<small>${sub}</small>` : ""}</td>
         <td class="r">${bs(i.precio)}</td><td class="c">${num(i.cant)}</td>${conDesc ? `<td class="r d">${num(i.desc) ? "− " + bs(i.desc) : ""}</td>` : ""}<td class="r t">${bs(linea(i))}</td></tr>`; }).join("");
-    const entrega = [v.entrega, [v.direccion, v.ciudad].filter(Boolean).join(", ")].filter(Boolean).map(esc).join(" · ") || "—";
+    const entrega = [v.entrega, [sinMapa(v.direccion), v.ciudad].filter(Boolean).join(", ")].filter(Boolean).map(esc).join(" · ") || "—";
     const I = { wa: '<path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.8z"/><path d="M9 9.5c.3 1.9 2.6 4.2 4.5 4.5l1.3-1.2 2 1-.4 1.6c-3.6.4-8.2-4.2-7.8-7.8l1.6-.4 1 2z"/>',
       ig: '<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".7"/>',
       tk: '<path d="M14 3v11.5a3.5 3.5 0 1 1-3-3.46"/><path d="M14 3c.4 2.6 2.2 4.4 5 4.6"/>',
