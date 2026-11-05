@@ -887,6 +887,13 @@
     </section>
 
     <section class="caja">
+      <h2>🎬 Videos de TikTok</h2>
+      <p class="ayuda">Salen en el inicio de tu tienda como círculos (como las historias). Al tocar uno, la clienta ve el video sin salir de tu página. Abre el video en TikTok, toca <b>Compartir → Copiar enlace</b> y pégalo aquí. <b>Usa el enlace largo</b> (el que dice <i>/video/</i> con muchos números), no el corto de vm.tiktok.com. La portada es opcional: si no subes una, intento usar la del video, y si no se puede se ve un círculo rosa con ▶.</p>
+      <div id="aj-vids" class="cats-ed"></div>
+      <button type="button" class="btn btn-sec btn-sm" id="aj-addvid" style="margin-top:10px;align-self:flex-start">＋ Agregar video</button>
+    </section>
+
+    <section class="caja">
       <h2>Tarjeta de sellitos</h2>
       <p class="ayuda">Cada pedido <b>Pagado</b> o <b>Entregado</b> desde el monto mínimo (sin contar el envío) le suma un sellito a la clienta, según su WhatsApp. Al llenar la tarjeta gana un vale. Ella ve su tarjeta en tu tienda, en <b>Mis sellitos</b>.</p>
       <label class="check" style="margin-bottom:12px"><input type="checkbox" name="sel_activo"> Mostrar la tarjeta de sellitos</label>
@@ -1073,6 +1080,11 @@
     <div class="campo"><label>Categorías</label><div class="checks" id="ed-cats"></div></div>
     <div class="campo"><label>Descripción</label><textarea name="descripcion" rows="3" placeholder="Cuéntale a tus clientes cómo es…"></textarea></div>
     <div class="campo" id="campo-frase"><label>Frase en movimiento</label><input name="frase" maxlength="90" placeholder="Ej: ¡felicidades, graduada! ✦ regalo perfecto ✦ snoopy"><p class="ayuda">Se desliza debajo de las fotos. Separa las frases con ✦ o con una coma. Si lo dejas vacío, se arma sola con el personaje y la categoría.</p></div>
+    <div class="campo" id="campo-videos"><label>🎬 Videos de TikTok de este producto</label>
+      <p class="ayuda">Salen en la ficha del producto como círculos. Pega el enlace <b>largo</b> de TikTok (con /video/ y muchos números).</p>
+      <div id="ed-vids" class="cats-ed"></div>
+      <button type="button" class="btn btn-sec btn-sm" id="ed-addvid" style="margin-top:8px;align-self:flex-start">＋ Agregar video</button></div>
+    <p class="ayuda" id="aviso-videos" hidden style="color:var(--rojo)">Para poner videos en los productos, primero corre <b>supabase-videos-producto.sql</b> en Supabase (SQL Editor).</p>
     <div class="checks" style="margin-bottom:6px">
       <label class="check"><input type="checkbox" name="nuevo"> ✨ Mostrar en Novedades</label>
       <label class="check"><input type="checkbox" name="activo" checked> 👀 Visible en la tienda</label>
@@ -1134,6 +1146,15 @@
 
   let PRODS = [], filtro = "todos";
   // La columna "frase" existe solo después de correr supabase-frase.sql
+  const TIENE_VIDEOS = () => PRODS.some(p => p && Object.prototype.hasOwnProperty.call(p, "videos"));
+  let pvids = [];
+  function pintarPVids() {
+    $("#ed-vids").innerHTML = pvids.map((v, i) => `<div class="scopf">
+        <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-pvimg="${i}"></label>
+        <div class="scopf-campos"><input data-pv="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
+          <input data-pv="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="Enlace de TikTok (…/video/1234567890)" inputmode="url"></div>
+        <div class="bt"><button type="button" data-pvsube="${i}" aria-label="Subir">↑</button><button type="button" data-pvbaja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-pvborra="${i}" aria-label="Quitar">✕</button></div></div>`).join("");
+  }
   const TIENE_FRASE = () => PRODS.some(p => p && Object.prototype.hasOwnProperty.call(p, "frase"));
 
   // ---------- Sesión ----------
@@ -1343,6 +1364,8 @@
     F.orden.value = p?.orden ?? 0;
     F.descripcion.value = p?.descripcion || "";
     F.frase.value = p?.frase || "";
+    pvids = (p && Array.isArray(p.videos) ? p.videos : []).map(v => ({ ...v })); pintarPVids();
+    $("#campo-videos").hidden = !TIENE_VIDEOS(); $("#aviso-videos").hidden = TIENE_VIDEOS();
     $("#campo-frase").hidden = !TIENE_FRASE();
     F.nuevo.checked = p ? !!p.nuevo : true;
     F.activo.checked = p ? !!p.activo : true;
@@ -1441,6 +1464,22 @@
   const slug = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "producto";
   const rutaDe = u => decodeURIComponent(u.split("/storage/v1/object/public/fotos/")[1] || "").split("?")[0];
 
+  $("#ed-vids").addEventListener("input", e => { const { pv, f } = e.target.dataset; if (pv !== undefined) pvids[pv][f] = e.target.value; });
+  $("#ed-vids").addEventListener("change", async e => {
+    const i = e.target.dataset.pvimg; if (i === undefined || !e.target.files[0]) return;
+    toast("Subiendo…"); const u = await subirArchivo(e.target.files[0], "videos", 500);
+    if (u) { pvids[i].imagen = u; pintarPVids(); toast("Listo, ahora toca Guardar"); }
+  });
+  $("#ed-vids").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
+    const mover = (i, j) => { if (j < 0 || j >= pvids.length) return; [pvids[i], pvids[j]] = [pvids[j], pvids[i]]; };
+    if (d.pvsube) mover(+d.pvsube, +d.pvsube - 1);
+    else if (d.pvbaja) mover(+d.pvbaja, +d.pvbaja + 1);
+    else if (d.pvborra && confirm(`¿Quitar "${pvids[d.pvborra].titulo || "este video"}"?`)) pvids.splice(+d.pvborra, 1);
+    else return;
+    pintarPVids();
+  });
+  $("#ed-addvid").onclick = () => { pvids.push({ titulo: "", url: "", imagen: "" }); pintarPVids(); };
   $("#ed-guardar").onclick = async () => {
     if (!F.reportValidity()) return;
     const conVar = $("#ed-conmodelos").checked;
@@ -1448,11 +1487,13 @@
       const [, n, s] = d.querySelectorAll("input"); return { nombre: n.value.trim(), stock: Math.max(0, parseInt(s.value) || 0), ...(d.dataset.img ? { imagen: d.dataset.img } : {}) };
     }).filter(v => v.nombre) : [];
     if (conVar && !variantes.length) return toast("Agrega al menos un modelo con nombre", true);
+    if (TIENE_VIDEOS() && pvids.find(v => (v.url || "").trim() && !/\/video\/\d{8,}/.test(v.url))) return toast("Un enlace de video no sirve. Usa el enlace largo de TikTok (tiene /video/ y muchos números).", true);
     const datos = {
       nombre: F.nombre.value.trim(),
       precio: parseFloat(F.precio.value) || 0,
       orden: parseInt(F.orden.value) || 0,
       descripcion: F.descripcion.value.trim(),
+      ...(TIENE_VIDEOS() ? { videos: pvids.filter(v => (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: v.url.trim(), imagen: v.imagen || "" })) } : {}),
       ...(TIENE_FRASE() ? { frase: F.frase.value.replace(/,/g, " ✦ ").replace(/\s+/g, " ").trim() } : {}),
       nuevo: F.nuevo.checked, activo: F.activo.checked,
       categorias: [...document.querySelectorAll("#ed-cats input:checked")].map(i => i.value),
@@ -1513,6 +1554,14 @@
   const LISTAS = ["avisos", "busquedas", "entregas", "cinta", "tiktokVideos", "valores"];
   const tipoC = c => c.tipo || (c.marca ? "personaje" : "categoria");
   const TEXTOS = ["avisoEntrega", "pieTexto", "franja", "bannerTitulo", "bannerTexto", "bannerBoton", "nosotros", "pago", "whatsapp", "instagram", "tiktok", "ubicacion"];
+  let vids = [];
+  function pintarVids() {
+    $("#aj-vids").innerHTML = vids.map((v, i) => `<div class="scopf">
+        <label class="cat-img" title="Subir portada" style="border-radius:50%">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" style="object-fit:cover">` : `<span>▶</span>`}<input type="file" accept="image/*" hidden data-vdimg="${i}"></label>
+        <div class="scopf-campos"><input data-vd="${i}" data-f="titulo" value="${esc(v.titulo || "")}" placeholder="Título corto (ej: Primer calendario)" maxlength="40">
+          <input data-vd="${i}" data-f="url" value="${esc(v.url || "")}" placeholder="Enlace de TikTok (…/video/1234567890)" inputmode="url"></div>
+        <div class="bt"><button type="button" data-vdsube="${i}" aria-label="Subir">↑</button><button type="button" data-vdbaja="${i}" aria-label="Bajar">↓</button><button type="button" class="q" data-vdborra="${i}" aria-label="Quitar">✕</button></div></div>`).join("") || `<p class="ayuda">Todavía no hay videos.</p>`;
+  }
   let cajasSc = [];
   function pintarCajas() {
     $("#aj-cajas").innerHTML = cajasSc.map((c, i) => `<div class="scopf">
@@ -1654,6 +1703,7 @@
     ["titulo", "intro", "nota", "precioVideo", "minColores", "minPersonajes"].forEach(k => A["sc_" + k].value = S0[k] ?? "");
     A.sc_colores.value = (S0.colores || []).join("\n"); A.sc_personajes.value = (S0.personajes || []).join("\n");
     scops = (S0.opciones || []).map(o => ({ ...o }));
+    vids = (Array.isArray(AJ.videos) ? AJ.videos : []).map(v => ({ ...v })); pintarVids();
     cajasSc = (S0.cajas && S0.cajas.length ? S0.cajas : DEF.scoops.cajas).map(c => ({ ...c }));
     pintarBanners(); pintarMinis(); pintarCats(); pintarScops(); pintarCajas();
   }
@@ -1718,6 +1768,22 @@
     if (u) { cajasSc[i].imagen = u; pintarCajas(); toast("Listo, ahora toca Guardar cambios"); }
   });
   $("#aj-cajas").addEventListener("click", e => { const b = e.target.closest("[data-cjborra]"); if (b && confirm(`¿Quitar "${cajasSc[b.dataset.cjborra].nombre}"?`)) { cajasSc.splice(+b.dataset.cjborra, 1); pintarCajas(); } });
+  $("#aj-vids").addEventListener("input", e => { const { vd, f } = e.target.dataset; if (vd !== undefined) vids[vd][f] = e.target.value; });
+  $("#aj-vids").addEventListener("change", async e => {
+    const i = e.target.dataset.vdimg; if (i === undefined || !e.target.files[0]) return;
+    toast("Subiendo…"); const u = await subirArchivo(e.target.files[0], "videos", 500);
+    if (u) { vids[i].imagen = u; pintarVids(); toast("Listo, ahora toca Guardar cambios"); }
+  });
+  $("#aj-vids").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
+    const mover = (i, j) => { if (j < 0 || j >= vids.length) return; [vids[i], vids[j]] = [vids[j], vids[i]]; };
+    if (d.vdsube) mover(+d.vdsube, +d.vdsube - 1);
+    else if (d.vdbaja) mover(+d.vdbaja, +d.vdbaja + 1);
+    else if (d.vdborra && confirm(`¿Quitar "${vids[d.vdborra].titulo || "este video"}"?`)) vids.splice(+d.vdborra, 1);
+    else return;
+    pintarVids();
+  });
+  $("#aj-addvid").onclick = () => { vids.push({ titulo: "", url: "", imagen: "" }); pintarVids(); };
   $("#aj-addcaja").onclick = () => { cajasSc.push({ nombre: "", precio: 0, detalle: "", imagen: "" }); pintarCajas(); };
   $("#aj-addscop").onclick = () => { scops.push({ nombre: "", precio: 0, detalle: "", imagen: "", contenido: "" }); pintarScops(); };
   $("#aj-addcat").onclick = () => {
@@ -1805,6 +1871,7 @@
       historia: { titulo: A.hist_titulo.value.trim(), texto: A.hist_texto.value.trim(), imagenes: ["hist1", "hist2", "hist3"].map(k => imgs[k]).filter(Boolean) },
       opiniones: A.opiniones.value.split("\n").map(l => l.trim()).filter(Boolean).map(l => { const k = l.indexOf("|"); return k < 0 ? { nombre: "", texto: l } : { nombre: l.slice(0, k).trim(), texto: l.slice(k + 1).trim() }; }).filter(o => o.texto),
       quiz: { activo: A.quiz_activo.checked, titulo: A.quiz_titulo.value.trim() },
+      videos: vids.filter(v => (v.url || "").trim()).map(v => ({ titulo: (v.titulo || "").trim(), url: v.url.trim(), imagen: v.imagen || "" })),
       sellitos: { activo: A.sel_activo.checked, minimo: A.sel_minimo.value === "" ? 50 : num(A.sel_minimo.value), meta: Math.max(1, Math.round(num(A.sel_meta.value) || 5)),
         vale: A.sel_vale.value === "" ? 25 : num(A.sel_vale.value), desde: A.sel_desde.value || "" },
       categorias: (() => {
@@ -1818,6 +1885,8 @@
         });
       })()
     };
+    const malVid = vids.find(v => (v.url || "").trim() && !/\/video\/\d{8,}/.test(v.url));
+    if (malVid) return toast("Un enlace de video no sirve. Usa el enlace largo de TikTok (tiene /video/ y muchos números), no el corto.", true);
     const b = $("#aj-guardar"); b.disabled = true; b.textContent = "Guardando…";
     const { error } = await db.from("ajustes").upsert({ id: "tienda", datos, editado: new Date().toISOString() });
     b.disabled = false; b.textContent = "Guardar cambios";
