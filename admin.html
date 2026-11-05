@@ -87,6 +87,16 @@
     .acc{display:flex;flex-direction:column;gap:6px}
     .sc-cont{border-top:2px dashed var(--borde);padding-top:10px;display:flex;flex-direction:column;gap:8px}
     .desc-modo{border:2px solid var(--borde);border-radius:8px;background:#fff;font:inherit;font-size:.72rem;padding:1px 2px;margin-left:4px;color:var(--gris)}
+    .emp-fila{display:grid;grid-template-columns:1fr 92px auto auto;gap:8px;align-items:center;margin-bottom:8px}
+    .emp-fila input[type=text],.emp-fila input[type=number]{border:2px solid var(--borde);border-radius:10px;padding:9px 10px;font:inherit;background:#fff;min-width:0;width:100%}
+    .emp-fila label{display:flex;align-items:center;gap:4px;font-size:.78rem;color:var(--gris);white-space:nowrap}
+    .emp-fila .x{border:0;background:var(--rosa-claro);color:var(--rojo);width:34px;height:34px;border-radius:10px;cursor:pointer;font-weight:800}
+    .pemp{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#fff;border:2px solid var(--borde);border-radius:14px;padding:8px 10px;margin-bottom:6px}
+    .pemp.on{border-color:var(--rosa-fuerte,#ee6fae)}
+    .pemp b{font-size:.92rem}.pemp small{display:block;color:var(--gris);font-size:.76rem}
+    .pemp .st{display:flex;align-items:center;gap:4px}
+    .pemp .st button{width:38px;height:38px;border-radius:50%;border:2px solid var(--borde);background:#fff;font-size:1.25rem;font-weight:800;color:var(--rosa-tinta,#c04a7a);cursor:pointer;line-height:1}
+    .pemp .st span{min-width:24px;text-align:center;font-weight:800}
     .sc-cont h4{margin:0;font-size:1rem}
     .scp{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;background:#fff;border:2px solid var(--borde);border-radius:16px;padding:8px}
     .scp.sin{border-color:var(--rojo)}
@@ -576,6 +586,11 @@
    <!-- ===== Compras ===== -->
    <div id="t-compras" hidden>
     <div id="cmp-lista-vista">
+      <section class="caja emp-caja" id="emp-caja">
+        <h3 style="margin:0 0 4px">📦 Mis empaques <small style="font-weight:600;color:var(--gris)">(solo tú los ves)</small></h3>
+        <p class="ayuda" style="margin:0 0 10px">Pon cuánto te cuesta cada uno. En cada pedido eliges cuáles usaste y su costo se resta de tu ganancia. El cliente no lo ve.</p>
+        <div id="emp-lista"></div>
+      </section>
       <div class="cmp-res">
         <div class="dato"><b id="cmp-n">0</b><span>compras guardadas</span></div>
         <div class="dato"><b id="cmp-tot">—</b><span>comprado en total</span></div>
@@ -971,6 +986,11 @@
       <div id="ped-items" class="ped-items"></div>
     </div>
 
+    <div class="campo" id="ped-emp-caja" hidden>
+      <label>📦 Empaque usado <small style="font-weight:600;color:var(--gris)">(solo tú lo ves)</small></label>
+      <div id="ped-emp"></div>
+    </div>
+
     <div class="sep"></div>
     <div class="totales">
       <div><span>Subtotal</span><b id="pt-sub"></b></div>
@@ -984,6 +1004,7 @@
     <div class="ped-gan" id="ped-gan" hidden>
       <h4>Ganancia de este pedido (solo tú la ves)</h4>
       <div><span>Costo de los productos</span><b id="pg-costo"></b></div>
+      <div id="pg-emp-fila"><span>Empaque</span><b id="pg-emp"></b></div>
       <div><span>Ganancia</span><b id="pg-gan"></b></div>
       <div><span>Margen</span><b id="pg-marg"></b></div>
       <p class="nota-gan" id="pg-nota"></p>
@@ -1164,9 +1185,12 @@
     const mk = await db.from("marcas_producto").select("id,wsp,mkt");   // existe después de correr supabase-marcas-wsp-mkt.sql
     MARCAS = mk.error ? null : Object.fromEntries((mk.data || []).map(x => [x.id, { wsp: !!x.wsp, mkt: !!x.mkt }]));
     $("#marcas-falta").hidden = !!MARCAS;
+    const em = await db.from("empaques").select("id,nombre,costo,defecto,orden").order("orden").order("nombre");   // existe después de correr supabase-empaques.sql
+    EMP = em.error ? null : (em.data || []).map(x => ({ ...x, costo: +x.costo || 0, defecto: !!x.defecto }));
+    pintarEmp();
     pintar();
   }
-  let COSTOS = null, MINS = null, MARCAS = null;
+  let COSTOS = null, MINS = null, MARCAS = null, EMP = null;
   const marcaDe = (p, k) => !!(MARCAS && MARCAS[p.id] && MARCAS[p.id][k]);
   const costoDe = p => COSTOS && COSTOS[p.id] != null ? COSTOS[p.id] : null;
   // Stock mínimo: el que pusiste en el producto, o 3 si no pusiste ninguno
@@ -1834,7 +1858,7 @@
             ${p.entrega ? `<span>🚚 ${esc(p.entrega)}</span>` : ""}
             ${p.pagado_en ? `<span>Pagado ${fechaCorta(p.pagado_en)}</span>` : ""}${p.entregado_en ? `<span>Entregado ${fechaCorta(p.entregado_en)}</span>` : ""}
             ${(p.extra || {}).sin_stock ? `<span class="tag gris">Sin descontar stock</span>` : ""}</div>
-          ${COSTOS && p.estado !== "cancelado" ? (() => { const g = gananciaPed(p.items); return `<div class="meta" style="margin:6px 0 0"><span class="tag costo">Costo ${bs(g.costo)}</span><span class="tag ${g.gan < 0 ? "rojo" : "gan"}">Ganas ${bs(g.gan)} · ${Math.round(g.marg * 100)}%</span>${g.sinCosto ? `<span class="tag gris">Falta costo de ${g.sinCosto}</span>` : ""}</div>`; })() : ""}
+          ${COSTOS && p.estado !== "cancelado" ? (() => { const g = gananciaPed(p.items, p.extra); return `<div class="meta" style="margin:6px 0 0"><span class="tag costo">Costo ${bs(g.costo)}</span><span class="tag ${g.gan < 0 ? "rojo" : "gan"}">Ganas ${bs(g.gan)} · ${Math.round(g.marg * 100)}%</span>${g.sinCosto ? `<span class="tag gris">Falta costo de ${g.sinCosto}</span>` : ""}</div>`; })() : ""}
           ${faltaEn(p) ? `<div class="falta">⚠️ Falta stock de algún producto: revísalo</div>` : ""}
         </div>
         <div class="der"><b>${bs(c.total)}</b><span class="est est-${p.estado}">${ESTADO_TXT[p.estado] || p.estado}</span></div>
@@ -1864,7 +1888,8 @@
     FP.fecha_pago.value = ymd(ED.pagado_en); FP.fecha_entrega.value = ymd(ED.entregado_en);
     $("#ped-sinstock").checked = !!(ED.extra || {}).sin_stock && !ED.stock_descontado;
     ajustarEstado();
-    pintarExtra(); pintarItems(); actualizarMapaPed();
+    if (!p && EMP) { const d = EMP.filter(e => e.defecto); if (d.length) { ED.extra = ED.extra || {}; ED.extra.empaques = d.map(e => ({ id: e.id, nombre: e.nombre, cant: 1, costo: e.costo })); } }
+    pintarEmpPed(); pintarExtra(); pintarItems(); actualizarMapaPed();
     $("#ped-velo").hidden = $("#ped").hidden = false;
   }
   // Muestra solo lo que corresponde al estado elegido: fecha de pago (Pagado/Entregado), fecha de entrega (Entregado) y la opción de no descontar stock
@@ -1889,6 +1914,59 @@
   $("#ped-sinstock").addEventListener("change", () => { if (ED) pintarItems(); });
   // Detalles del scoop (editable) + comprobante
   const SCF = () => AJ.scoops || {};
+  // ----- Empaques: lista de materiales con su costo (solo administradora). En cada pedido se elige cuáles se usaron. -----
+  function pintarEmp() {
+    const box = $("#emp-lista"); if (!box) return;
+    if (!EMP) { box.innerHTML = `<div class="aviso-config">Falta un pasito: copia el archivo <b>supabase-empaques.sql</b>, pégalo en Supabase → <b>SQL Editor</b> → <b>Run</b>, y recarga esta página.</div>`; return; }
+    box.innerHTML = EMP.map((e, k) => `<div class="emp-fila" data-ek="${k}">
+        <input type="text" data-ef="nombre" value="${esc(e.nombre)}" aria-label="Nombre del empaque">
+        <input type="number" min="0" step="0.1" inputmode="decimal" data-ef="costo" value="${e.costo || ""}" placeholder="Bs 0" aria-label="Costo en Bs">
+        <label title="Se agrega solo a los pedidos nuevos"><input type="checkbox" data-ef="defecto" ${e.defecto ? "checked" : ""}> usual</label>
+        <button type="button" class="x" data-edel="${k}" aria-label="Quitar">✕</button></div>`).join("") +
+      `<button type="button" class="btn btn-sec btn-sm" id="emp-nuevo">＋ Agregar empaque</button>`;
+  }
+  async function guardarEmp(e) {
+    const { error } = await db.from("empaques").upsert({ id: e.id, nombre: e.nombre, costo: e.costo, defecto: e.defecto, orden: e.orden || 0 });
+    if (error) toast("No se pudo guardar el empaque: " + error.message, true); else toast("Empaque guardado ✔");
+  }
+  $("#emp-lista").addEventListener("change", async ev => {
+    const fila = ev.target.closest("[data-ek]"); if (!fila || !EMP) return;
+    const e = EMP[+fila.dataset.ek], f = ev.target.dataset.ef;
+    if (f === "nombre") e.nombre = ev.target.value.trim() || e.nombre; else if (f === "costo") e.costo = Math.max(0, num(ev.target.value)); else if (f === "defecto") e.defecto = ev.target.checked;
+    await guardarEmp(e);
+  });
+  $("#emp-lista").addEventListener("click", async ev => {
+    if (!EMP) return;
+    if (ev.target.id === "emp-nuevo") {
+      const nombre = (prompt("¿Cómo se llama el empaque? (ej: Bolsa kraft)") || "").trim(); if (!nombre) return;
+      let id = slug(nombre); while (EMP.some(x => x.id === id)) id += "-" + Math.floor(Math.random() * 90 + 10);
+      const e = { id, nombre, costo: 0, defecto: false, orden: EMP.length + 1 }; EMP.push(e); pintarEmp(); await guardarEmp(e); return;
+    }
+    const b = ev.target.closest("[data-edel]"); if (!b) return;
+    const e = EMP[+b.dataset.edel]; if (!confirm(`¿Quitar "${e.nombre}" de tus empaques?\nLos pedidos ya guardados conservan su costo.`)) return;
+    const { error } = await db.from("empaques").delete().eq("id", e.id); if (error) return toast("No se pudo quitar: " + error.message, true);
+    EMP.splice(+b.dataset.edel, 1); pintarEmp(); toast("Empaque quitado");
+  });
+  const empUsado = id => ((ED.extra || {}).empaques || []).find(x => x.id === id);
+  function pintarEmpPed() {
+    const caja = $("#ped-emp-caja"), box = $("#ped-emp"); if (!caja) return;
+    caja.hidden = !EMP || !EMP.length; if (caja.hidden) return;
+    const hay = new Set(EMP.map(e => e.id)), usados = ((ED.extra || {}).empaques || []).filter(u => !hay.has(u.id));   // quitados del catálogo pero usados en este pedido
+    box.innerHTML = EMP.concat(usados.map(u => ({ id: u.id, nombre: u.nombre, costo: u.costo }))).map(e => {
+      const u = empUsado(e.id), n = u ? num(u.cant) : 0, c = u ? num(u.costo) : e.costo;
+      return `<div class="pemp ${n ? "on" : ""}"><div><b>${esc(e.nombre)}</b><small>${bs(c)} c/u${n ? " · " + bs(c * n) : ""}</small></div>
+        <div class="st"><button type="button" data-emp="${esc(e.id)}" data-d="-1" aria-label="Quitar uno">−</button><span>${n}</span><button type="button" data-emp="${esc(e.id)}" data-d="1" aria-label="Agregar uno">+</button></div></div>`;
+    }).join("") + (empDe(ED.extra) ? `<div class="aviso" style="font-weight:800">Empaque de este pedido: ${bs(empDe(ED.extra))}</div>` : "");
+  }
+  $("#ped-emp").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-emp]"); if (!b || !ED) return;
+    ED.extra = ED.extra || {}; ED.extra.empaques = ED.extra.empaques || [];
+    let u = ED.extra.empaques.find(x => x.id === b.dataset.emp); const d = +b.dataset.d;
+    if (!u) { if (d < 0) return; const e = EMP.find(x => x.id === b.dataset.emp); u = { id: e.id, nombre: e.nombre, cant: 0, costo: e.costo }; ED.extra.empaques.push(u); }
+    u.cant = Math.max(0, num(u.cant) + d); if (u.cant === 0) ED.extra.empaques = ED.extra.empaques.filter(x => x !== u);
+    if (!ED.extra.empaques.length) delete ED.extra.empaques;
+    pintarEmpPed(); totalesPed();
+  });
   // Ubicación: si en la dirección hay un link (lo pone la tienda como "· Mapa: https://…") se abre ese; si no, se busca la dirección en Google Maps
   const URL_MAPA = /https?:\/\/\S+/i;
   const sinMapa = d => String(d || "").replace(/\s*·?\s*Mapa:\s*https?:\/\/\S+/i, "").replace(URL_MAPA, "").trim();
@@ -2093,14 +2171,16 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   const costoItem = i => (COSTOS && COSTOS[i.id] != null) ? COSTOS[i.id] * num(i.cant) : null;
   const EXTRAS = ["video-scoop", "caja-scoop", "carta-scoop"];
   // Costo y ganancia de un pedido: lo vendido en productos (sin envío) menos el costo de cada producto
-  const gananciaPed = items => {
+  const empDe = extra => ((extra && extra.empaques) || []).reduce((a, e) => a + num(e.cant) * num(e.costo), 0);
+  const gananciaPed = (items, extra) => {
     let ing = 0, costo = 0, sinCosto = 0;
     (items || []).forEach(i => {
       ing += num(i.cant) * num(i.precio) - num(i.desc);
       const c = costoItem(i);
       if (c == null) { if (!EXTRAS.includes(i.id)) sinCosto++; } else costo += c;
     });
-    return { ing, costo, gan: ing - costo, marg: ing > 0 ? (ing - costo) / ing : 0, sinCosto };
+    const emp = empDe(extra); costo += emp;
+    return { ing, costo, emp, costoProd: costo - emp, gan: ing - costo, marg: ing > 0 ? (ing - costo) / ing : 0, sinCosto };
   };
   const telN = t => { const d = String(t || "").replace(/\D/g, ""); return /^[67]\d{7}$/.test(d) ? "591" + d : d; };
   const cliKey = p => { const t = telN(p.telefono); return t.length >= 8 ? t : "n:" + sinTilde(p.cliente || "").trim(); };
@@ -2440,10 +2520,10 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const c = cuentas(ED.items, FP.envio.value, FP.pagado.value);
     $("#pt-sub").textContent = bs(c.sub); $("#pt-desc").textContent = c.desc ? "− " + bs(c.desc) : bs(0);
     $("#pt-total").textContent = bs(c.total); $("#pt-saldo").textContent = bs(c.saldo);
-    const g = gananciaPed(ED.items), caja = $("#ped-gan");
+    const g = gananciaPed(ED.items, ED.extra), caja = $("#ped-gan");
     caja.hidden = !COSTOS || !ED.items.length;
     if (!caja.hidden) {
-      $("#pg-costo").textContent = bs(g.costo);
+      $("#pg-costo").textContent = bs(g.costoProd); $("#pg-emp-fila").hidden = !g.emp; $("#pg-emp").textContent = bs(g.emp);
       $("#pg-gan").textContent = bs(g.gan); $("#pg-gan").className = g.gan < 0 ? "mal" : "bien";
       $("#pg-marg").textContent = Math.round(g.marg * 100) + "%";
       $("#pg-nota").textContent = (g.sinCosto ? `Falta el costo de ${g.sinCosto} producto(s): la ganancia real es menor. ` : "") + "No cuenta el envío.";
