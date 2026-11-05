@@ -249,6 +249,7 @@
     const box = form.querySelector(".envio-datos");
     if (box) { box.hidden = !otro; box.querySelectorAll("input").forEach(i => i.required = otro); }
     ["ciudad", "direccion"].forEach(n => { const i = form.querySelector(`[name=${n}]`); if (!i) return; const ver = !otro && !recojo; i.hidden = !ver; i.required = ver && (n === "ciudad" || i.dataset.req === "1"); if (!ver) i.value = ""; });
+    const ubi = form.querySelector(".ubi"); if (ubi) { ubi.hidden = otro || recojo; if (ubi.hidden) ubi.querySelector("input").value = ""; }
   }
   function datosEnvio(f) {
     const ent = f.get("entrega") || "";
@@ -832,6 +833,11 @@
             ${envioHTML()}
             <input name="ciudad" placeholder="Ciudad" required>
             <input name="direccion" placeholder="Dirección de entrega" data-req="1" required>
+            <div class="ubi">
+              <button type="button" class="ubi-btn" id="sc-ubi-btn">📍 Usar mi ubicación actual</button>
+              <input name="ubicacion" type="url" inputmode="url" placeholder="o pega el link de Google Maps (opcional)" autocomplete="off">
+              <small class="ubi-msg" id="sc-ubi-msg">Así el repartidor llega directo a tu puerta.</small>
+            </div>
           </div>
         </div></section>
 
@@ -879,6 +885,16 @@
       i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0);
     });
     const ir = sel => F.querySelector(sel).scrollIntoView({ behavior: "smooth", block: "center" });
+    F.addEventListener("click", e => {
+      if (e.target.id !== "sc-ubi-btn") return;
+      const msg = F.querySelector("#sc-ubi-msg"), inp = F.querySelector("[name=ubicacion]");
+      if (!navigator.geolocation) { msg.textContent = "Tu celular no permite obtener la ubicación. Pega el link de Google Maps."; return; }
+      msg.textContent = "Buscando tu ubicación… (acepta el permiso)";
+      navigator.geolocation.getCurrentPosition(
+        pos => { inp.value = `https://www.google.com/maps?q=${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`; msg.textContent = "✔ Ubicación agregada. Revisa que la dirección de arriba esté bien."; },
+        () => { msg.textContent = "No pude obtener tu ubicación. Abre Google Maps, comparte tu ubicación y pega el link aquí."; },
+        { enableHighAccuracy: true, timeout: 12000 });
+    });
     F.addEventListener("change", e => {
       if (e.target.id !== "sc-para-mi") return;
       const r = F.querySelector("[name=recibe]"); r.hidden = e.target.checked; r.required = !e.target.checked;
@@ -893,13 +909,14 @@
       if (!F.reportValidity()) return;
       const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
       const recibe = F.querySelector("#sc-para-mi").checked ? "" : (f.get("recibe") || "").trim();
+      const ubi = (f.get("ubicacion") || "").trim();
       const ventana = window.open("", "_blank");
       const base = SB.url ? SB.url.replace(/\/$/, "") : "", H = { apikey: SB.key, Authorization: `Bearer ${SB.key}` };
       let comp = null, numero = null; const envio = datosEnvio(f);
       try {
         if (base) {
           const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
-            body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad, direccion: envio.direccion,
+            body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad, direccion: envio.direccion + (ubi ? ` · Mapa: ${ubi}` : ""),
               entrega: f.get("entrega") || "", comprobante: comp,
               scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "", recibe,
                 carta: st.carta, carta_texto: st.carta ? (f.get("carta") || "").trim() : "" } } }) });
@@ -916,7 +933,7 @@
         st.carta ? `• Carta personalizada impresa — ${pc ? bs(pc) : "sin costo"}` : null, "",
         st.carta ? "💌 *Mi carta*" : null, st.carta ? `"${(f.get("carta") || "").trim()}"` : null, st.carta ? "" : null,
         "🎨 *Mis preferencias*", `Colores: ${st.colores.join(", ")}`, `Personajes: ${st.personajes.join(", ")}`, "",
-        "🚚 *Entrega*", ...envio.lineas, "",
+        "🚚 *Entrega*", ...envio.lineas, ubi ? `📍 Ubicación: ${ubi}` : null, "",
         `💰 *TOTAL: ${bs(total())}*`, "",
         "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"].filter(x => x !== null).join("\n");
       const url = waURL(msg);
