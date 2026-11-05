@@ -350,10 +350,11 @@
     document.addEventListener("keydown", tecla);
     document.body.appendChild(ov); document.body.style.overflow = "hidden";
   }
-  function activarVideos(lista) {
-    app.querySelectorAll("[data-vid]").forEach(b => {
-      const v = lista[+b.dataset.vid];
-      b.addEventListener("click", () => abrirVideo(v));
+  const circulosVideo = lista => lista.map((v, i) => `<button type="button" class="marca-item vid-item" data-vid="${i}" aria-label="Ver video: ${esc(v.titulo || "Cani Shop")}"><div class="circ">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" loading="lazy">` : ""}<span class="vid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span></div><span class="marca-nom">${esc(v.titulo || "Video")}</span></button>`).join("");
+  function activarVideos(lista, root = app, conClick = true) {
+    root.querySelectorAll("[data-vid]").forEach(b => {
+      const v = lista[+b.dataset.vid]; if (!v) return;
+      if (conClick) b.addEventListener("click", () => abrirVideo(v));
       if (!v.imagen) {   // sin portada subida: intenta la de TikTok; si no se puede, queda el círculo rosa con ▶
         fetch("https://www.tiktok.com/oembed?url=" + encodeURIComponent(v.url)).then(r => r.ok ? r.json() : null).then(j => {
           if (j && j.thumbnail_url && b.isConnected) { const im = new Image(); im.alt = ""; im.src = j.thumbnail_url; im.onload = () => b.querySelector(".circ").prepend(im); }
@@ -403,7 +404,7 @@
 
       ${pers.length ? `<section class="seccion pers-fila"><h2 class="fila-tit">Personajes</h2><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
 
-      ${VIDS.length ? `<section class="seccion pers-fila vid-fila"><h2 class="fila-tit">Videos</h2><div class="marcas-fila">${VIDS.map((v, i) => `<button type="button" class="marca-item vid-item" data-vid="${i}" aria-label="Ver video: ${esc(v.titulo || "Cani Shop")}"><div class="circ">${v.imagen ? `<img src="${esc(v.imagen)}" alt="" loading="lazy">` : ""}<span class="vid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span></div><span class="marca-nom">${esc(v.titulo || "Video")}</span></button>`).join("")}</div></section>` : ""}
+      ${VIDS.length ? `<section class="seccion pers-fila vid-fila"><h2 class="fila-tit">Videos</h2><div class="marcas-fila">${circulosVideo(VIDS)}</div></section>` : ""}
 
       <h2 class="fila-tit">Categorías</h2>
       <section class="seccion cat-pills">${categs.map((c, i) => `<a class="cat-pill cp${i % 3}" href="#/catalogo/${c.id}"><span class="cp-ico">${iconoCat(c.nombre)}</span>${esc(c.nombre)}</a>`).join("")}</section>
@@ -559,6 +560,7 @@
       const pista = $("#pdx-pista");
       pista.onscroll = () => { const k = Math.round(pista.scrollLeft / pista.clientWidth); document.querySelectorAll(".pdx-puntos i").forEach((d, n) => d.classList.toggle("on", n === k)); };
     };
+    const PV = (Array.isArray(p.videos) ? p.videos : []).filter(v => v && vidId(v.url));
     let falta = false;
     const pocas = (p, v) => { const n = maxDe(p, v); return n > 0 && n <= 3 && (v || !tieneVar(p)) ? n : 0; };
     const pintarPan = () => {
@@ -579,9 +581,11 @@
             <button type="button" class="pdx-btn ${sinElegir ? "pide" : ""}" id="agregar">${sinElegir ? "Elige un modelo" : "Agregar al carrito"}</button></div>
         ${pocas(p, vari) ? `<small class="pdx-pocas">¡Quedan solo ${pocas(p, vari)}!</small>` : ""}`
           : `<button type="button" class="pdx-btn" disabled>Agotado</button>`}
-        <small class="pdx-nota">Envíos a toda Bolivia. El costo del envío y el pago con QR los coordinamos contigo por WhatsApp al finalizar tu pedido.</small>`;
+        <small class="pdx-nota">Envíos a toda Bolivia. El costo del envío y el pago con QR los coordinamos contigo por WhatsApp al finalizar tu pedido.</small>
+        ${PV.length ? `<div class="pdx-vids marcas-fila">${circulosVideo(PV)}</div>` : ""}`;
     };
     pintarFotos(); pintarPan(); window.scrollTo(0, 0);
+    if (PV.length) activarVideos(PV, $("#pdx-pan"), false);
     // Barra fija abajo (celular) con precio y "agregar": aparece cuando el botón grande no se ve
     {
       app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">${tieneVar(p) && !vari ? "Elige un modelo" : "Agregar al carrito"}</button></div>`);
@@ -616,6 +620,7 @@
     }
     app.onclick = e => {
       const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.vid !== undefined) { const v = PV[+b.dataset.vid]; if (v) abrirVideo(v); return; }
       if (b.id === "pdx-mas") { abierto = !abierto; pintarPan(); }
       else if (b.dataset.var) {
         vari = b.dataset.var; falta = false; pintarPan();
