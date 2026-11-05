@@ -87,22 +87,34 @@
     .acc{display:flex;flex-direction:column;gap:6px}
     .sc-cont{border-top:2px dashed var(--borde);padding-top:10px;display:flex;flex-direction:column;gap:8px}
     .sc-cont h4{margin:0;font-size:1rem}
-    #sc-buscar{border:2px solid var(--borde);border-radius:12px;padding:11px 13px;background:#fff;width:100%;font:inherit}
-    #sc-buscar:focus{outline:none;border-color:var(--rosa-fuerte)}
-    .scp select{border:2px solid var(--borde);border-radius:10px;padding:6px 8px;background:#fff;font:inherit}
-    .scp input[type=number]{border:2px solid var(--borde);border-radius:10px;padding:6px 8px;background:#fff;font:inherit}
-    .scp{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;background:#fff;border:2px solid var(--borde);border-radius:14px;padding:8px 10px}
+    .scp{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;background:#fff;border:2px solid var(--borde);border-radius:16px;padding:8px}
     .scp.sin{border-color:var(--rojo)}
-    .scp b{font-size:.92rem}.scp small{display:block;color:var(--gris);font-size:.78rem}
-    .scp .fila-n{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .scp input[type=number]{width:70px}
-    .scp .q{background:var(--rosa-claro);border:0;border-radius:10px;width:32px;height:32px;cursor:pointer;color:var(--rojo);font-weight:800}
-    .sc-res{border:2px solid var(--borde);border-radius:14px;background:#fff;max-height:260px;overflow-y:auto;display:flex;flex-direction:column}
-    .sc-res[hidden]{display:none}
-    .sc-res button{border:0;border-bottom:1px solid var(--borde);background:#fff;text-align:left;padding:8px 12px;cursor:pointer;font-family:inherit;font-size:.9rem;color:var(--tinta,#783746)}
-    .sc-res button small{color:var(--gris)}
-    .sc-res .vars{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}
-    .sc-res .vars button{border:2px solid var(--borde);border-radius:999px;padding:3px 10px;width:auto}
+    .scp-f{width:56px;height:56px;border-radius:12px;object-fit:contain;background:var(--rosa-claro)}
+    .scp-i{min-width:0}.scp-i b{display:block;font-size:.92rem;line-height:1.2}.scp-i small{display:block;color:var(--gris);font-size:.76rem;margin-top:2px}
+    .scp-i small.mal{color:var(--rojo);font-weight:800}
+    .scp-st{display:flex;align-items:center;gap:4px}
+    .scp-st button{width:40px;height:40px;border-radius:50%;border:2px solid var(--borde);background:#fff;font-size:1.3rem;font-weight:800;color:var(--rosa-tinta,#c04a7a);cursor:pointer;line-height:1}
+    .scp-st button:active{background:var(--rosa-claro)}
+    .scp-st b{min-width:26px;text-align:center;font-size:1.05rem}
+    .sc-abrir{width:100%;padding:14px;font-size:1rem}
+    .scpick{position:fixed;inset:0;z-index:90;background:var(--fondo);display:flex;flex-direction:column}
+    .scpick-top{display:flex;gap:8px;padding:10px 12px;background:#fff;border-bottom:2px solid var(--borde)}
+    .scpick-top input{flex:1;min-width:0;border:2px solid var(--borde);border-radius:12px;padding:12px;font:inherit;font-size:1rem}
+    .scpick-ayuda{margin:0;padding:8px 14px;font-size:.84rem;color:var(--gris)}
+    .scpick-grid{flex:1;overflow-y:auto;padding:4px 10px 90px;display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;align-content:start}
+    .scpick-c{position:relative;border:2px solid var(--borde);border-radius:14px;background:#fff;padding:0 0 6px;cursor:pointer;font-family:inherit;text-align:left;overflow:hidden;color:inherit}
+    .scpick-c.on{border-color:var(--rosa-fuerte,#ee6fae);box-shadow:0 0 0 2px var(--rosa-fuerte,#ee6fae) inset}
+    .scpick-c:active{transform:scale(.97)}
+    .scpick-c img{width:100%;aspect-ratio:1;object-fit:contain;background:var(--rosa-claro);display:block}
+    .scpick-c b{display:block;font-size:.76rem;line-height:1.15;padding:5px 7px 0;max-height:2.4em;overflow:hidden}
+    .scpick-c small{display:block;font-size:.7rem;color:var(--gris);padding:1px 7px 0}
+    .scpick-c small.mal{color:var(--rojo);font-weight:800}
+    .scpick-c .bd{position:absolute;top:6px;right:6px;min-width:26px;height:26px;border-radius:13px;background:var(--rosa-fuerte,#ee6fae);color:#fff;font-weight:800;font-size:.85rem;display:none;align-items:center;justify-content:center;padding:0 6px}
+    .scpick-c.on .bd{display:flex}
+    .scpick-c .mn{position:absolute;top:6px;left:6px;width:30px;height:30px;border-radius:50%;border:0;background:#fff;color:var(--rojo);font-weight:800;font-size:1.2rem;display:none;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+    .scpick-c.on .mn{display:flex}
+    .scpick-pie{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid var(--borde);padding:10px 12px;display:flex;gap:10px;align-items:center}
+    .scpick-pie span{flex:1;font-weight:800;font-size:.95rem}
     .marcas{display:flex;flex-direction:column;gap:6px}
     .marca{display:flex;align-items:center;gap:6px;border:2px solid var(--borde);border-radius:999px;padding:4px 12px;font-size:.85rem;font-weight:800;color:var(--gris);background:#fff;cursor:pointer;font-family:inherit}
     .marca i{font-style:normal;width:18px;height:18px;border-radius:6px;border:2px solid var(--borde);display:grid;place-items:center;font-size:.8rem;line-height:1;color:#fff}
@@ -1893,27 +1905,66 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   const hayScoop = () => ED.items.some(i => i.id === "scoop");
   const cajasDe = () => { const c = (SCF().cajas || []).filter(c => c.nombre); return c.length ? c : [{ nombre: "Caja blanca", precio: 0 }, { nombre: "Caja especial", precio: 5 }]; };
   // ----- Productos que lleva el scoop: descuentan stock y suman al costo (precio 0, no cambian lo que paga la clienta) -----
+  const cantEnScoop = (id, vari) => { const it = ED.items.find(i => i.en_scoop && i.id === id && (i.variante || null) === (vari || null)); return it ? num(it.cant) : 0; };
+  function cambiarEnScoop(p, vari, d) {
+    const k = ED.items.findIndex(i => i.en_scoop && i.id === p.id && (i.variante || null) === (vari || null));
+    if (k < 0) { if (d > 0) ED.items.push({ id: p.id, nombre: p.nombre, variante: vari || null, cant: d, precio: 0, desc: 0, desc_nota: "", en_scoop: true }); }
+    else { ED.items[k].cant = num(ED.items[k].cant) + d; if (ED.items[k].cant <= 0) ED.items.splice(k, 1); }
+    totalesPed();
+  }
   function pintarContScoop() {
     const box = $("#sc-cont"); if (!box) return;
     const lock = !!ED.stock_descontado, lista = ED.items.map((i, k) => ({ i, k })).filter(x => x.i.en_scoop);
     const costo = lista.reduce((a, x) => a + (costoItem(x.i) || 0), 0), sinC = lista.filter(x => COSTOS && costoItem(x.i) == null).length;
+    const unid = lista.reduce((a, x) => a + num(x.i.cant), 0);
     const sc = ED.items.find(i => i.id === "scoop"), venta = sc ? num(sc.cant) * num(sc.precio) - num(sc.desc) : 0;
     box.innerHTML = `<h4>🧺 Productos que lleva este scoop</h4>
-      <p class="ayuda" style="margin:0">Agrega lo que pusiste en el scoop. Se <b>descuentan del stock</b> y su <b>costo se suma</b> a este pedido. No cambian lo que paga la clienta.</p>
+      <p class="ayuda" style="margin:0">Se <b>descuentan del stock</b> y su <b>costo se suma</b> a este pedido. No cambian lo que paga la clienta.</p>
+      ${lock ? "" : `<button type="button" class="btn sc-abrir" id="sc-abrir">➕ Agregar productos</button>`}
       ${lista.map(({ i, k }) => { const p = prodDe(i), s = stockDe(i), sin = !lock && !sinDescuento() && s !== null && s < num(i.cant), c = costoItem(i);
-        const vars = p && tieneVar(p) ? `<select data-sck="${k}" data-f="variante" ${lock ? "disabled" : ""}>${p.variantes.map(v => `<option ${v.nombre === i.variante ? "selected" : ""} value="${esc(v.nombre)}">${esc(v.nombre)} (${+v.stock || 0})</option>`).join("")}</select>` : "";
-        return `<div class="scp ${sin ? "sin" : ""}"><div><b>${esc(i.nombre)}</b>${i.variante && !vars ? `<small>${esc(i.variante)}</small>` : ""}<small>${txtStock(i)}${c != null ? " · Costo " + bs(c) : (COSTOS ? " · Sin costo" : "")}</small></div>
-          ${lock ? "" : `<button type="button" class="q" data-scq="${k}" aria-label="Quitar">✕</button>`}
-          <div class="fila-n">${vars}<label>Cant. <input type="number" min="1" step="1" data-sck="${k}" data-f="cant" value="${num(i.cant)}" ${lock ? "disabled" : ""}></label></div></div>`; }).join("") || `<p class="ayuda" style="margin:0">Todavía no agregaste productos.</p>`}
-      ${lock ? "" : `<input id="sc-buscar" type="search" autocomplete="off" placeholder="🔍 Buscar producto para agregar al scoop…"><div id="sc-res" class="sc-res" hidden></div>`}
-      ${lista.length ? `<div class="aviso" style="font-weight:800">Costo de lo que lleva: ${bs(costo)}${COSTOS && venta > 0 ? ` · Ganancia del scoop: ${bs(venta - costo)} (${Math.round((venta - costo) / venta * 100)}%)` : ""}${sinC ? ` · Falta el costo de ${sinC}` : ""}</div>` : ""}`;
+        return `<div class="scp ${sin ? "sin" : ""}"><img class="scp-f" src="${esc(((p && tieneVar(p) ? ((p.variantes.find(v => v.nombre === i.variante) || {}).imagen) : "") || ((p && p.imagenes) || [])[0] || "logo.png"))}" alt="">
+          <div class="scp-i"><b>${esc(i.nombre)}</b><small>${i.variante ? esc(i.variante) + " · " : ""}${c != null ? "Costo " + bs(c) : (COSTOS ? "Sin costo" : "")}</small><small class="${sin ? "mal" : ""}">${txtStock(i)}</small></div>
+          ${lock ? `<b>× ${num(i.cant)}</b>` : `<div class="scp-st"><button type="button" data-scm="${k}" data-d="-1" aria-label="Quitar uno">−</button><b>${num(i.cant)}</b><button type="button" data-scm="${k}" data-d="1" aria-label="Agregar uno">+</button></div>`}</div>`; }).join("") || `<p class="ayuda" style="margin:0">Todavía no agregaste productos.</p>`}
+      ${lista.length ? `<div class="aviso" style="font-weight:800">${unid} producto${unid === 1 ? "" : "s"} · Costo: ${bs(costo)}${COSTOS && venta > 0 ? ` · Ganancia del scoop: ${bs(venta - costo)} (${Math.round((venta - costo) / venta * 100)}%)` : ""}${sinC ? ` · Falta el costo de ${sinC}` : ""}</div>` : ""}`;
   }
-  function pintarResSc() {
-    const q = ($("#sc-buscar") || {}).value || "", box = $("#sc-res"); if (!box) return;
-    if (!q.trim()) { box.hidden = true; box.innerHTML = ""; return; }
-    const l = buscarProds(q).slice(0, 12); box.hidden = false;
-    box.innerHTML = l.length ? l.map(p => `<div><button type="button" ${tieneVar(p) ? "" : `data-scadd="${esc(p.id)}"`}><b>${esc(p.nombre)}</b> <small>${total(p)} en stock${tieneVar(p) ? " · elige el modelo 👇" : ""}</small></button>
-      ${tieneVar(p) ? `<div class="vars">${p.variantes.map((v, i) => `<button type="button" data-scadd="${esc(p.id)}" data-v="${i}">${esc(v.nombre)} <b>${+v.stock || 0}</b></button>`).join("")}</div>` : ""}</div>`).join("") : `<p class="ayuda" style="margin:8px">No encontré “${esc(q)}”.</p>`;
+  // Pantalla completa para elegir productos con foto: un toque suma uno
+  function abrirPickerScoop() {
+    if (document.getElementById("scpick")) return;
+    const ov = document.createElement("div"); ov.className = "scpick"; ov.id = "scpick";
+    ov.innerHTML = `<div class="scpick-top"><input id="scpick-q" type="search" placeholder="🔍 Buscar producto…" autocomplete="off"><button type="button" class="btn" id="scpick-ok">Listo</button></div>
+      <p class="scpick-ayuda">Toca un producto para agregarlo. Toca otra vez para sumar uno más.</p>
+      <div class="scpick-grid" id="scpick-grid"></div>
+      <div class="scpick-pie"><span id="scpick-n"></span><button type="button" class="btn" id="scpick-ok2">Listo</button></div>`;
+    document.body.appendChild(ov); document.body.style.overflow = "hidden";
+    const grid = ov.querySelector("#scpick-grid"); let celdas = [];
+    const resumen = () => { const n = ED.items.filter(i => i.en_scoop).reduce((a, i) => a + num(i.cant), 0); ov.querySelector("#scpick-n").textContent = n ? `🧺 ${n} producto${n === 1 ? "" : "s"} en el scoop` : "Aún no agregas nada"; };
+    const pintarCelda = (el, c) => {
+      const n = cantEnScoop(c.p.id, c.vari), mal = !sinDescuento() && n > c.stock;
+      el.classList.toggle("on", n > 0); el.querySelector(".bd").textContent = n;
+      const sm = el.querySelector("small"); sm.textContent = c.stock > 0 ? `Hay ${c.stock}` : "Sin stock"; sm.className = (mal || c.stock <= 0) ? "mal" : "";
+    };
+    const pintarGrid = () => {
+      const q = ov.querySelector("#scpick-q").value;
+      celdas = buscarProds(q).flatMap(p => tieneVar(p)
+        ? p.variantes.map(v => ({ p, vari: v.nombre, stock: +v.stock || 0, img: v.imagen || (p.imagenes || [])[0] || "logo.png" }))
+        : [{ p, vari: null, stock: +p.stock || 0, img: (p.imagenes || [])[0] || "logo.png" }]);
+      if (!q.trim()) celdas.sort((a, b) => (b.stock > 0) - (a.stock > 0));
+      const ver = celdas.slice(0, 150);
+      grid.innerHTML = ver.length ? ver.map((c, k) => `<div class="scpick-c" data-k="${k}" role="button" tabindex="0"><img src="${esc(c.img)}" alt="" loading="lazy"><button type="button" class="mn" data-menos aria-label="Quitar uno">−</button><span class="bd"></span><b>${esc(c.p.nombre)}${c.vari ? " – " + esc(c.vari) : ""}</b><small></small></div>`).join("")
+        : `<p class="ayuda" style="grid-column:1/-1;margin:14px">No encontré “${esc(q)}”.</p>`;
+      grid.querySelectorAll(".scpick-c").forEach(el => pintarCelda(el, celdas[+el.dataset.k]));
+      if (celdas.length > 150) grid.insertAdjacentHTML("beforeend", `<p class="ayuda" style="grid-column:1/-1;margin:10px">Hay más productos: escribe en el buscador para encontrarlos.</p>`);
+    };
+    grid.addEventListener("click", e => {
+      const el = e.target.closest(".scpick-c"); if (!el) return;
+      const c = celdas[+el.dataset.k]; if (!c) return;
+      cambiarEnScoop(c.p, c.vari, e.target.closest("[data-menos]") ? -1 : 1); pintarCelda(el, c); resumen();
+      if (navigator.vibrate) navigator.vibrate(8);
+    });
+    ov.querySelector("#scpick-q").addEventListener("input", pintarGrid);
+    const cerrar = () => { ov.remove(); document.body.style.overflow = ""; if ($("#sc-cont")) pintarContScoop(); };
+    ov.querySelector("#scpick-ok").onclick = cerrar; ov.querySelector("#scpick-ok2").onclick = cerrar;
+    pintarGrid(); resumen(); ov.querySelector("#scpick-q").focus({ preventScroll: true });
   }
   function pintarExtra() {
     const x = ED.extra = ED.extra || {}, S = SCF(), ops = (S.opciones || []), pv = num(S.precioVideo || 5);
@@ -1965,26 +2016,15 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       pintarExtra(); pintarItems();
     }
     if (b.id === "sc-quitar") { ED.items = ED.items.filter(i => !["scoop", "video-scoop", "caja-scoop", "carta-scoop"].includes(i.id) && !i.en_scoop); delete ED.extra.carta; delete ED.extra.caja; delete ED.extra.tipo; delete ED.extra.recibe; ED.extra.video = false; pintarExtra(); pintarItems(); }
-    if (b.dataset.scq !== undefined) { ED.items.splice(+b.dataset.scq, 1); pintarContScoop(); totalesPed(); return; }
-    if (b.dataset.scadd) {
-      const p = PRODS.find(x => x.id === b.dataset.scadd); if (!p) return;
-      const vari = tieneVar(p) ? (b.dataset.v !== undefined ? p.variantes[+b.dataset.v] : p.variantes[0]).nombre : null;
-      const ya = ED.items.find(i => i.en_scoop && i.id === p.id && (i.variante || null) === vari);
-      if (ya) ya.cant = num(ya.cant) + 1; else ED.items.push({ id: p.id, nombre: p.nombre, variante: vari, cant: 1, precio: 0, desc: 0, desc_nota: "", en_scoop: true });
-      pintarContScoop(); totalesPed(); const bs2 = $("#sc-buscar"); if (bs2) bs2.focus(); toast(`Agregado al scoop: ${p.nombre}${vari ? " – " + vari : ""}`); return;
-    }
+    if (b.dataset.scm !== undefined) { const it = ED.items[+b.dataset.scm]; if (it) { cambiarEnScoop({ id: it.id, nombre: it.nombre }, it.variante, +b.dataset.d); pintarContScoop(); } return; }
+    if (b.id === "sc-abrir") return abrirPickerScoop();
     if (b.id === "sc-carta-imp") return imprimirCarta((ED.extra || {}).carta || "", S.fuenteCarta || "Caveat");
     if (b.dataset.g) { const arr = ED.extra[b.dataset.g] = ED.extra[b.dataset.g] || [], v = b.dataset.v, i = arr.indexOf(v); i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0); }
   });
   $("#ped-extra").addEventListener("change", e => {
     if (!ED) return;
     const S = SCF();
-    if (e.target.dataset && e.target.dataset.sck !== undefined) {
-      const it = ED.items[+e.target.dataset.sck];
-      if (it && e.target.dataset.f === "variante") { it.variante = e.target.value; pintarContScoop(); totalesPed(); }
-      if (it && e.target.dataset.f === "cant") { it.cant = Math.max(1, Math.round(num(e.target.value))); pintarContScoop(); totalesPed(); }
-      return;
-    }
+
     if (e.target.id === "sc-op") {
       const o = (S.opciones || []).find(o => o.nombre === e.target.value), it = ED.items.find(i => i.id === "scoop");
       if (o && it) { it.nombre = o.nombre; it.precio = num(o.precio); } pintarItems();
@@ -2007,7 +2047,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
       pintarExtra(); pintarItems();
     }
   });
-  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-buscar") pintarResSc(); if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-rec") ED.extra.recibe = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
+  $("#ped-extra").addEventListener("input", e => { if (ED && e.target.id === "sc-tk") ED.extra.tiktok = e.target.value.trim(); if (ED && e.target.id === "sc-rec") ED.extra.recibe = e.target.value.trim(); if (ED && e.target.id === "sc-carta-txt") ED.extra.carta = e.target.value; });
 
   // ---------- Transacciones y estadísticas ----------
   let TX = [], TODOS = [], TX_COLS = false, ENT_COLS = false, EST_V = "dia", EST_MET = "fact", TOP_M = "valor";
