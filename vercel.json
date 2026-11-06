@@ -1,0 +1,7 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/mudanza.html", "permanent": false },
+    { "source": "/index.html", "destination": "/mudanza.html", "permanent": false },
+    { "source": "/admin.html", "destination": "https://canishop.pages.dev/admin.html", "permanent": false }
+  ]
+}
