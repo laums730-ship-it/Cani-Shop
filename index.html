@@ -17,22 +17,12 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261105u">
-  <!-- No medir mis propias visitas: abre la tienda una vez con ?nomedir=1 en cada aparato (y ?nomedir=0 para volver a medir) -->
-  <script>
-  (function () {
-    try {
-      var m = /[?&]nomedir=([01])/.exec(location.search);
-      if (m) { if (m[1] === "1") localStorage.setItem("nomedir", "1"); else localStorage.removeItem("nomedir"); }
-      window.__NOMEDIR = localStorage.getItem("nomedir") === "1";
-    } catch (e) { window.__NOMEDIR = false; }
-  })();
-  </script>
+  <link rel="stylesheet" href="styles.css?v=20261105v">
   <!-- Microsoft Clarity (mapas de calor y grabaciones). Pega tu ID entre las comillas de CLARITY_ID; si está vacío, no se activa. -->
   <script>
   (function () {
     var CLARITY_ID = "z962c3cy5h";
-    if (!CLARITY_ID || window.__NOMEDIR) return;
+    if (!CLARITY_ID) return;
     (function (c, l, a, r, i, t, y) {
       c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
       t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
@@ -49,7 +39,7 @@
   <script>
   (function () {
     var GA_ID = "G-11169FTL4L";
-    if (!GA_ID || window.__NOMEDIR) return;
+    if (!GA_ID) return;
     var s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
     document.head.appendChild(s);
     window.dataLayer = window.dataLayer || [];
@@ -188,6 +178,6 @@
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
   <script defer src="/_vercel/insights/script.js"></script>
   <script src="productos.js"></script>
-  <script src="app.js?v=20261105u"></script>
+  <script src="app.js?v=20261105v"></script>
 </body>
 </html>
