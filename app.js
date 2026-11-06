@@ -1285,18 +1285,60 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     animarCani(false);
   }
   function contacto() {
-    app.innerHTML = `<section class="seccion"><h2>Contacto</h2>
-      <p class="texto">Escríbenos y te respondemos lo antes posible.</p>
-      <form class="form" id="form-contacto" style="max-width:520px">
-        <input name="nombre" placeholder="Nombre" required>
-        <input name="telefono" placeholder="Teléfono">
-        <textarea name="mensaje" rows="4" placeholder="Tu mensaje" required></textarea>
-        <button class="btn btn-wa" type="submit">Enviar por WhatsApp</button>
-      </form></section>`;
-    $("#form-contacto").onsubmit = e => {
-      e.preventDefault(); const f = new FormData(e.target);
-      const msg = `Hola, soy ${f.get("nombre")}${f.get("telefono") ? ` (${f.get("telefono")})` : ""}.\n${f.get("mensaje")}`;
-      window.open(waURL(msg), "_blank");
+    const SVG_WA = `<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.9 1 1-3.8-.2-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.9 1 3.9.8a3.3 3.3 0 0 0 2.2-1.5 2.7 2.7 0 0 0 .2-1.5c-.1-.2-.3-.3-.7-.5z"/></svg>`;
+    const ic = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+    const temas = [
+      ["Hacer un pedido", "Hola Cani Shop, quiero hacer un pedido.", '<path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2"/>'],
+      ["Preguntar por un producto", "Hola Cani Shop, tengo una pregunta sobre un producto.", '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'],
+      ["Mi pedido", "Hola Cani Shop, quiero saber cómo va mi pedido.", '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/>'],
+      ["Envíos y pagos", "Hola Cani Shop, quiero saber sobre envíos y formas de pago.", '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18M7 15h3"/>'],
+      ["Punto de retiro", "Hola Cani Shop, quisiera coordinar un retiro.", '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>'],
+      ["Otra consulta", "Hola Cani Shop, quisiera hacerles una consulta.", '<path d="M4 5h16v11H9l-5 4V5z"/><path d="M8.5 10h.01M12 10h.01M15.5 10h.01"/>']
+    ];
+    const sel = selOn();
+    const bloques = [
+      ["Pedidos", '<path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2"/>', [
+        ["¿Cómo hago mi pedido?", T.pago || "Armas tu carrito y lo envías por WhatsApp. Te confirmamos stock y el costo de envío, y te pasamos el QR para pagar."],
+        ["¿Qué es un Scoop?", 'Es una forma de comprar armando tu propio Scoop a tu gusto. <a href="#/scoops">Entra a Arma tu Scoop</a> y elige.']
+      ]],
+      ["Pagos", '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18M7 15h3"/>', [
+        ["¿Cómo pago?", "Pagas con QR. Te lo pasamos por WhatsApp cuando confirmamos tu pedido."],
+        ["¿Cuándo pago?", "Después de que confirmamos el stock y el costo de envío por WhatsApp. Primero te escribimos, luego pagas."]
+      ]],
+      ["Envíos y retiro", '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/>', [
+        ["¿Envían a todo el país?", "Sí, enviamos a toda Bolivia. El costo del envío te lo confirmamos por WhatsApp."],
+        ["¿Tienen punto de retiro?", "Sí. Lo coordinamos contigo por WhatsApp para ponernos de acuerdo en el lugar y la hora."]
+      ]],
+      ...(sel ? [["Sellitos", '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"/>', [
+        ["¿Qué son los sellitos?", `Cada compra de ${bsc(SEL.minimo)} o más te da un sellito. Con ${SEL.meta} sellitos ganas un vale de ${bsc(SEL.vale)}. <a href="#/sellitos">Ver mi tarjeta</a>`],
+        ["¿Cuándo se suma mi sellito?", `Cuando confirmamos tu pago, si tu compra es de ${bsc(SEL.minimo)} o más sin contar el envío.`],
+        ["¿Cómo uso mi vale?", "Se descuenta de tu próximo pedido hecho con el mismo número de WhatsApp. Nos avisa solito al enviarlo."]
+      ]]] : [])
+    ];
+    const igUser = (T.instagram || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+    app.innerHTML = `<section class="ct-pag">
+      <div class="ct-hero"><svg class="ct-sp a" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><svg class="ct-sp b" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><svg class="ct-sp c" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><img src="cani-charla.webp" alt=""><div><h1>Ayuda</h1><p class="ct-globo">¿En qué te ayudo?</p></div></div>
+      <div class="ct-hoja">
+        <div class="ct-temas">${temas.map(([t, m, d], i) => `<a class="ct-tema c${i % 3}" href="${waURL(m)}" target="_blank" rel="noopener"><span class="ct-ico">${ic(d)}</span><b>${esc(t)}</b></a>`).join("")}</div>
+        <p class="ct-aviso">Cada botón abre WhatsApp con el mensaje ya escrito. Solo das enviar.</p>
+        <h2 class="ct-tit">Preguntas frecuentes</h2>
+        <label class="ct-busca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="ct-q" type="search" placeholder="Busca tu duda, por ejemplo: pago" autocomplete="off"></label>
+        <div id="ct-faq">${bloques.map(([nom, d, qs]) => `<div class="ct-bloque"><h3><span class="ct-ico">${ic(d)}</span>${esc(nom)}</h3><div class="ct-faq">${qs.map(([q, r]) => `<details><summary>${esc(q)}</summary><p>${r}</p></details>`).join("")}</div></div>`).join("")}</div>
+        <p class="ct-nada" id="ct-nada" hidden>No encontré esa pregunta. Escríbenos y te ayudamos.</p>
+        <div class="ct-cierre"><a class="btn btn-wa ct-wa" href="${waURL("Hola Cani Shop, quisiera hacerles una consulta.")}" target="_blank" rel="noopener">${SVG_WA}Escribir por WhatsApp</a>
+          <div class="ct-redes">
+            ${ttUser ? `<a href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener"><span class="ct-ico">${ic('<path d="M14 3v11.5a3.5 3.5 0 1 1-3-3.46"/><path d="M14 3c.4 2.6 2.2 4.4 5 4.6"/>')}</span><b>TikTok</b><small>@${esc(ttUser)}</small></a>` : ""}
+            ${T.instagram ? `<a href="${esc(T.instagram)}" target="_blank" rel="noopener"><span class="ct-ico">${ic('<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6" fill="currentColor"/>')}</span><b>Instagram</b><small>${igUser ? "@" + esc(igUser) : "Síguenos"}</small></a>` : ""}
+          </div></div>
+      </div>
+    </section>`;
+    const q = $("#ct-q");
+    const norm = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    q.oninput = () => {
+      const t = norm(q.value).trim(); let hay = 0;
+      document.querySelectorAll("#ct-faq details").forEach(d => { const ok = !t || norm(d.textContent).includes(t); d.hidden = !ok; if (ok) hay++; if (t && ok) d.open = true; if (!t) d.open = false; });
+      document.querySelectorAll(".ct-bloque").forEach(b => { b.hidden = ![...b.querySelectorAll("details")].some(d => !d.hidden); });
+      $("#ct-nada").hidden = hay > 0;
     };
   }
 
@@ -1524,7 +1566,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops, sellitos, blog: () => blog(arg) }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, blog: () => blog(arg) }[sec] || inicio)();
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
