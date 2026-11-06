@@ -35,6 +35,23 @@
     });
   })();
   </script>
+  <!-- Google Analytics 4. Pega tu ID de medición (empieza con G-) entre las comillas de GA_ID; si está vacío, no se activa. -->
+  <script>
+  (function () {
+    var GA_ID = "";
+    if (!GA_ID) return;
+    var s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { dataLayer.push(arguments); };
+    gtag("js", new Date());
+    gtag("config", GA_ID, { send_page_view: false });
+    // La tienda cambia de página con # (sin recargar), así que mandamos cada cambio a mano
+    var visto = function () { gtag("event", "page_view", { page_location: location.href, page_path: location.pathname + location.hash, page_title: document.title }); };
+    visto();
+    window.addEventListener("hashchange", visto);
+  })();
+  </script>
 </head>
 <body>
   <div class="aviso">
