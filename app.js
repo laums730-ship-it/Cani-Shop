@@ -730,13 +730,37 @@
     const nav = $("#menu"), cat = nav && nav.querySelector('a[href="#/catalogo"]');
     if (!cat || nav.querySelector(".menu-drop")) return;
     const pers = PERS(), categ = CATEG();
+    // Ícono dibujado para cada personaje / categoría (según su nombre)
+    const IC = {
+      gato: `<path d="M5 10V4l4 3.2h6L19 4v6c0 3.9-3.1 7-7 7s-7-3.1-7-7z"/><path d="M9.5 11h.01M14.5 11h.01M11 14h2"/>`,
+      perro: `<path d="M8 6h8c1 0 2 1 2 2v5a6 6 0 01-12 0V8c0-1 1-2 2-2z"/><path d="M8 6C5 6 4 9 4 12c0 1.5.5 2.5 1.5 2.5M16 6c3 0 4 3 4 6 0 1.5-.5 2.5-1.5 2.5"/><path d="M9.5 11h.01M14.5 11h.01M11 14.5h2"/>`,
+      fantasma: `<path d="M5 20v-9a7 7 0 0114 0v9l-2.3-2-2.3 2-2.4-2-2.4 2-2.3-2z"/><path d="M9.5 11h.01M14.5 11h.01"/>`,
+      musica: `<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>`,
+      estrella: `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"/>`,
+      juego: `<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4M15.5 12h.01M18 14h.01"/>`,
+      cuaderno: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4"/>`,
+      lapiz: `<path d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/>`,
+      belleza: `<rect x="9" y="12" width="6" height="8" rx="1"/><path d="M10 12V8l4-4v8"/>`,
+      regalo: `<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/>`,
+      lazo: `<path d="M12 12L5 7v10l7-5zm0 0l7-5v10l-7-5z"/><circle cx="12" cy="12" r="1.4"/>`,
+      oso: `<circle cx="12" cy="13" r="6"/><circle cx="6.5" cy="7.5" r="2.2"/><circle cx="17.5" cy="7.5" r="2.2"/><path d="M10 13h.01M14 13h.01M11 15.5h2"/>`,
+      corazon: `<path d="M12 20S4 15 4 9.5A4 4 0 0112 8a4 4 0 018 1.5C20 15 12 20 12 20z"/>`
+    };
+    const iconoMenu = nombre => {
+      const n = String(nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const k = /kitty|gatit|gato|cat/.test(n) ? "gato" : /snoopy|perr|dog/.test(n) ? "perro" : /obakenu|fantasma|ghost/.test(n) ? "fantasma"
+        : /bts|music|kpop|k-pop/.test(n) ? "musica" : /sanrio|estrella|novedad/.test(n) ? "estrella" : /juego|kawaii|game/.test(n) ? "juego"
+        : /papel|cuaderno|libreta/.test(n) ? "cuaderno" : /lapic|boligraf|pluma/.test(n) ? "lapiz" : /beauty|belleza|maquill|labial/.test(n) ? "belleza"
+        : /happy|box|regalo|sorpresa/.test(n) ? "regalo" : /accesor|lazo|mon|joya/.test(n) ? "lazo" : /peluch|oso|muñec/.test(n) ? "oso" : "corazon";
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
+    };
     const d = document.createElement("div"); d.className = "menu-drop";
     d.innerHTML = `<button type="button" class="menu-tienda" aria-expanded="false">Tienda <span>▾</span></button>
-      <div class="mega">
-        ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}</div>` : ""}
-        <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}
-          <a href="#/novedades" class="mega-todo">Novedades →</a><a href="#/todo" class="mega-todo">Ver todo →</a></div>
-        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span></a>` : ""}
+      <div class="mega${SC ? "" : " sin-promo"}">
+        ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}"><i>${iconoMenu(c.nombre)}</i>${esc(c.nombre)}</a>`).join("")}</div>` : ""}
+        <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}"><i>${iconoMenu(c.nombre)}</i>${esc(c.nombre)}</a>`).join("")}</div>
+        <div class="mega-pie"><a href="#/novedades">Novedades →</a><a href="#/todo">Ver todo →</a></div>
+        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span><small>Armar ahora</small></a>` : ""}
       </div>`;
     cat.replaceWith(d);
     const b = d.querySelector(".menu-tienda");
