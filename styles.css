@@ -1511,49 +1511,61 @@ input,select,textarea{max-width:100%;min-width:0}
 .pdx-pocas{display:block;margin-top:8px;font-size:.82rem;font-weight:700;color:#c2415f}
 
 /* ---------- Tarjeta de sellitos ---------- */
-.sel-pag{max-width:560px;padding-left:16px;padding-right:16px}
-.sel-cab{text-align:center;margin-bottom:22px}
-.sel-cab h1{font-family:var(--f-tit);font-weight:600;font-size:clamp(2rem,6vw,2.6rem);margin:0 0 6px;color:var(--cafe)}
-.sel-cab p{margin:0 auto;max-width:400px;font-size:.92rem;line-height:1.5}
-.sel-caja{max-width:440px;margin:0 auto}
-.sel-tarjeta{position:relative;background:#fce3ee;border-radius:26px;padding:22px 18px;box-shadow:0 6px 0 #f8d3e3;overflow:hidden}
-.sel-tarjeta.llena{background:#fdf1e7}
-.sel-tarjeta > *:not(.sel-confeti){position:relative;z-index:1}
-.sel-charla{display:flex;align-items:flex-end;gap:10px;margin-bottom:16px}
-.sel-charla img{width:76px;height:auto;flex:none}
-.sel-globo{margin:0;background:#fff;border-radius:18px 18px 18px 4px;padding:12px 14px;font-size:.84rem;line-height:1.45;font-weight:700;box-shadow:0 3px 0 #f8d3e3;color:var(--cafe)}
-.sel-form label{display:block;font-size:.8rem;font-weight:700;margin-bottom:6px}
 .sel-campo{width:100%;box-sizing:border-box;border:2px solid #f8d3e3;border-radius:16px;padding:13px 14px;font:700 16px var(--f-txt);color:var(--cafe);background:#fff;outline:none}
 .sel-campo:focus{border-color:#fd95c8}
 .sel-btn{width:100%;margin-top:14px;border-radius:16px!important;font-family:var(--f-tit);font-weight:600;font-size:1.05rem;box-sizing:border-box}
 .sel-btn.lila{background:#cca1e8!important;box-shadow:0 5px 0 #b386d3!important}
 .sel-nota{font-size:.75rem;text-align:center;margin:12px 0 0;opacity:.8;line-height:1.4}
-.sel-sellos{display:grid;grid-template-columns:repeat(var(--n,5),1fr);gap:8px;margin:4px 0 14px}
-.sel-sello{aspect-ratio:1;border-radius:50%;background:#fff;border:2.5px dashed #f8d3e3;display:grid;place-items:center;font:600 15px var(--f-tit);color:#e2b9c8;box-sizing:border-box}
-.sel-sello.ok{border:2.5px solid #fd95c8;box-shadow:0 4px 0 #ef7db6}
-.sel-sello.ok img{width:76%;animation:sel-pop .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * .12s)}
-.sel-sello.regalo{border-color:#cca1e8;color:#cca1e8}
-.sel-sello.regalo svg{width:56%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 @keyframes sel-pop{0%{transform:scale(0) rotate(-30deg)}100%{transform:scale(1) rotate(0)}}
-.sel-barra{height:16px;background:#fff;border-radius:999px;overflow:hidden;box-shadow:inset 0 2px 0 #f8d3e3}
-.sel-barra i{display:block;height:100%;background:#fd95c8;border-radius:999px;position:relative;transition:width .8s cubic-bezier(.2,.9,.2,1)}
-.sel-barra i::after{content:"";position:absolute;left:8px;right:8px;top:3px;height:4px;border-radius:9px;background:rgba(255,255,255,.55)}
-.sel-cuenta{display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;margin-top:7px}
-.sel-premio{background:#fff;border-radius:18px;padding:14px;text-align:center;margin-top:14px;box-shadow:0 4px 0 #f8d3e3}
-.sel-premio b{font-family:var(--f-tit);font-weight:600;font-size:1.4rem;display:block;margin-bottom:4px;color:#ee6fae}
-.sel-premio span{font-size:.78rem;line-height:1.45}
+/* tarjeta de sellitos (nuevo look) */
+/* mis sellitos: anillo + hoja */
+.sel-pag{padding:0}
+.sel-hero{position:relative;overflow:hidden;background:#fd95c8;text-align:center;padding:26px 16px 62px;color:var(--cafe)}
+.sel-hero::before,.sel-hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.22);pointer-events:none}
+.sel-hero::before{width:180px;height:180px;left:-60px;top:30px}.sel-hero::after{width:120px;height:120px;right:-30px;top:-30px}
+.sel-hero > *{position:relative;z-index:1}.sel-hero > .sel-confeti{position:absolute;z-index:0}
+.sel-hero h1{font-family:var(--f-tit);font-weight:600;font-size:clamp(2rem,6vw,2.6rem);margin:0 0 4px;color:var(--cafe)}
+.sel-hero p{margin:0;font-size:.88rem}
+.sel-ring{position:relative;width:210px;height:210px;margin:20px auto 0}
+.sel-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.sel-ring circle{fill:none;stroke-width:16;stroke-linecap:round}
+.sel-ring .bg{stroke:rgba(255,255,255,.55)}
+.sel-ring .fg{stroke:#fff;stroke-dasharray:565.5;filter:drop-shadow(0 3px 0 rgba(120,55,70,.18));transition:stroke-dashoffset 1s cubic-bezier(.2,.9,.2,1)}
+.sel-mid{position:absolute;inset:0;display:grid;place-items:center;align-content:center}
+.sel-mid img{width:84px;height:auto;margin-bottom:-4px}
+.sel-mid b{font:600 2.3rem/1 var(--f-tit)}.sel-mid small{font:700 .72rem var(--f-txt);opacity:.75}
+.sel-hoja{background:#fff;border-radius:28px 28px 0 0;margin:-34px auto 0;position:relative;z-index:2;padding:24px 16px 40px;max-width:520px}
+.sel-msg{text-align:center;font:600 1.15rem/1.3 var(--f-tit);margin:0 0 16px;color:var(--cafe)}
+.sel-dots{display:flex;justify-content:space-between;align-items:center;padding:0 6px;position:relative;margin-bottom:22px}
+.sel-dots::before{content:"";position:absolute;left:24px;right:24px;top:50%;height:4px;margin-top:-2px;background:#fbe4ee;border-radius:9px}
+.sel-d{position:relative;width:46px;height:46px;border-radius:50%;background:#fff;border:3px solid #f2c4d9;display:grid;place-items:center;font:600 1rem var(--f-tit);color:#e1a9c3;box-sizing:border-box}
+.sel-d.ok{background:#fce3ee;border-color:#fd95c8;box-shadow:0 3px 0 #ef7db6}
+.sel-d.ok img{width:70%;animation:sel-pop .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i) * .12s)}
+.sel-d.v{border-color:#cca1e8;background:#f6ecfc;color:#9a63c2}
+.sel-d.v svg{width:60%;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sel-tk{display:flex;align-items:stretch;background:#f6ecfc;border-radius:18px;margin-bottom:14px;box-shadow:0 4px 0 #dfc4f1}
+.sel-tk .l{flex:none;min-width:92px;padding:0 8px;display:grid;place-items:center;background:#cca1e8;border-radius:18px 0 0 18px;font:600 1.5rem var(--f-tit);position:relative;color:#fff;text-shadow:0 2px 0 rgba(120,55,70,.25)}
+.sel-tk .l::after{content:"";position:absolute;right:-8px;top:0;bottom:0;width:16px;background:radial-gradient(circle at 8px 50%,#fff 6px,transparent 6.5px) 0 0/16px 22px repeat-y}
+.sel-tk .r{padding:14px 14px 14px 22px;font-size:.8rem;line-height:1.4;color:var(--cafe)}
+.sel-tk .r b{font:600 1.05rem var(--f-tit);display:block}
+.sel-tk.listo{box-shadow:0 4px 0 #b386d3}
+.sel-form{margin:18px 0 22px}
+.sel-form label{display:block;font-size:.8rem;font-weight:700;margin:0 0 6px 4px}
+.sel-row{display:flex;gap:8px}
+.sel-row .sel-campo{flex:1;min-width:0}
+.sel-ver{flex:none;border-radius:14px!important;font-family:var(--f-tit);font-weight:600;font-size:1.05rem;padding:0 22px!important}
+.sel-lab{font:700 .72rem var(--f-txt);letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin:22px 0 10px 4px}
+.sel-pasos{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.sel-pasos li{display:flex;gap:12px;align-items:center;background:#fce3ee;border-radius:18px;padding:12px 14px;font-size:.8rem;line-height:1.4}
+.sel-pasos li > span{flex:none;width:36px;height:36px;border-radius:50%;background:#fff;display:grid;place-items:center;font:600 1rem var(--f-tit);color:#ee6fae}
+.sel-pasos b{font:600 .98rem var(--f-tit);display:block}
 .sel-confeti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
 .sel-confeti i{position:absolute;width:8px;height:12px;border-radius:3px;top:-14px;animation:sel-cae 2.6s linear infinite}
 @keyframes sel-cae{to{transform:translateY(620px) rotate(540deg)}}
 .sel-otro{display:block;margin:14px auto 0;background:none;border:0;font:700 .82rem var(--f-txt);color:var(--cafe);text-decoration:underline;text-underline-offset:4px;cursor:pointer}
-.sel-pasos{list-style:none;padding:0;margin:30px auto 0;max-width:440px;display:grid;gap:12px}
-.sel-pasos li{display:flex;gap:12px;align-items:flex-start;background:#fff;border:2px solid #fce3ee;border-radius:20px;padding:14px}
-.sel-pasos li > span{flex:none;width:34px;height:34px;border-radius:50%;background:#fd95c8;color:var(--cafe);display:grid;place-items:center;font:600 1rem var(--f-tit);box-shadow:0 3px 0 #ef7db6}
-.sel-pasos b{font-family:var(--f-tit);font-weight:600;font-size:1rem}
-.sel-pasos p{margin:2px 0 0;font-size:.8rem;line-height:1.45}
 .sel-aviso{display:flex;align-items:center;gap:8px;background:#fce3ee;border-radius:14px;padding:9px 12px;font-size:.8rem;font-weight:700;color:var(--cafe);text-decoration:none;animation:sel-pop .4s cubic-bezier(.3,1.6,.5,1) both}
 .sel-aviso img{width:22px;height:22px;flex:none}
-@media (prefers-reduced-motion:reduce){.sel-sello.ok img,.sel-aviso{animation:none}.sel-confeti{display:none}}
+@media (prefers-reduced-motion:reduce){.sel-d.ok img,.sel-aviso{animation:none}.sel-confeti{display:none}}
 
 /* ---------- Blog ---------- */
 .bl-pag{max-width:1080px}

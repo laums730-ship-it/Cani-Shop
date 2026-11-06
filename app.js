@@ -1301,65 +1301,73 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     return d && d.vales > 0 ? `🎁 Tengo ${d.vales > 1 ? d.vales + " vales" : "un vale"} de sellitos de ${bsc(d.vale)}${d.vales > 1 ? " c/u" : ""}` : null; };
   const SVG_REGALO = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/></svg>`;
   const telGuardado = () => { try { return (JSON.parse(localStorage.getItem("datos-pedido") || "{}").telefono) || localStorage.getItem("sellitos-tel") || ""; } catch (e) { return ""; } };
-  const fichas = (d) => {
-    const n = d.meta, llenos = d.sellos;
-    return `<div class="sel-sellos" style="--n:${n}">${Array.from({ length: n }, (_, i) => i < llenos
-      ? `<span class="sel-sello ok" style="--i:${i}"><img src="estrella-rosa.svg" alt=""></span>`
-      : i === n - 1 ? `<span class="sel-sello regalo">${SVG_REGALO}</span>` : `<span class="sel-sello">${i + 1}</span>`).join("")}</div>`;
-  };
-  function tarjetaSellitos(d) {
-    const falta = d.meta - d.sellos, llena = d.vales > 0;
-    const globo = llena ? `¡lo lograste! te ganaste ${d.vales > 1 ? d.vales + " vales" : "un vale"} de ${bsc(d.vale)}`
-      : d.sellos === 0 ? `todavía no tienes sellitos. tu primera compra de ${bsc(d.minimo)} o más te da el primero`
-      : falta === 1 ? "¡te falta solo 1 comprita para tu vale!"
-      : d.sellos >= d.meta / 2 ? `¡vas súper bien! solo ${falta} compritas más para tu vale de ${bsc(d.vale)}`
-      : `¡qué lindo verte! llevas ${d.sellos} ${d.sellos === 1 ? "sellito" : "sellitos"}, sigue así`;
-    return `<div class="sel-tarjeta ${llena ? "llena" : ""}">
-      ${llena ? `<div class="sel-confeti" aria-hidden="true">${Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i * .13) % 2.6}s;background:${["#fd95c8", "#cca1e8", "#fce3ee"][i % 3]}"></i>`).join("")}</div>` : ""}
-      <div class="sel-charla"><img src="${llena ? "cani-charla.webp" : "cani-sentado.webp"}" alt=""><p class="sel-globo">${esc(globo)}</p></div>
-      ${fichas({ ...d, sellos: llena ? d.meta : d.sellos })}
-      <div class="sel-barra"><i style="width:${(llena ? 1 : d.sellos / d.meta) * 100}%"></i></div>
-      <div class="sel-cuenta"><span>${llena ? d.meta : d.sellos} de ${d.meta} sellitos</span><span>${llena ? "¡tarjeta llena!" : `faltan ${falta}`}</span></div>
-      ${llena ? `<div class="sel-premio"><b>vale de ${bsc(d.vale)}</b><span>se descuenta de tu próximo pedido hecho con este mismo WhatsApp. al enviarlo, nos avisa solito</span></div>
-        <a class="btn sel-btn lila" href="#/catalogo">elegir mis cositas</a>` : ""}
-      ${d.extra > 0 ? `<p class="sel-nota">y ya llevas ${d.extra} ${d.extra === 1 ? "sellito" : "sellitos"} para tu próxima tarjeta</p>` : ""}
-    </div>`;
+  // Página "mis sellitos": arriba un anillo con el avance, abajo la hoja con sellitos, vale y formulario.
+  // Antes de buscar el número se ve en cero, de muestra.
+  function pintarSellitos(d, muestra) {
+    const n = d.meta, llena = d.vales > 0, ll = llena ? n : d.sellos, falta = n - d.sellos;
+    const msg = muestra ? "Escribe tu WhatsApp y te muestro tus sellitos"
+      : llena ? `Te ganaste ${d.vales > 1 ? d.vales + " vales" : "un vale"} de ${bsc(d.vale)}`
+      : d.sellos === 0 ? `Tu primera compra de ${bsc(d.minimo)} o más te da el primer sellito`
+      : falta === 1 ? `Te falta 1 sellito para tu vale de ${bsc(d.vale)}`
+      : `Te faltan ${falta} sellitos para tu vale de ${bsc(d.vale)}`;
+    const C = 565.5;
+    $("#sel-hero").classList.toggle("llena", llena);
+    $("#sel-ring").innerHTML = `<svg viewBox="0 0 200 200" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" cx="100" cy="100" r="90" style="stroke-dashoffset:${C * (1 - ll / n)}"/></svg>
+      <div class="sel-mid"><img src="${llena ? "cani-charla.webp" : "cani-sentado.webp"}" alt=""><b>${muestra ? "0" : ll} de ${n}</b><small>Sellitos</small></div>`;
+    $("#sel-confeti").innerHTML = llena ? Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i * .13) % 2.6}s;background:${["#fff", "#cca1e8", "#fce3ee"][i % 3]}"></i>`).join("") : "";
+    const puntos = Array.from({ length: n }, (_, i) => i < ll
+      ? `<span class="sel-d ok" style="--i:${i}"><img src="estrella-rosa.svg" alt=""></span>`
+      : i === n - 1 ? `<span class="sel-d v">${SVG_REGALO}</span>` : `<span class="sel-d">${i + 1}</span>`).join("");
+    $("#sel-arriba").innerHTML = `<p class="sel-msg">${esc(msg)}</p>
+      <div class="sel-dots">${puntos}</div>
+      <div class="sel-tk ${llena ? "listo" : ""}"><div class="l">${esc(bsc(d.vale))}</div><div class="r"><b>${llena ? "Tu vale está listo" : "Tu vale"}</b>${llena ? "Se descuenta de tu próximo pedido hecho con este mismo WhatsApp. Al enviarlo, nos avisa solito." : "Se descuenta de tu próximo pedido cuando llenes la tarjeta."}</div></div>
+      ${llena ? `<a class="btn sel-btn lila" href="#/catalogo">Elegir mis cositas</a>` : ""}
+      ${d.extra > 0 ? `<p class="sel-nota">Y ya llevas ${d.extra} ${d.extra === 1 ? "sellito" : "sellitos"} para tu próxima tarjeta</p>` : ""}`;
   }
   function sellitos() {
     if (!selOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">La tarjeta de sellitos no está disponible por ahora.</p>`; return; }
     const tel0 = telGuardado();
-    app.innerHTML = `<section class="seccion sel-pag">
-      <div class="sel-cab"><h1>mis sellitos</h1>
-        <p>cada compra de ${bsc(SEL.minimo)} o más te da un sellito. junta ${SEL.meta} y te ganas un vale de ${bsc(SEL.vale)}</p></div>
-      <div class="sel-caja" id="sel-caja">
-        <form class="sel-tarjeta sel-form" id="sel-form">
-          <div class="sel-charla"><img src="cani-charla.webp" alt=""><p class="sel-globo">¡hola! escribe tu WhatsApp y te muestro cuántos sellitos llevas</p></div>
-          <label for="sel-tel">tu WhatsApp</label>
-          <input id="sel-tel" class="sel-campo" type="tel" inputmode="tel" placeholder="ej: 71234567" value="${esc(tel0)}" required>
-          <button class="btn sel-btn" type="submit">ver mi tarjeta</button>
-          <p class="sel-nota">no necesitas cuenta ni contraseña</p>
+    app.innerHTML = `<section class="sel-pag">
+      <div class="sel-hero" id="sel-hero"><div class="sel-confeti" id="sel-confeti" aria-hidden="true"></div>
+        <h1>Mis sellitos</h1><p>Cada compra de ${bsc(SEL.minimo)} o más te da un sellito.</p>
+        <div class="sel-ring" id="sel-ring"></div></div>
+      <div class="sel-hoja">
+        <div id="sel-arriba"></div>
+        <form class="sel-form" id="sel-form">
+          <label for="sel-tel">Tu WhatsApp</label>
+          <div class="sel-row">
+            <input id="sel-tel" class="sel-campo" type="tel" inputmode="tel" placeholder="Ej: 71234567" value="${esc(tel0)}" required>
+            <button class="btn sel-ver" type="submit">Ver</button>
+          </div>
+          <p class="sel-nota">No necesitas cuenta ni contraseña</p>
         </form>
+        <p class="sel-lab">Cómo funciona</p>
+        <ol class="sel-pasos">
+          <li><span>1</span><div><b>Compras</b>Desde ${bsc(SEL.minimo)}, sin contar el envío, con tu número de WhatsApp.</div></li>
+          <li><span>2</span><div><b>Sumas un sellito</b>Se suma solito cuando confirmamos tu pago.</div></li>
+          <li><span>3</span><div><b>Ganas tu vale</b>${bsc(SEL.vale)} de descuento con ${SEL.meta} sellitos.</div></li>
+        </ol>
       </div>
-      <ol class="sel-pasos">
-        <li><span>1</span><div><b>compras</b><p>haz tu pedido en la tienda o arma tu Scoop, con tu número de WhatsApp.</p></div></li>
-        <li><span>2</span><div><b>sumas un sellito</b><p>cuando confirmamos tu pago, se suma solito si tu compra es de ${bsc(SEL.minimo)} o más (sin contar el envío).</p></div></li>
-        <li><span>3</span><div><b>ganas tu vale</b><p>con ${SEL.meta} sellitos te ganas ${bsc(SEL.vale)} de descuento para tu siguiente pedido.</p></div></li>
-      </ol>
     </section>`;
+    pintarSellitos({ meta: SEL.meta, sellos: 0, vales: 0, vale: SEL.vale, minimo: SEL.minimo, extra: 0 }, true);
     const F = $("#sel-form");
     F.onsubmit = async e => {
       e.preventDefault();
       const tel = $("#sel-tel").value, tn = telLimpio(tel);
       if (tn.length < 8) { toast("Revisa tu número de WhatsApp"); return $("#sel-tel").focus(); }
-      const b = F.querySelector("button"); b.disabled = true; b.textContent = "buscando…";
+      const b = F.querySelector("button"); b.disabled = true; b.textContent = "…";
       const d = await consultarSellitos(tel);
-      b.disabled = false; b.textContent = "ver mi tarjeta";
+      b.disabled = false; b.textContent = "Ver";
       if (!d) return toast("No pudimos ver tu tarjeta, intenta otra vez");
       try { localStorage.setItem("sellitos-tel", tel); } catch (e) {}
-      $("#sel-caja").innerHTML = tarjetaSellitos(d) + `<button class="sel-otro" id="sel-otro" type="button">ver otro número</button>`;
+      pintarSellitos(d, false);
+      F.outerHTML = `<button class="sel-otro" id="sel-otro" type="button">Ver otro número</button>`;
       $("#sel-otro").onclick = sellitos;
     };
+    if (tel0 && telLimpio(tel0).length >= 8) F.requestSubmit();
   }
+
+
   // En el carrito y en Arma tu Scoop: al escribir el WhatsApp, Cani le cuenta sus sellitos
   { let tSel;
     document.addEventListener("input", e => {
