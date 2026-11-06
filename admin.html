@@ -997,8 +997,8 @@
       <button class="btn" id="ped-nuevo">＋ Nuevo pedido</button>
     </div>
     <div class="barra" id="ped-filtros">
-      <button class="filtro on" data-pf="activos">Por atender</button>
-      <button class="filtro" data-pf="nuevo">🆕 Nuevos</button>
+      <button class="filtro on" data-pf="nuevo">🆕 Nuevos</button>
+      <button class="filtro" data-pf="porentregar">🚚 Por entregar</button>
       <button class="filtro" data-pf="confirmado">✅ Confirmados</button>
       <button class="filtro" data-pf="pagado">💰 Pagados</button>
       <button class="filtro" data-pf="entregado">📦 Entregados</button>
@@ -2141,7 +2141,7 @@
     const nN = PEDS.filter(p => p.estado === "nuevo").length, nC = PEDS.filter(p => p.estado === "confirmado").length, nP = PEDS.filter(p => p.estado === "pagado").length;
     const rep = PRODS.filter(porReponer).sort((a, b) => total(a) - total(b)), nAg = rep.filter(agotado).length;
     $("#ini-kpis").innerHTML = `
-      <button type="button" class="ini-kpi dest" data-ir-tab="pedidos"><small>${ICK.ped}Por atender</small><b>${nN + nC + nP} pedido${nN + nC + nP === 1 ? "" : "s"}</b><span>${[nN && `${nN} nuevo${nN === 1 ? "" : "s"}`, nC && `${nC} confirmado${nC === 1 ? "" : "s"}`, nP && `${nP} por entregar`].filter(Boolean).join(" · ") || "¡Todo al día!"}</span></button>
+      <button type="button" class="ini-kpi dest" data-ir-tab="pedidos"><small>${ICK.ped}Pedidos en curso</small><b>${nN + nC + nP} pedido${nN + nC + nP === 1 ? "" : "s"}</b><span>${[nN && `${nN} nuevo${nN === 1 ? "" : "s"}`, nC && `${nC} confirmado${nC === 1 ? "" : "s"}`, nP && `${nP} por entregar`].filter(Boolean).join(" · ") || "¡Todo al día!"}</span></button>
       <button type="button" class="ini-kpi" data-ir-tab="estadisticas"><small>${ICK.sube}Ventas de la semana</small><b>${bs(vSem)}</b><span class="${cambio === null ? "" : cambio >= 0 ? "sube" : "baja"}">${cambio === null ? `${sem.length} venta${sem.length === 1 ? "" : "s"}` : `${cambio >= 0 ? "+" : ""}${cambio}% que la semana anterior`}</span></button>
       <button type="button" class="ini-kpi" data-ir-tab="estadisticas"><small>${ICK.est}Ganancia de la semana</small><b>${gan === null ? "—" : bs(gan)}</b><span class="${gan === null ? "" : "sube"}">${gan === null ? "Carga los costos para verla" : vSem ? `${Math.round(gan / vSem * 100)}% de lo vendido` : "Aún sin ventas esta semana"}</span></button>
       <button type="button" class="ini-kpi" data-ir-tab="productos" data-filtro-rep="1"><small>${ICK.rep}Por reponer</small><b>${rep.length} producto${rep.length === 1 ? "" : "s"}</b><span class="${nAg ? "baja" : ""}">${nAg ? `${nAg} agotado${nAg === 1 ? "" : "s"}` : rep.length ? "Con pocas unidades" : "Stock al día"}</span></button>`;
@@ -2542,7 +2542,7 @@
   };
 
   // ---------- Pedidos ----------
-  let PEDS = [], pfiltro = "activos", ED = null, nNuevosAntes = null;
+  let PEDS = [], pfiltro = "nuevo", ED = null, nNuevosAntes = null;
   const ACTIVOS = ["nuevo", "confirmado", "pagado"];
   const DESCUENTAN = ["confirmado", "pagado", "entregado"];
   const ESTADO_TXT = { nuevo: "🆕 Nuevo", confirmado: "✅ Confirmado", pagado: "💰 Pagado", entregado: "📦 Entregado", cancelado: "✖ Cancelado" };
@@ -2633,7 +2633,7 @@
     document.querySelectorAll("#ped-vistas [data-vista]").forEach(x => x.classList.toggle("on", x.dataset.vista === pvista));
     $("#ped-filtros").hidden = tab; $("#ped-lista").hidden = tab; $("#ped-tablero").hidden = !tab; if (!tab) $("#ped-tablero-nota").hidden = true;
     if (tab) return pintarTablero(q);
-    let l = PEDS.filter(p => pfiltro === "todos" ? true : pfiltro === "activos" ? ACTIVOS.includes(p.estado) : p.estado === pfiltro);
+    let l = PEDS.filter(p => pfiltro === "todos" ? true : pfiltro === "porentregar" ? ["confirmado", "pagado"].includes(p.estado) : p.estado === pfiltro);
     if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
     if (!l.length) { $("#ped-lista").innerHTML = `<div class="vacio">${PEDS.length ? "No hay pedidos aquí." : "Todavía no llegan pedidos. Cuando alguien compre en tu tienda, aparece aquí 💕"}</div>`; return; }
     $("#ped-lista").innerHTML = l.map(p => {
@@ -3190,7 +3190,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#est-reactivar").innerHTML = reac.length ? reac.map(c => `<div class="barra-h"><div class="bh-c"><div class="bh-t"><b>${esc(c.nom || "Sin nombre")}</b><small>${bs(c.tot)} · ${c.n} ${c.n === 1 ? "compra" : "compras"}</small></div><small class="bh-sub">Última compra: ${fCorta(new Date(c.t))}</small></div>${telN(c.tel).length >= 8 ? `<a class="btn btn-sec btn-sm" target="_blank" rel="noopener" href="https://wa.me/${telN(c.tel)}?text=${encodeURIComponent(`¡Hola ${(c.nom || "").split(" ")[0]}! Te extrañamos en ${AJ.nombre || "Cani Shop"} ♡ Llegaron novedades que te pueden encantar: ${location.origin}/`)}">Escribir</a>` : ""}</div>`).join("") : `<p class="ayuda">Todos tus clientes compraron en los últimos 60 días.</p>`;
     // Embudo
     const est = e => todosPer.filter(p => p.estado === e).length, tot = todosPer.length || 1;
-    $("#est-embudo").innerHTML = todosPer.length ? barras([["Pedidos recibidos", todosPer.length], ["Sin atender (nuevos)", est("nuevo")], ["Confirmados", est("confirmado")], ["Pagados o entregados", est("pagado") + est("entregado")], ["Cancelados", est("cancelado")]]
+    $("#est-embudo").innerHTML = todosPer.length ? barras([["Pedidos recibidos", todosPer.length], ["Nuevos", est("nuevo")], ["Confirmados", est("confirmado")], ["Pagados o entregados", est("pagado") + est("entregado")], ["Cancelados", est("cancelado")]]
       .map(([t, n]) => ({ t, d: `${n} · ${Math.round(n / tot * 100)}%`, p: n / tot * 100 }))) : `<p class="ayuda">No llegaron pedidos en este período.</p>`;
   }
   let estRz; window.addEventListener("resize", () => { clearTimeout(estRz); estRz = setTimeout(pintarEst, 200); });
