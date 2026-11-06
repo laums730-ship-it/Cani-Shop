@@ -546,7 +546,10 @@
     .bh-t small{color:var(--gris);white-space:nowrap;font-weight:700}
     .bh-c i{display:block;height:7px;border-radius:999px;background:var(--rosa-fuerte);margin-top:4px}
     .est-kpis{grid-template-columns:repeat(4,minmax(0,1fr))!important}
-    .kpi-fijo{cursor:default;background:#fffdf0}
+    .kpi-fijo{cursor:default;background:#fce3ee}
+    .falta-costo .ayuda{margin:0 0 8px}.fc-lista{display:flex;flex-wrap:wrap;gap:8px}
+    .fc-btn{font:inherit;font-size:.8rem;font-weight:700;color:var(--cafe);background:#fff;border:1.5px solid var(--rosa-fuerte);border-radius:999px;padding:6px 12px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fc-btn.fc-off{border-color:var(--borde);color:var(--gris);cursor:default}
     .kpi em.neutro{color:var(--gris);font-weight:600}
     .est-tres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
     .bh-sub{display:block;color:var(--gris);font-size:.74rem;margin-top:3px;font-weight:600}
@@ -3088,14 +3091,14 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     pintarTx(); pintarEst();
   }
   function kpisDe(l) {
-    let fact = 0, gan = 0, unid = 0, sinCosto = 0, desc = 0;
+    let fact = 0, gan = 0, unid = 0, sinCosto = 0, desc = 0; const faltan = new Map();
     l.forEach(p => {
       const t = totalPed(p); fact += t; let costo = 0;
-      (p.items || []).forEach(i => { desc += num(i.desc); if (!EXTRAS.includes(i.id) && !i.en_scoop) unid += num(i.cant); const c = costoItem(i); if (c == null) { if (!EXTRAS.includes(i.id)) sinCosto++; } else costo += c; });
+      (p.items || []).forEach(i => { desc += num(i.desc); if (!EXTRAS.includes(i.id) && !i.en_scoop) unid += num(i.cant); const c = costoItem(i); if (c == null) { if (!EXTRAS.includes(i.id)) { sinCosto++; faltan.set(i.id, i.nombre || i.id); } } else costo += c; });
       gan += t - num(p.envio) - costo;
     });
     const clis = new Set(l.map(cliKey));
-    return { fact, ventas: l.length, ticket: l.length ? fact / l.length : 0, gan, unid, sinCosto, desc, clientes: clis.size, margen: fact ? gan / fact * 100 : 0 };
+    return { fact, ventas: l.length, ticket: l.length ? fact / l.length : 0, gan, unid, sinCosto, desc, clientes: clis.size, margen: fact ? gan / fact * 100 : 0, faltan };
   }
   function pintarTx() {
     document.querySelectorAll(".per-txt").forEach(x => x.textContent = perTxt());
@@ -3167,7 +3170,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#est-kpis").innerHTML = Object.entries(METRICAS).map(([id, [nom, f]]) => `<button type="button" class="kpi ${EST_MET === id ? "on" : ""}" data-met="${id}"><span>${nom}</span><b>${f(k[id])}</b>${delta(k[id], ka[id])}</button>`).join("")
       + `<div class="kpi kpi-fijo"><span>Margen de ganancia</span><b>${Math.round(k.margen)}%</b><em class="neutro">ganancia ÷ facturación</em></div>`
       + `<div class="kpi kpi-fijo"><span>Tasa de venta</span><b>${Math.round(tasa)}%</b><em class="neutro">${pagadosDeEstos.length} pagados de ${todosPer.length} pedidos</em></div>`
-      + (k.sinCosto ? `<p class="ayuda kpi-nota">La ganancia no descuenta el costo de ${k.sinCosto} producto(s) vendido(s) que no tienen costo cargado.</p>` : "");
+      + (k.sinCosto ? `<div class="kpi-nota falta-costo"><p class="ayuda">La ganancia no descuenta el costo de ${k.faltan.size} producto(s) que vendiste y no tienen costo cargado. Toca uno para ponerle su costo:</p><div class="fc-lista">${[...k.faltan].map(([id, nom]) => PRODS.some(x => x.id === id) ? `<button type="button" class="fc-btn" data-ini-prod="${esc(id)}">${esc(nom)}</button>` : `<span class="fc-btn fc-off" title="Este producto ya no está en tu lista">${esc(nom)}</span>`).join("")}</div></div>` : "");
     $("#est-tit").textContent = METRICAS[EST_MET][0];
     const G = grupos(l), con = G.filter(g => g.ventas);
     const mejor = con.length ? con.reduce((a, b) => b[EST_MET] > a[EST_MET] ? b : a) : null, peor = con.length > 1 ? con.reduce((a, b) => b[EST_MET] < a[EST_MET] ? b : a) : null;
