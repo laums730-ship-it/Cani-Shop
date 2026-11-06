@@ -730,13 +730,37 @@
     const nav = $("#menu"), cat = nav && nav.querySelector('a[href="#/catalogo"]');
     if (!cat || nav.querySelector(".menu-drop")) return;
     const pers = PERS(), categ = CATEG();
+    // Ícono dibujado para cada personaje / categoría (según su nombre)
+    const IC = {
+      gato: `<path d="M5 10V4l4 3.2h6L19 4v6c0 3.9-3.1 7-7 7s-7-3.1-7-7z"/><path d="M9.5 11h.01M14.5 11h.01M11 14h2"/>`,
+      perro: `<path d="M8 6h8c1 0 2 1 2 2v5a6 6 0 01-12 0V8c0-1 1-2 2-2z"/><path d="M8 6C5 6 4 9 4 12c0 1.5.5 2.5 1.5 2.5M16 6c3 0 4 3 4 6 0 1.5-.5 2.5-1.5 2.5"/><path d="M9.5 11h.01M14.5 11h.01M11 14.5h2"/>`,
+      fantasma: `<path d="M5 20v-9a7 7 0 0114 0v9l-2.3-2-2.3 2-2.4-2-2.4 2-2.3-2z"/><path d="M9.5 11h.01M14.5 11h.01"/>`,
+      musica: `<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>`,
+      estrella: `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"/>`,
+      juego: `<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4M15.5 12h.01M18 14h.01"/>`,
+      cuaderno: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4"/>`,
+      lapiz: `<path d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/>`,
+      belleza: `<rect x="9" y="12" width="6" height="8" rx="1"/><path d="M10 12V8l4-4v8"/>`,
+      regalo: `<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/>`,
+      lazo: `<path d="M12 12L5 7v10l7-5zm0 0l7-5v10l-7-5z"/><circle cx="12" cy="12" r="1.4"/>`,
+      oso: `<circle cx="12" cy="13" r="6"/><circle cx="6.5" cy="7.5" r="2.2"/><circle cx="17.5" cy="7.5" r="2.2"/><path d="M10 13h.01M14 13h.01M11 15.5h2"/>`,
+      corazon: `<path d="M12 20S4 15 4 9.5A4 4 0 0112 8a4 4 0 018 1.5C20 15 12 20 12 20z"/>`
+    };
+    const iconoMenu = nombre => {
+      const n = String(nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const k = /kitty|gatit|gato|cat/.test(n) ? "gato" : /snoopy|perr|dog/.test(n) ? "perro" : /obakenu|fantasma|ghost/.test(n) ? "fantasma"
+        : /bts|music|kpop|k-pop/.test(n) ? "musica" : /sanrio|estrella|novedad/.test(n) ? "estrella" : /juego|kawaii|game/.test(n) ? "juego"
+        : /papel|cuaderno|libreta/.test(n) ? "cuaderno" : /lapic|boligraf|pluma/.test(n) ? "lapiz" : /beauty|belleza|maquill|labial/.test(n) ? "belleza"
+        : /happy|box|regalo|sorpresa/.test(n) ? "regalo" : /accesor|lazo|mon|joya/.test(n) ? "lazo" : /peluch|oso|muñec/.test(n) ? "oso" : "corazon";
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
+    };
     const d = document.createElement("div"); d.className = "menu-drop";
     d.innerHTML = `<button type="button" class="menu-tienda" aria-expanded="false">Tienda <span>▾</span></button>
-      <div class="mega">
-        ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}</div>` : ""}
-        <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}">${c.imagen ? `<i><img src="${esc(c.imagen)}" alt=""></i>` : ""}${esc(c.nombre)}</a>`).join("")}
-          <a href="#/novedades" class="mega-todo">Novedades →</a><a href="#/todo" class="mega-todo">Ver todo →</a></div>
-        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span></a>` : ""}
+      <div class="mega${SC ? "" : " sin-promo"}">
+        ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}"><i>${iconoMenu(c.nombre)}</i>${esc(c.nombre)}</a>`).join("")}</div>` : ""}
+        <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}"><i>${iconoMenu(c.nombre)}</i>${esc(c.nombre)}</a>`).join("")}</div>
+        <div class="mega-pie"><a href="#/novedades">Novedades →</a><a href="#/todo">Ver todo →</a></div>
+        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span><small>Armar ahora</small></a>` : ""}
       </div>`;
     cat.replaceWith(d);
     const b = d.querySelector(".menu-tienda");
@@ -1261,18 +1285,60 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     animarCani(false);
   }
   function contacto() {
-    app.innerHTML = `<section class="seccion"><h2>Contacto</h2>
-      <p class="texto">Escríbenos y te respondemos lo antes posible.</p>
-      <form class="form" id="form-contacto" style="max-width:520px">
-        <input name="nombre" placeholder="Nombre" required>
-        <input name="telefono" placeholder="Teléfono">
-        <textarea name="mensaje" rows="4" placeholder="Tu mensaje" required></textarea>
-        <button class="btn btn-wa" type="submit">Enviar por WhatsApp</button>
-      </form></section>`;
-    $("#form-contacto").onsubmit = e => {
-      e.preventDefault(); const f = new FormData(e.target);
-      const msg = `Hola, soy ${f.get("nombre")}${f.get("telefono") ? ` (${f.get("telefono")})` : ""}.\n${f.get("mensaje")}`;
-      window.open(waURL(msg), "_blank");
+    const SVG_WA = `<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.9 1 1-3.8-.2-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.9 1 3.9.8a3.3 3.3 0 0 0 2.2-1.5 2.7 2.7 0 0 0 .2-1.5c-.1-.2-.3-.3-.7-.5z"/></svg>`;
+    const ic = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+    const temas = [
+      ["Hacer un pedido", "Hola Cani Shop, quiero hacer un pedido.", '<path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2"/>'],
+      ["Preguntar por un producto", "Hola Cani Shop, tengo una pregunta sobre un producto.", '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'],
+      ["Mi pedido", "Hola Cani Shop, quiero saber cómo va mi pedido.", '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/>'],
+      ["Envíos y pagos", "Hola Cani Shop, quiero saber sobre envíos y formas de pago.", '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18M7 15h3"/>'],
+      ["Punto de retiro", "Hola Cani Shop, quisiera coordinar un retiro.", '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>'],
+      ["Otra consulta", "Hola Cani Shop, quisiera hacerles una consulta.", '<path d="M4 5h16v11H9l-5 4V5z"/><path d="M8.5 10h.01M12 10h.01M15.5 10h.01"/>']
+    ];
+    const sel = selOn();
+    const bloques = [
+      ["Pedidos", '<path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2"/>', [
+        ["¿Cómo hago mi pedido?", T.pago || "Armas tu carrito y lo envías por WhatsApp. Te confirmamos stock y el costo de envío, y te pasamos el QR para pagar."],
+        ["¿Qué es un Scoop?", 'Es una forma de comprar armando tu propio Scoop a tu gusto. <a href="#/scoops">Entra a Arma tu Scoop</a> y elige.']
+      ]],
+      ["Pagos", '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18M7 15h3"/>', [
+        ["¿Cómo pago?", "Pagas con QR. Te lo pasamos por WhatsApp cuando confirmamos tu pedido."],
+        ["¿Cuándo pago?", "Después de que confirmamos el stock y el costo de envío por WhatsApp. Primero te escribimos, luego pagas."]
+      ]],
+      ["Envíos y retiro", '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/>', [
+        ["¿Envían a todo el país?", "Sí, enviamos a toda Bolivia. El costo del envío te lo confirmamos por WhatsApp."],
+        ["¿Tienen punto de retiro?", "Sí. Lo coordinamos contigo por WhatsApp para ponernos de acuerdo en el lugar y la hora."]
+      ]],
+      ...(sel ? [["Sellitos", '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"/>', [
+        ["¿Qué son los sellitos?", `Cada compra de ${bsc(SEL.minimo)} o más te da un sellito. Con ${SEL.meta} sellitos ganas un vale de ${bsc(SEL.vale)}. <a href="#/sellitos">Ver mi tarjeta</a>`],
+        ["¿Cuándo se suma mi sellito?", `Cuando confirmamos tu pago, si tu compra es de ${bsc(SEL.minimo)} o más sin contar el envío.`],
+        ["¿Cómo uso mi vale?", "Se descuenta de tu próximo pedido hecho con el mismo número de WhatsApp. Nos avisa solito al enviarlo."]
+      ]]] : [])
+    ];
+    const igUser = (T.instagram || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+    app.innerHTML = `<section class="ct-pag">
+      <div class="ct-hero"><svg class="ct-sp a" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><svg class="ct-sp b" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><svg class="ct-sp c" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><img src="cani-charla.webp" alt=""><div><h1>Ayuda</h1><p class="ct-globo">¿En qué te ayudo?</p></div></div>
+      <div class="ct-hoja">
+        <div class="ct-temas">${temas.map(([t, m, d], i) => `<a class="ct-tema c${i % 3}" href="${waURL(m)}" target="_blank" rel="noopener"><span class="ct-ico">${ic(d)}</span><b>${esc(t)}</b></a>`).join("")}</div>
+        <p class="ct-aviso">Cada botón abre WhatsApp con el mensaje ya escrito. Solo das enviar.</p>
+        <h2 class="ct-tit">Preguntas frecuentes</h2>
+        <label class="ct-busca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="ct-q" type="search" placeholder="Busca tu duda, por ejemplo: pago" autocomplete="off"></label>
+        <div id="ct-faq">${bloques.map(([nom, d, qs]) => `<div class="ct-bloque"><h3><span class="ct-ico">${ic(d)}</span>${esc(nom)}</h3><div class="ct-faq">${qs.map(([q, r]) => `<details><summary>${esc(q)}</summary><p>${r}</p></details>`).join("")}</div></div>`).join("")}</div>
+        <p class="ct-nada" id="ct-nada" hidden>No encontré esa pregunta. Escríbenos y te ayudamos.</p>
+        <div class="ct-cierre"><a class="btn btn-wa ct-wa" href="${waURL("Hola Cani Shop, quisiera hacerles una consulta.")}" target="_blank" rel="noopener">${SVG_WA}Escribir por WhatsApp</a>
+          <div class="ct-redes">
+            ${ttUser ? `<a href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener"><span class="ct-ico">${ic('<path d="M14 3v11.5a3.5 3.5 0 1 1-3-3.46"/><path d="M14 3c.4 2.6 2.2 4.4 5 4.6"/>')}</span><b>TikTok</b><small>@${esc(ttUser)}</small></a>` : ""}
+            ${T.instagram ? `<a href="${esc(T.instagram)}" target="_blank" rel="noopener"><span class="ct-ico">${ic('<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6" fill="currentColor"/>')}</span><b>Instagram</b><small>${igUser ? "@" + esc(igUser) : "Síguenos"}</small></a>` : ""}
+          </div></div>
+      </div>
+    </section>`;
+    const q = $("#ct-q");
+    const norm = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    q.oninput = () => {
+      const t = norm(q.value).trim(); let hay = 0;
+      document.querySelectorAll("#ct-faq details").forEach(d => { const ok = !t || norm(d.textContent).includes(t); d.hidden = !ok; if (ok) hay++; if (t && ok) d.open = true; if (!t) d.open = false; });
+      document.querySelectorAll(".ct-bloque").forEach(b => { b.hidden = ![...b.querySelectorAll("details")].some(d => !d.hidden); });
+      $("#ct-nada").hidden = hay > 0;
     };
   }
 
@@ -1301,65 +1367,73 @@ Gracias por ser parte de nuestro pequeño mundo. ♡`;
     return d && d.vales > 0 ? `🎁 Tengo ${d.vales > 1 ? d.vales + " vales" : "un vale"} de sellitos de ${bsc(d.vale)}${d.vales > 1 ? " c/u" : ""}` : null; };
   const SVG_REGALO = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/></svg>`;
   const telGuardado = () => { try { return (JSON.parse(localStorage.getItem("datos-pedido") || "{}").telefono) || localStorage.getItem("sellitos-tel") || ""; } catch (e) { return ""; } };
-  const fichas = (d) => {
-    const n = d.meta, llenos = d.sellos;
-    return `<div class="sel-sellos" style="--n:${n}">${Array.from({ length: n }, (_, i) => i < llenos
-      ? `<span class="sel-sello ok" style="--i:${i}"><img src="estrella-rosa.svg" alt=""></span>`
-      : i === n - 1 ? `<span class="sel-sello regalo">${SVG_REGALO}</span>` : `<span class="sel-sello">${i + 1}</span>`).join("")}</div>`;
-  };
-  function tarjetaSellitos(d) {
-    const falta = d.meta - d.sellos, llena = d.vales > 0;
-    const globo = llena ? `¡lo lograste! te ganaste ${d.vales > 1 ? d.vales + " vales" : "un vale"} de ${bsc(d.vale)}`
-      : d.sellos === 0 ? `todavía no tienes sellitos. tu primera compra de ${bsc(d.minimo)} o más te da el primero`
-      : falta === 1 ? "¡te falta solo 1 comprita para tu vale!"
-      : d.sellos >= d.meta / 2 ? `¡vas súper bien! solo ${falta} compritas más para tu vale de ${bsc(d.vale)}`
-      : `¡qué lindo verte! llevas ${d.sellos} ${d.sellos === 1 ? "sellito" : "sellitos"}, sigue así`;
-    return `<div class="sel-tarjeta ${llena ? "llena" : ""}">
-      ${llena ? `<div class="sel-confeti" aria-hidden="true">${Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i * .13) % 2.6}s;background:${["#fd95c8", "#cca1e8", "#fce3ee"][i % 3]}"></i>`).join("")}</div>` : ""}
-      <div class="sel-charla"><img src="${llena ? "cani-charla.webp" : "cani-sentado.webp"}" alt=""><p class="sel-globo">${esc(globo)}</p></div>
-      ${fichas({ ...d, sellos: llena ? d.meta : d.sellos })}
-      <div class="sel-barra"><i style="width:${(llena ? 1 : d.sellos / d.meta) * 100}%"></i></div>
-      <div class="sel-cuenta"><span>${llena ? d.meta : d.sellos} de ${d.meta} sellitos</span><span>${llena ? "¡tarjeta llena!" : `faltan ${falta}`}</span></div>
-      ${llena ? `<div class="sel-premio"><b>vale de ${bsc(d.vale)}</b><span>se descuenta de tu próximo pedido hecho con este mismo WhatsApp. al enviarlo, nos avisa solito</span></div>
-        <a class="btn sel-btn lila" href="#/catalogo">elegir mis cositas</a>` : ""}
-      ${d.extra > 0 ? `<p class="sel-nota">y ya llevas ${d.extra} ${d.extra === 1 ? "sellito" : "sellitos"} para tu próxima tarjeta</p>` : ""}
-    </div>`;
+  // Página "mis sellitos": arriba un anillo con el avance, abajo la hoja con sellitos, vale y formulario.
+  // Antes de buscar el número se ve en cero, de muestra.
+  function pintarSellitos(d, muestra) {
+    const n = d.meta, llena = d.vales > 0, ll = llena ? n : d.sellos, falta = n - d.sellos;
+    const msg = muestra ? "Escribe tu WhatsApp y te muestro tus sellitos"
+      : llena ? `Te ganaste ${d.vales > 1 ? d.vales + " vales" : "un vale"} de ${bsc(d.vale)}`
+      : d.sellos === 0 ? `Tu primera compra de ${bsc(d.minimo)} o más te da el primer sellito`
+      : falta === 1 ? `Te falta 1 sellito para tu vale de ${bsc(d.vale)}`
+      : `Te faltan ${falta} sellitos para tu vale de ${bsc(d.vale)}`;
+    const C = 565.5;
+    $("#sel-hero").classList.toggle("llena", llena);
+    $("#sel-ring").innerHTML = `<svg viewBox="0 0 200 200" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" cx="100" cy="100" r="90" style="stroke-dashoffset:${C * (1 - ll / n)}"/></svg>
+      <div class="sel-mid"><img src="${llena ? "cani-charla.webp" : "cani-sentado.webp"}" alt=""><b>${muestra ? "0" : ll} de ${n}</b><small>Sellitos</small></div>`;
+    $("#sel-confeti").innerHTML = llena ? Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i * .13) % 2.6}s;background:${["#fff", "#cca1e8", "#fce3ee"][i % 3]}"></i>`).join("") : "";
+    const puntos = Array.from({ length: n }, (_, i) => i < ll
+      ? `<span class="sel-d ok" style="--i:${i}"><img src="estrella-rosa.svg" alt=""></span>`
+      : i === n - 1 ? `<span class="sel-d v">${SVG_REGALO}</span>` : `<span class="sel-d">${i + 1}</span>`).join("");
+    $("#sel-arriba").innerHTML = `<p class="sel-msg">${esc(msg)}</p>
+      <div class="sel-dots">${puntos}</div>
+      <div class="sel-tk ${llena ? "listo" : ""}"><div class="l">${esc(bsc(d.vale))}</div><div class="r"><b>${llena ? "Tu vale está listo" : "Tu vale"}</b>${llena ? "Se descuenta de tu próximo pedido hecho con este mismo WhatsApp. Al enviarlo, nos avisa solito." : "Se descuenta de tu próximo pedido cuando llenes la tarjeta."}</div></div>
+      ${llena ? `<a class="btn sel-btn lila" href="#/catalogo">Elegir mis cositas</a>` : ""}
+      ${d.extra > 0 ? `<p class="sel-nota">Y ya llevas ${d.extra} ${d.extra === 1 ? "sellito" : "sellitos"} para tu próxima tarjeta</p>` : ""}`;
   }
   function sellitos() {
     if (!selOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">La tarjeta de sellitos no está disponible por ahora.</p>`; return; }
     const tel0 = telGuardado();
-    app.innerHTML = `<section class="seccion sel-pag">
-      <div class="sel-cab"><h1>mis sellitos</h1>
-        <p>cada compra de ${bsc(SEL.minimo)} o más te da un sellito. junta ${SEL.meta} y te ganas un vale de ${bsc(SEL.vale)}</p></div>
-      <div class="sel-caja" id="sel-caja">
-        <form class="sel-tarjeta sel-form" id="sel-form">
-          <div class="sel-charla"><img src="cani-charla.webp" alt=""><p class="sel-globo">¡hola! escribe tu WhatsApp y te muestro cuántos sellitos llevas</p></div>
-          <label for="sel-tel">tu WhatsApp</label>
-          <input id="sel-tel" class="sel-campo" type="tel" inputmode="tel" placeholder="ej: 71234567" value="${esc(tel0)}" required>
-          <button class="btn sel-btn" type="submit">ver mi tarjeta</button>
-          <p class="sel-nota">no necesitas cuenta ni contraseña</p>
+    app.innerHTML = `<section class="sel-pag">
+      <div class="sel-hero" id="sel-hero"><div class="sel-confeti" id="sel-confeti" aria-hidden="true"></div>
+        <h1>Mis sellitos</h1><p>Cada compra de ${bsc(SEL.minimo)} o más te da un sellito.</p>
+        <div class="sel-ring" id="sel-ring"></div></div>
+      <div class="sel-hoja">
+        <div id="sel-arriba"></div>
+        <form class="sel-form" id="sel-form">
+          <label for="sel-tel">Tu WhatsApp</label>
+          <div class="sel-row">
+            <input id="sel-tel" class="sel-campo" type="tel" inputmode="tel" placeholder="Ej: 71234567" value="${esc(tel0)}" required>
+            <button class="btn sel-ver" type="submit">Ver</button>
+          </div>
+          <p class="sel-nota">No necesitas cuenta ni contraseña</p>
         </form>
+        <p class="sel-lab">Cómo funciona</p>
+        <ol class="sel-pasos">
+          <li><span>1</span><div><b>Compras</b>Desde ${bsc(SEL.minimo)}, sin contar el envío, con tu número de WhatsApp.</div></li>
+          <li><span>2</span><div><b>Sumas un sellito</b>Se suma solito cuando confirmamos tu pago.</div></li>
+          <li><span>3</span><div><b>Ganas tu vale</b>${bsc(SEL.vale)} de descuento con ${SEL.meta} sellitos.</div></li>
+        </ol>
       </div>
-      <ol class="sel-pasos">
-        <li><span>1</span><div><b>compras</b><p>haz tu pedido en la tienda o arma tu Scoop, con tu número de WhatsApp.</p></div></li>
-        <li><span>2</span><div><b>sumas un sellito</b><p>cuando confirmamos tu pago, se suma solito si tu compra es de ${bsc(SEL.minimo)} o más (sin contar el envío).</p></div></li>
-        <li><span>3</span><div><b>ganas tu vale</b><p>con ${SEL.meta} sellitos te ganas ${bsc(SEL.vale)} de descuento para tu siguiente pedido.</p></div></li>
-      </ol>
     </section>`;
+    pintarSellitos({ meta: SEL.meta, sellos: 0, vales: 0, vale: SEL.vale, minimo: SEL.minimo, extra: 0 }, true);
     const F = $("#sel-form");
     F.onsubmit = async e => {
       e.preventDefault();
       const tel = $("#sel-tel").value, tn = telLimpio(tel);
       if (tn.length < 8) { toast("Revisa tu número de WhatsApp"); return $("#sel-tel").focus(); }
-      const b = F.querySelector("button"); b.disabled = true; b.textContent = "buscando…";
+      const b = F.querySelector("button"); b.disabled = true; b.textContent = "…";
       const d = await consultarSellitos(tel);
-      b.disabled = false; b.textContent = "ver mi tarjeta";
+      b.disabled = false; b.textContent = "Ver";
       if (!d) return toast("No pudimos ver tu tarjeta, intenta otra vez");
       try { localStorage.setItem("sellitos-tel", tel); } catch (e) {}
-      $("#sel-caja").innerHTML = tarjetaSellitos(d) + `<button class="sel-otro" id="sel-otro" type="button">ver otro número</button>`;
+      pintarSellitos(d, false);
+      F.outerHTML = `<button class="sel-otro" id="sel-otro" type="button">Ver otro número</button>`;
       $("#sel-otro").onclick = sellitos;
     };
+    if (tel0 && telLimpio(tel0).length >= 8) F.requestSubmit();
   }
+
+
   // En el carrito y en Arma tu Scoop: al escribir el WhatsApp, Cani le cuenta sus sellitos
   { let tSel;
     document.addEventListener("input", e => {
@@ -1492,7 +1566,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, scoops, sellitos, blog: () => blog(arg) }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, blog: () => blog(arg) }[sec] || inicio)();
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
