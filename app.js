@@ -896,14 +896,11 @@
               <img class="la-premio la-p1" src="llavero.webp" alt="">
               <img class="la-premio la-p2" src="libreta.webp" alt="">
             </div>
-            <p>Un Lucky Scoop es un juego de suerte kawaii: sacamos <b>piedritas de una taza, al azar</b>, y <b>cada piedrita es un producto</b> que te llevas. ¡Lo que te toca es lo que llega a tu caja!</p>
-            <p>Todo se hace <b>por video</b>, para que veas cada piedrita que sale.</p>
-            <div class="scp-pasos">
-              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1.3 10.2a1 1 0 0 1-1 .8H7.3a1 1 0 0 1-1-.8z"/><path d="M4 9a8 5 0 0 1 16 0"/></svg></span><b>Elige tu scoop</b><small>Cada tamaño trae una cantidad distinta de productos.</small></div>
-              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10A4.300 4.300 0 0 1 12 7.200 4.300 4.300 0 0 1 19.500 10c0 5.400-7.500 10-7.500 10z"/></svg></span><b>Tus favoritos</b><small>Escoge tus colores y personajes preferidos.</small></div>
-              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M9 9.500a3.500 3.500 0 0 1 3-1.500"/></svg></span><b>Sacamos tus piedritas</b><small>Al azar, de una taza y por video.</small></div>
-              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 6.500h18V9H3zM12 6.500V20"/></svg></span><b>Armamos tu caja</b><small>Con lo que te tocó. Puedes sumarle carta o caja especial.</small></div>
-            </div>
+            <ul class="scp-filas">
+              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M9 9.500a3.500 3.500 0 0 1 3-1.500"/></svg></span><div><b>Sacamos piedritas de una taza</b><small>Al azar.</small></div></li>
+              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.500"/><path d="M3 6.500h18V9H3zM12 6.500V20"/></svg></span><div><b>Cada piedrita es un producto</b><small>Lo que te toca es lo que llega a tu caja.</small></div></li>
+              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2.500"/><path d="M16 10.500l5-3v9l-5-3z"/></svg></span><div><b>Todo se hace por video</b><small>Así ves cada piedrita que sale.</small></div></li>
+            </ul>
           </div>
         </div></section>
 
@@ -1080,7 +1077,7 @@
     let paso = 0, ocupado = false;
     const ESTRELLA = "estrella-rosa.svg";
     const ICO_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-    const frase = p => p.querySelector(".scp-info") ? "¡Hola! Soy Cani. Te cuento cómo funciona un Lucky Scoop."
+    const frase = p => p.querySelector(".scp-info") ? "¡Hola! Soy Cani. Así funciona un Lucky Scoop:"
       : p.querySelector("[name=op]") ? "¿Qué scoop quieres hoy?"
       : p.querySelector("[data-grupo=colores]") ? `¿Qué colores te gustan más? Elige al menos ${minC}.`
       : p.querySelector("[data-grupo=personajes]") ? `¡Ahora tus personajes favoritos! Elige al menos ${minP}.`
@@ -1182,6 +1179,7 @@
         $("#scd-n").textContent = paso + 1;
         fill.style.width = ancho(paso) + "%";
         $("#sc-atras").style.visibility = paso ? "visible" : "hidden";
+        { const t = F.querySelector(".scd-total"); if (t) t.style.visibility = paso ? "visible" : "hidden"; const sg = $("#sc-seguir span"); if (sg) sg.textContent = paso ? "Continuar" : "Empezar"; }
         $("#sc-seguir").hidden = paso === N - 1; $("#sc-btn").hidden = paso !== N - 1;
         window.scrollTo(0, 0);
         estado();

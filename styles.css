@@ -1760,12 +1760,11 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .cabecera .menu > a#menu-scoops{justify-content:flex-start}
 
 /* Scoops: paso de información (primer paso del paso a paso) */
-.scp-info{display:flex;flex-direction:column;gap:12px}
-.scp-info p{color:var(--cafe);line-height:1.6;margin:0;font-size:1rem}
-.scp-info .lucky-anim{margin:0 auto -6px;max-width:250px}
-.scp-pasos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
-.scp-paso{background:#fff;border:2px solid #f3d7e4;border-bottom-width:5px;border-radius:18px;padding:14px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
-.scp-ic{width:42px;height:42px;border-radius:50%;background:#fce3ee;display:grid;place-items:center}
-.scp-ic svg{width:22px;height:22px;fill:none;stroke:var(--cafe);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.scp-paso b{color:var(--cafe);font-size:.95rem}
-.scp-paso small{color:var(--gris);line-height:1.4;font-size:.8rem}
+.scp-info{display:flex;flex-direction:column;gap:6px}
+.scp-info .lucky-anim{margin:-4px auto 0;max-width:210px}
+.scp-filas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.scp-filas li{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid #f3d7e4;border-bottom-width:5px;border-radius:18px;padding:12px 14px}
+.scp-ic{flex:none;width:44px;height:44px;border-radius:50%;background:#fce3ee;display:grid;place-items:center}
+.scp-ic svg{width:23px;height:23px;fill:none;stroke:var(--cafe);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.scp-filas b{display:block;color:var(--cafe);font-size:1rem;line-height:1.25}
+.scp-filas small{display:block;color:var(--gris);font-size:.88rem;line-height:1.35;margin-top:2px}
