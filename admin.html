@@ -964,6 +964,13 @@
         <h2>Productos de esta compra</h2>
         <p class="cmp-ayuda">Escribe el nombre y elige el producto de tu tienda. Si no existe todavía, queda como "Falta subir".</p>
         <datalist id="cmp-prods"></datalist>
+        <details class="cmp-pegar" id="cmp-pegar-d" style="margin:10px 0">
+          <summary style="cursor:pointer;font-weight:700;color:var(--cafe,#783746)">Pegar lista del proveedor</summary>
+          <p class="cmp-ayuda">Pega el mensaje tal cual (un producto por línea, con su precio). Yo armo las filas.</p>
+          <textarea id="cmp-pegar" rows="7" style="width:100%" placeholder="- Box reglas Snoopy 220 bs&#10;- 24 unid post it snoopy 144 bs"></textarea>
+          <div class="barra"><button class="btn btn-sec btn-sm" id="cmp-pegar-b" type="button">Armar filas</button></div>
+          <p class="cmp-ayuda" id="cmp-pegar-r"></p>
+        </details>
         <div class="lista" id="cmp-items" style="margin:12px 0"></div>
         <div class="barra"><button class="btn btn-sec" id="cmp-add" type="button">＋ Agregar producto</button>
           <button class="btn btn-sec" id="cmp-crear" type="button">Crear en la tienda los que faltan</button></div>
@@ -3826,8 +3833,34 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     $("#cmp-guardar").textContent = txtGuardarCmp();
     $("#cmp-provs").innerHTML = [...new Set(CMP.map(x => x.proveedor).filter(Boolean))].map(n => `<option value="${esc(n)}">`).join("");
     $("#cmp-prods").innerHTML = PRODS.map(p => `<option value="${esc(p.nombre)}">`).join("");
-    ayudaStock(); pintarItemsCmp(); cmpVista(true);
+    $("#cmp-pegar-r").textContent = ""; ayudaStock(); pintarItemsCmp(); cmpVista(true);
   }
+  // Pegar lista: "- 24 unid post it snoopy 144 bs" → producto, cantidad y costo total
+  function leerListaCmp(txt) {
+    const out = [], omit = [];
+    txt.split(/\r?\n/).forEach(raw => {
+      let l = raw.replace(/^[\s\-•*·\u2022\u200e\u200f\u2060]+/, "").replace(/\s+/g, " ").trim();
+      if (!l || /[=+]/.test(l) || !/[a-záéíóúñ]/i.test(l)) { if (l) omit.push(l); return; }
+      let total = "", m = l.match(/(\d+(?:[.,]\d+)?)\s*(?:bs\.?|bolivianos)?\s*$/i);
+      if (m && l.slice(0, m.index).trim()) { total = m[1].replace(",", "."); l = l.slice(0, m.index).trim(); }
+      let cant = "1", q = l.match(/^(\d+)\s+(?=\D)/);
+      if (q) { cant = q[1]; l = l.slice(q[0].length).trim(); }
+      l = l.replace(/^(unid(?:ades?)?|u)\.?\s+/i, "").replace(/^(box|doc|docena)\s+de\s+/i, "$1 ").trim();
+      if (!l) return;
+      out.push({ nombre: l.charAt(0).toUpperCase() + l.slice(1), cant, total, precio: "", modelo: "", pid: null });
+    });
+    return { out, omit };
+  }
+  $("#cmp-pegar-b").onclick = () => {
+    const { out, omit } = leerListaCmp($("#cmp-pegar").value);
+    if (!out.length) { $("#cmp-pegar-r").textContent = "No encontré productos. Un producto por línea, con su precio al final."; return; }
+    const vacio = CI.length === 1 && !CI[0].nombre && !CI[0].cant && !CI[0].total;
+    CI = (vacio ? [] : CI).concat(out);
+    pintarItemsCmp();
+    const sinP = out.filter(x => !x.total).length, suma = out.reduce((a, x) => a + (+x.total || 0), 0);
+    $("#cmp-pegar-r").textContent = `Listo: ${out.length} productos, suma Bs ${suma.toFixed(2).replace(".", ",")}.` + (sinP ? ` ${sinP} sin precio: complétalo abajo.` : "") + (omit.length ? ` No usé ${omit.length} línea(s) (sumas o texto).` : "") + " Revisa los nombres y elige el producto de tu tienda.";
+    $("#cmp-pegar").value = "";
+  };
   $("#cmp-nueva").onclick = () => abrirCompra(null);
   $("#cmp-volver").onclick = () => cmpVista(false);
   $("#cmp-add").onclick = () => { CI.push({ nombre: "", cant: "", total: "", precio: "", modelo: "", pid: null }); pintarItemsCmp(); const ult = $("#cmp-n-" + (CI.length - 1)); if (ult) ult.focus(); };
