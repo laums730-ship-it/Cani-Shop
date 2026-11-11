@@ -1752,3 +1752,9 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .ct-redes b{font:600 1rem var(--f-tit);align-self:end}
 .ct-redes small{font-size:.76rem;opacity:.85;align-self:start}
 .ct-redes > :last-child:nth-child(odd){grid-column:1/-1}
+
+/* Menú: "Arma tu Scoop" en lila con estrellita, distinto del rosa de la página activa */
+.cabecera .menu > a#menu-scoops{background:var(--lila)!important;border-color:var(--lila)!important;color:var(--cafe)!important;display:inline-flex;align-items:center;gap:7px;font-weight:700}
+.cabecera .menu > a#menu-scoops::before{content:"";width:14px;height:14px;flex:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23783746'%3E%3Cpath d='M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z'/%3E%3C/svg%3E") center/contain no-repeat}
+.cabecera .menu > a#menu-scoops:hover,.cabecera .menu > a#menu-scoops.activo{background:#b98ad9!important;border-color:#b98ad9!important}
+.cabecera .menu > a#menu-scoops{justify-content:flex-start}
