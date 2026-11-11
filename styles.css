@@ -1759,37 +1759,13 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .cabecera .menu > a#menu-scoops:hover,.cabecera .menu > a#menu-scoops.activo{background:#b98ad9!important;border-color:#b98ad9!important}
 .cabecera .menu > a#menu-scoops{justify-content:flex-start}
 
-/* Scoops: portada que explica qué es */
-.sc-portada{max-width:900px;margin:0 auto;padding:30px 0 10px}
-.scp-hero{display:grid;grid-template-columns:1fr 220px;gap:24px;align-items:center;background:var(--crema,#fdf1e7);border-radius:32px;padding:34px 34px 30px}
-.scp-txt h1{font-size:clamp(1.9rem,5vw,2.8rem);color:var(--cafe);margin:8px 0 10px}
-.scp-txt p{color:var(--cafe);line-height:1.65;margin:0 0 20px;font-size:1.02rem}
-.scp-cta{background:var(--rosa-fuerte,#fd95c8);color:var(--cafe);border:0;border-radius:999px;padding:13px 30px;font-weight:700;font-size:1.02rem;cursor:pointer}
-.scp-cani{width:100%;max-width:220px;height:auto;justify-self:center}
-.scp-h{font-size:1.35rem;color:var(--cafe);text-align:center;margin:34px 0 14px}
-.scp-pasos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.scp-paso{background:#fff;border:2px solid var(--borde,#f3d3e2);border-radius:22px;padding:18px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
-.scp-ic{width:46px;height:46px;border-radius:50%;background:#fce3ee;display:grid;place-items:center}
-.scp-ic svg{width:24px;height:24px;fill:none;stroke:var(--cafe);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.scp-paso b{color:var(--cafe);font-size:.98rem}
-.scp-paso small{color:var(--gris);line-height:1.4;font-size:.84rem}
-.scp-ops{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.scp-op{background:#fff;border:2px solid var(--borde,#f3d3e2);border-radius:22px;padding:14px;font:inherit;color:var(--cafe);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-.scp-op:hover{border-color:var(--lila)}
-.scp-op img{width:100%;max-width:140px;aspect-ratio:1;object-fit:cover;border-radius:16px;background:#fce3ee}
-.scp-op b{font-size:1rem}.scp-op em{font-style:normal;font-weight:700;color:var(--cafe)}
-.scp-op small{color:var(--gris);font-size:.82rem;line-height:1.35}
-.scp-elegir{margin-top:6px;background:#fce3ee;border-radius:999px;padding:6px 18px;font-weight:700;font-size:.88rem}
-.scp-nota{text-align:center;color:var(--gris);font-size:.86rem;margin:18px auto 0;max-width:560px;line-height:1.5}
-.scp-volver{background:none;border:0;color:var(--cafe);font:inherit;font-weight:700;cursor:pointer;padding:14px 4px 0;text-decoration:underline;text-underline-offset:4px}
-@media (max-width:700px){
-  .scp-hero{grid-template-columns:1fr;text-align:center;padding:26px 20px 22px}
-  .scp-cani{max-width:150px;order:-1}
-  .scp-pasos{grid-template-columns:1fr 1fr}
-}
-.sc-wrap:has(#sc-portada:not([hidden])){max-width:900px}
-.scp-txt .sc-tag{background:#fce3ee!important;color:var(--cafe)!important}
-@media (min-width:701px){.scp-hero{grid-template-columns:1fr 240px}.scp-cani{max-width:240px}}
-.scp-sub{font-size:.95rem!important;margin:-8px 0 18px!important}
-.scp-hero .lucky-anim{margin:0 auto;max-width:300px}
-@media (min-width:701px){.scp-hero{grid-template-columns:1fr 300px}}
+/* Scoops: paso de información (primer paso del paso a paso) */
+.scp-info{display:flex;flex-direction:column;gap:12px}
+.scp-info p{color:var(--cafe);line-height:1.6;margin:0;font-size:1rem}
+.scp-info .lucky-anim{margin:0 auto -6px;max-width:250px}
+.scp-pasos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.scp-paso{background:#fff;border:2px solid #f3d7e4;border-bottom-width:5px;border-radius:18px;padding:14px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.scp-ic{width:42px;height:42px;border-radius:50%;background:#fce3ee;display:grid;place-items:center}
+.scp-ic svg{width:22px;height:22px;fill:none;stroke:var(--cafe);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.scp-paso b{color:var(--cafe);font-size:.95rem}
+.scp-paso small{color:var(--gris);line-height:1.4;font-size:.8rem}

@@ -881,40 +881,32 @@
     if (cartaOn) cargarFuenteCarta(fuenteCarta);
     const ENT = (T.entregas || []).filter(Boolean);
     app.innerHTML = `<div class="sc-wrap">
-      <section class="sc-portada" id="sc-portada">
-        <div class="scp-hero">
-          <div class="scp-txt">
-            <span class="sc-tag">Lucky Scoops</span>
-            <h1>¿Qué es un Lucky Scoop?</h1>
-            <p>Un Lucky Scoop es un juego de suerte kawaii: sacamos <b>piedritas de una taza, al azar</b>, y <b>cada piedrita es un producto</b> que te llevas. ¡Lo que te toca es lo que llega a tu caja!</p>
-            <p class="scp-sub">Todo se hace <b>por video</b>, para que veas cada piedrita que sale.</p>
-            <button type="button" class="btn scp-cta" data-sc-ir="armar">Armar mi Scoop</button>
-          </div>
-          <div class="lucky-anim" aria-hidden="true">
-            <img class="la-taza" src="taza-cani.webp" alt="">
-            <img class="la-perla" src="perla.webp" alt="">
-            <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            <img class="la-premio la-p1" src="llavero.webp" alt="">
-            <img class="la-premio la-p2" src="libreta.webp" alt="">
-          </div>
-        </div>
-        <h2 class="scp-h">Así funciona</h2>
-        <div class="scp-pasos">
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1.3 10.2a1 1 0 0 1-1 .8H7.3a1 1 0 0 1-1-.8z"/><path d="M4 9a8 5 0 0 1 16 0"/></svg></span><b>Elige tu scoop</b><small>Cada tamaño trae una cantidad distinta de productos.</small></div>
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10A4.300 4.300 0 0 1 12 7.200 4.300 4.300 0 0 1 19.500 10c0 5.400-7.500 10-7.500 10z"/></svg></span><b>Cuéntanos tus favoritos</b><small>Escoge tus colores y personajes preferidos.</small></div>
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 6.5h18V9H3zM12 6.5V20"/><path d="M12 6.5C10 3 6.5 3.5 7.5 6M12 6.5c2-3.5 5.500-3 4.500-.5"/></svg></span><b>Sacamos tus piedritas</b><small>Al azar, de una taza y por video. Cada piedrita es un producto.</small></div>
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span><b>Armamos tu caja</b><small>Con lo que te tocó, y tú puedes sumarle carta o una caja especial.</small></div>
-        </div>
-        <h2 class="scp-h">Elige tu tamaño</h2>
-        <div class="scp-ops">${ops.map((o, i) => `<button type="button" class="scp-op" data-sc-op="${i}">${o.imagen ? `<img src="${esc(o.imagen)}" alt="">` : `<span class="circ-letra">${esc(inicial(o.nombre))}</span>`}<b>${esc(o.nombre)}</b><em>${bs(+o.precio)}</em>${o.detalle ? `<small>${esc(o.detalle)}</small>` : ""}<span class="scp-elegir">Elegir</span></button>`).join("")}</div>
-        <p class="scp-nota">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad.")}</p>
-      </section>
-      <div id="sc-armar" hidden>
       <section class="sc-hero">
         <h1>${esc(SC.titulo || "Arma tu Scoop")}</h1>
         <p>${esc(SC.intro || "Elige tu scoop, tus colores y personajes favoritos, ¡y nosotras lo armamos para ti!")}</p>
       </section>
       <form id="sc-form" class="sc-form" novalidate>
+        <section class="sc-paso scp-info-paso"><div class="sc-num">0</div><div class="sc-cont">
+          <h2>¿Qué es un Lucky Scoop?</h2>
+          <div class="scp-info">
+            <div class="lucky-anim" aria-hidden="true">
+              <img class="la-taza" src="taza-cani.webp" alt="">
+              <img class="la-perla" src="perla.webp" alt="">
+              <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <img class="la-premio la-p1" src="llavero.webp" alt="">
+              <img class="la-premio la-p2" src="libreta.webp" alt="">
+            </div>
+            <p>Un Lucky Scoop es un juego de suerte kawaii: sacamos <b>piedritas de una taza, al azar</b>, y <b>cada piedrita es un producto</b> que te llevas. ¡Lo que te toca es lo que llega a tu caja!</p>
+            <p>Todo se hace <b>por video</b>, para que veas cada piedrita que sale.</p>
+            <div class="scp-pasos">
+              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1.3 10.2a1 1 0 0 1-1 .8H7.3a1 1 0 0 1-1-.8z"/><path d="M4 9a8 5 0 0 1 16 0"/></svg></span><b>Elige tu scoop</b><small>Cada tamaño trae una cantidad distinta de productos.</small></div>
+              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10A4.300 4.300 0 0 1 12 7.200 4.300 4.300 0 0 1 19.500 10c0 5.400-7.500 10-7.500 10z"/></svg></span><b>Tus favoritos</b><small>Escoge tus colores y personajes preferidos.</small></div>
+              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M9 9.500a3.500 3.500 0 0 1 3-1.500"/></svg></span><b>Sacamos tus piedritas</b><small>Al azar, de una taza y por video.</small></div>
+              <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 6.500h18V9H3zM12 6.500V20"/></svg></span><b>Armamos tu caja</b><small>Con lo que te tocó. Puedes sumarle carta o caja especial.</small></div>
+            </div>
+          </div>
+        </div></section>
+
         <section class="sc-paso"><div class="sc-num">1</div><div class="sc-cont">
           <h2>Elige tu scoop</h2>
           <div class="sc-ops">${ops.map((o, i) => `<label class="sc-op">
@@ -990,13 +982,9 @@
         ${avisoEntrega()}
         <p class="sc-aviso">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad.")}</p>
         <div class="sc-enviar"><div><small>Total</small><b id="sc-total2">—</b></div><button class="btn btn-wa" type="submit" id="sc-btn">Enviar mi pedido</button></div>
-      </form></div></div>`;
+      </form></div>`;
 
     const F = $("#sc-form");
-    // Portada: explica qué es un Scoop; al tocar "Armar mi Scoop" (o un tamaño) aparece el formulario
-    const irArmar = ver => { $("#sc-portada").hidden = ver; $("#sc-armar").hidden = !ver; document.body.classList.toggle("en-scoop", ver); window.scrollTo(0, 0); };
-    app.querySelectorAll("[data-sc-ir]").forEach(b => b.addEventListener("click", () => irArmar(b.dataset.scIr === "armar")));
-    app.querySelectorAll("[data-sc-op]").forEach(b => b.addEventListener("click", () => { irArmar(true); const r = F.querySelector(`input[name="op"][value="${b.dataset.scOp}"]`); if (r) { r.click(); mostrar(1, 1, false); } }));
     const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0) + (+(CAJAS[st.caja] || {}).precio || 0) + (st.carta ? pc : 0);
     const pintarTotal = () => { const t = st.op === null ? "—" : bs(total()); $("#sc-total").textContent = $("#sc-total2").textContent = t; };
     F.addEventListener("input", e => {
@@ -1092,7 +1080,8 @@
     let paso = 0, ocupado = false;
     const ESTRELLA = "estrella-rosa.svg";
     const ICO_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-    const frase = p => p.querySelector("[name=op]") ? "¡Hola! Soy Cani. ¿Qué scoop quieres hoy?"
+    const frase = p => p.querySelector(".scp-info") ? "¡Hola! Soy Cani. Te cuento cómo funciona un Lucky Scoop."
+      : p.querySelector("[name=op]") ? "¿Qué scoop quieres hoy?"
       : p.querySelector("[data-grupo=colores]") ? `¿Qué colores te gustan más? Elige al menos ${minC}.`
       : p.querySelector("[data-grupo=personajes]") ? `¡Ahora tus personajes favoritos! Elige al menos ${minP}.`
       : p.querySelector("[name=caja]") ? "¿En qué cajita te lo enviamos?"
@@ -1192,7 +1181,7 @@
         if (anim) { void nuevo.offsetWidth; nuevo.classList.add(dir > 0 ? "scd-in-der" : "scd-in-izq"); }
         $("#scd-n").textContent = paso + 1;
         fill.style.width = ancho(paso) + "%";
-        $("#sc-atras").style.visibility = "visible";
+        $("#sc-atras").style.visibility = paso ? "visible" : "hidden";
         $("#sc-seguir").hidden = paso === N - 1; $("#sc-btn").hidden = paso !== N - 1;
         window.scrollTo(0, 0);
         estado();
@@ -1214,7 +1203,7 @@
       setTimeout(() => { barra.classList.remove("scd-ok"); ocupado = false; mostrar(paso + 1, 1); }, 850);
     };
     $("#sc-seguir").onclick = avanzar;
-    $("#sc-atras").onclick = () => { if (ocupado) return; if (paso === 0) irArmar(false); else mostrar(paso - 1, -1); };
+    $("#sc-atras").onclick = () => { if (!ocupado) mostrar(paso - 1, -1); };
     F.addEventListener("click", e => { const b = e.target.closest(".sc-chip"); if (b) { b.classList.remove("pum"); void b.offsetWidth; if (b.classList.contains("on")) b.classList.add("pum"); } setTimeout(estado, 0); });
     F.addEventListener("input", estado);
     // ya no avanza solo: la persona confirma con el botón de flecha
@@ -1594,7 +1583,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   // ---------- Rutas ----------
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
-    document.body.classList.remove("en-scoop");   // el modo paso a paso se activa al tocar "Armar mi Scoop"
+    document.body.classList.toggle("en-scoop", (location.hash.split("/")[1] || "") === "scoops");
     document.body.classList.toggle("en-producto", (location.hash.split("/")[1] || "") === "producto");
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
