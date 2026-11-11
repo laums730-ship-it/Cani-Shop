@@ -910,7 +910,6 @@
         <p class="scp-nota">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad.")}</p>
       </section>
       <div id="sc-armar" hidden>
-      <button type="button" class="scp-volver" data-sc-ir="portada">‹ ¿Qué es un Lucky Scoop?</button>
       <section class="sc-hero">
         <h1>${esc(SC.titulo || "Arma tu Scoop")}</h1>
         <p>${esc(SC.intro || "Elige tu scoop, tus colores y personajes favoritos, ¡y nosotras lo armamos para ti!")}</p>
@@ -995,9 +994,9 @@
 
     const F = $("#sc-form");
     // Portada: explica qué es un Scoop; al tocar "Armar mi Scoop" (o un tamaño) aparece el formulario
-    const irArmar = ver => { $("#sc-portada").hidden = ver; $("#sc-armar").hidden = !ver; window.scrollTo({ top: 0, behavior: "smooth" }); };
+    const irArmar = ver => { $("#sc-portada").hidden = ver; $("#sc-armar").hidden = !ver; document.body.classList.toggle("en-scoop", ver); window.scrollTo(0, 0); };
     app.querySelectorAll("[data-sc-ir]").forEach(b => b.addEventListener("click", () => irArmar(b.dataset.scIr === "armar")));
-    app.querySelectorAll("[data-sc-op]").forEach(b => b.addEventListener("click", () => { irArmar(true); const r = F.querySelector(`input[name="op"][value="${b.dataset.scOp}"]`); if (r) r.click(); }));
+    app.querySelectorAll("[data-sc-op]").forEach(b => b.addEventListener("click", () => { irArmar(true); const r = F.querySelector(`input[name="op"][value="${b.dataset.scOp}"]`); if (r) { r.click(); mostrar(1, 1, false); } }));
     const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0) + (+(CAJAS[st.caja] || {}).precio || 0) + (st.carta ? pc : 0);
     const pintarTotal = () => { const t = st.op === null ? "—" : bs(total()); $("#sc-total").textContent = $("#sc-total2").textContent = t; };
     F.addEventListener("input", e => {
@@ -1193,7 +1192,7 @@
         if (anim) { void nuevo.offsetWidth; nuevo.classList.add(dir > 0 ? "scd-in-der" : "scd-in-izq"); }
         $("#scd-n").textContent = paso + 1;
         fill.style.width = ancho(paso) + "%";
-        $("#sc-atras").style.visibility = paso ? "visible" : "hidden";
+        $("#sc-atras").style.visibility = "visible";
         $("#sc-seguir").hidden = paso === N - 1; $("#sc-btn").hidden = paso !== N - 1;
         window.scrollTo(0, 0);
         estado();
@@ -1215,7 +1214,7 @@
       setTimeout(() => { barra.classList.remove("scd-ok"); ocupado = false; mostrar(paso + 1, 1); }, 850);
     };
     $("#sc-seguir").onclick = avanzar;
-    $("#sc-atras").onclick = () => { if (!ocupado) mostrar(paso - 1, -1); };
+    $("#sc-atras").onclick = () => { if (ocupado) return; if (paso === 0) irArmar(false); else mostrar(paso - 1, -1); };
     F.addEventListener("click", e => { const b = e.target.closest(".sc-chip"); if (b) { b.classList.remove("pum"); void b.offsetWidth; if (b.classList.contains("on")) b.classList.add("pum"); } setTimeout(estado, 0); });
     F.addEventListener("input", estado);
     // ya no avanza solo: la persona confirma con el botón de flecha
@@ -1595,7 +1594,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   // ---------- Rutas ----------
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
-    document.body.classList.toggle("en-scoop", (location.hash.split("/")[1] || "") === "scoops");
+    document.body.classList.remove("en-scoop");   // el modo paso a paso se activa al tocar "Armar mi Scoop"
     document.body.classList.toggle("en-producto", (location.hash.split("/")[1] || "") === "producto");
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
