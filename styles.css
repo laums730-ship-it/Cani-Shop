@@ -1790,3 +1790,6 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .sc-wrap:has(#sc-portada:not([hidden])){max-width:900px}
 .scp-txt .sc-tag{background:#fce3ee!important;color:var(--cafe)!important}
 @media (min-width:701px){.scp-hero{grid-template-columns:1fr 240px}.scp-cani{max-width:240px}}
+.scp-sub{font-size:.95rem!important;margin:-8px 0 18px!important}
+.scp-hero .lucky-anim{margin:0 auto;max-width:300px}
+@media (min-width:701px){.scp-hero{grid-template-columns:1fr 300px}}

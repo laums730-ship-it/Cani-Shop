@@ -885,25 +885,32 @@
         <div class="scp-hero">
           <div class="scp-txt">
             <span class="sc-tag">Lucky Scoops</span>
-            <h1>¿Qué es un Scoop?</h1>
-            <p>Un Scoop es una cajita llena de sorpresas kawaii, <b>armada a mano por nosotras</b>. Tú eliges los colores y los personajes que más te gustan, y nosotras la llenamos de productos para que la abras con ilusión.</p>
+            <h1>¿Qué es un Lucky Scoop?</h1>
+            <p>Un Lucky Scoop es un juego de suerte kawaii: sacamos <b>piedritas de una taza, al azar</b>, y <b>cada piedrita es un producto</b> que te llevas. ¡Lo que te toca es lo que llega a tu caja!</p>
+            <p class="scp-sub">Todo se hace <b>por video</b>, para que veas cada piedrita que sale.</p>
             <button type="button" class="btn scp-cta" data-sc-ir="armar">Armar mi Scoop</button>
           </div>
-          <img class="scp-cani" src="cani-charla.webp" alt="Cani">
+          <div class="lucky-anim" aria-hidden="true">
+            <img class="la-taza" src="taza-cani.webp" alt="">
+            <img class="la-perla" src="perla.webp" alt="">
+            <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <img class="la-premio la-p1" src="llavero.webp" alt="">
+            <img class="la-premio la-p2" src="libreta.webp" alt="">
+          </div>
         </div>
-        <h2 class="scp-h">Así de fácil</h2>
+        <h2 class="scp-h">Así funciona</h2>
         <div class="scp-pasos">
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1.3 10.2a1 1 0 0 1-1 .8H7.3a1 1 0 0 1-1-.8z"/><path d="M4 9a8 5 0 0 1 16 0"/></svg></span><b>Elige tu scoop</b><small>Según cuántos productos quieres que lleve.</small></div>
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10A4.300 4.300 0 0 1 12 7.200 4.300 4.300 0 0 1 19.500 10c0 5.400-7.500 10-7.500 10z"/></svg></span><b>Cuéntanos tus favoritos</b><small>Escoge tus colores y personajes.</small></div>
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 6.5h18V9H3zM12 6.5V20"/><path d="M12 6.5C10 3 6.5 3.5 7.5 6M12 6.5c2-3.5 5.500-3 4.500-.5"/></svg></span><b>Hazlo especial</b><small>Caja, carta o video, si quieres. Es opcional.</small></div>
-          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span><b>Nosotras lo armamos</b><small>Cuando confirmamos tu pago, lo preparamos con cariño.</small></div>
+          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1.3 10.2a1 1 0 0 1-1 .8H7.3a1 1 0 0 1-1-.8z"/><path d="M4 9a8 5 0 0 1 16 0"/></svg></span><b>Elige tu scoop</b><small>Cada tamaño trae una cantidad distinta de productos.</small></div>
+          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 20s-7.500-4.600-7.500-10A4.300 4.300 0 0 1 12 7.200 4.300 4.300 0 0 1 19.500 10c0 5.400-7.500 10-7.500 10z"/></svg></span><b>Cuéntanos tus favoritos</b><small>Escoge tus colores y personajes preferidos.</small></div>
+          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 6.5h18V9H3zM12 6.5V20"/><path d="M12 6.5C10 3 6.5 3.5 7.5 6M12 6.5c2-3.5 5.500-3 4.500-.5"/></svg></span><b>Sacamos tus piedritas</b><small>Al azar, de una taza y por video. Cada piedrita es un producto.</small></div>
+          <div class="scp-paso"><span class="scp-ic"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span><b>Armamos tu caja</b><small>Con lo que te tocó, y tú puedes sumarle carta o una caja especial.</small></div>
         </div>
         <h2 class="scp-h">Elige tu tamaño</h2>
         <div class="scp-ops">${ops.map((o, i) => `<button type="button" class="scp-op" data-sc-op="${i}">${o.imagen ? `<img src="${esc(o.imagen)}" alt="">` : `<span class="circ-letra">${esc(inicial(o.nombre))}</span>`}<b>${esc(o.nombre)}</b><em>${bs(+o.precio)}</em>${o.detalle ? `<small>${esc(o.detalle)}</small>` : ""}<span class="scp-elegir">Elegir</span></button>`).join("")}</div>
         <p class="scp-nota">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad.")}</p>
       </section>
       <div id="sc-armar" hidden>
-      <button type="button" class="scp-volver" data-sc-ir="portada">‹ ¿Qué es un Scoop?</button>
+      <button type="button" class="scp-volver" data-sc-ir="portada">‹ ¿Qué es un Lucky Scoop?</button>
       <section class="sc-hero">
         <h1>${esc(SC.titulo || "Arma tu Scoop")}</h1>
         <p>${esc(SC.intro || "Elige tu scoop, tus colores y personajes favoritos, ¡y nosotras lo armamos para ti!")}</p>
