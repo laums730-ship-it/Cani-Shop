@@ -13,12 +13,12 @@
   <meta name="robots" content="noindex">
   <title>Panel · Cani Shop</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Patrick+Hand&family=Gochi+Hand&family=Indie+Flower&family=Mali:wght@400;600&family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root{--rosa-fuerte:#fd95c8;--rosa:#fce3ee;--rosa-claro:#fff3f8;--rosa-tinta:#d4609a;--rosa-osc:#783746;--cafe:#783746;--lila:#cca1e8;--amarillo:#fff275;
       --fondo:#fffafc;--tinta:#783746;--gris:#9a7780;--borde:#f6d6e5;--verde:#2fb574;--rojo:#d94452;--radio:18px;
-      --f-tit:Poppins,Comfortaa,sans-serif;--f-txt:Comfortaa,system-ui,sans-serif}
+      --f-tit:Fredoka,Comfortaa,sans-serif;--f-txt:Comfortaa,system-ui,sans-serif}
     *{box-sizing:border-box}
     body{margin:0;font-family:var(--f-txt);background:#fff6fa;color:var(--tinta)}
     h1,h2,h3,h4{font-family:var(--f-tit);font-weight:600;margin:0;color:var(--cafe)}
@@ -2233,7 +2233,7 @@
   document.addEventListener("input", e => { const d = e.target.dataset; if (d.dtit !== undefined) dests[d.dtit].titulo = e.target.value; });
   document.addEventListener("change", e => { const d = e.target.dataset; if (d.dcat !== undefined) dests[d.dcat].cat = e.target.value; });
   const FUENTES_AD = [
-    ["clasica", "Cani Shop (Poppins + Comfortaa)", "Poppins", "Comfortaa", "family=Poppins:wght@500;600&family=Comfortaa:wght@400;700"],
+    ["clasica", "Cani Shop (Fredoka + Comfortaa)", "Fredoka", "Comfortaa", "family=Fredoka:wght@500;600&family=Comfortaa:wght@400;700"],
     ["burbuja", "Burbuja", "Baloo 2", "Quicksand", "family=Baloo+2:wght@600;700&family=Quicksand:wght@400;600"],
     ["japonesa", "Japonesa kawaii", "Mochiy Pop One", "M PLUS Rounded 1c", "family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;700"],
     ["dulce", "Dulce", "DynaPuff", "Nunito", "family=DynaPuff:wght@500;600&family=Nunito:wght@400;700"],
@@ -3604,7 +3604,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const tienda = [esc(T2.ubicacion || "Santa Cruz de la Sierra, Bolivia"), tel ? "Tel. " + esc(tel) : "", ig ? "@" + esc(ig) : ""].filter(Boolean).join("<br>");
     const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nota de venta ${ED.numero ? "#" + ED.numero : ""} · ${esc(T2.nombre || "Cani Shop")}</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Comfortaa:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Comfortaa:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:A5 portrait;margin:0}
   *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -3625,7 +3625,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   .compacta .info{padding-top:5mm;padding-bottom:4mm}
   tr,.bajo,.pie{break-inside:avoid}
   .cab{display:flex;justify-content:space-between;align-items:flex-start;padding:11mm 10mm 0}
-  h1{font-family:Poppins,sans-serif;font-weight:600;font-size:25px;line-height:1;margin:0;color:#5e2a37}
+  h1{font-family:Fredoka,sans-serif;font-weight:600;font-size:25px;line-height:1;margin:0;color:#5e2a37}
   .num{font-size:11px;margin-top:1.8mm;letter-spacing:.3px}
   .cab img{height:24mm;width:auto;display:block;margin-top:-5mm;margin-right:-2mm}
   .info{display:grid;grid-template-columns:1.1fr 1.2fr .8fr;gap:5mm;padding:7mm 10mm 6mm}
@@ -3657,9 +3657,9 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   .tot div{display:flex;justify-content:space-between;gap:8mm;padding:.8mm 0}
   .tot div span:first-child{font-weight:700}
   .tot .d span:last-child{color:#c2557f}
-  .tot .total{margin-top:1.6mm;background:#fce3ee;border-radius:999px;padding:2mm 4mm;margin-right:-1mm;margin-left:-4mm;font-family:Poppins,sans-serif;font-weight:600;font-size:14px}
+  .tot .total{margin-top:1.6mm;background:#fce3ee;border-radius:999px;padding:2mm 4mm;margin-right:-1mm;margin-left:-4mm;font-family:Fredoka,sans-serif;font-weight:600;font-size:14px}
   .pie{margin-top:auto;padding:6mm 10mm 7mm;background:#fce3ee}
-  .gracias{font-family:Poppins,sans-serif;font-weight:600;font-size:12px;margin-bottom:2.2mm}
+  .gracias{font-family:Fredoka,sans-serif;font-weight:600;font-size:12px;margin-bottom:2.2mm}
   .redes{display:flex;flex-wrap:wrap;gap:1.5mm 5mm;font-size:8.8px;font-weight:700}
   .redes span{display:inline-flex;align-items:center;gap:1.3mm}
   .redes svg{width:3.4mm;height:3.4mm;fill:none;stroke:#783746;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}

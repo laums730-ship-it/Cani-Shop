@@ -694,7 +694,7 @@
 
   // ---------- Tipografía ----------
   const FUENTES = {
-    clasica:  { t: "'Poppins'", x: "'Comfortaa'", url: "family=Poppins:wght@500;600;700&family=Comfortaa:wght@400;500;600;700" },
+    clasica:  { t: "'Fredoka'", x: "'Comfortaa'", url: "family=Fredoka:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700" },
     burbuja:  { t: "'Baloo 2'", x: "'Quicksand'", url: "family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700" },
     japonesa: { t: "'Mochiy Pop One'", x: "'M PLUS Rounded 1c'", url: "family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;500;700;800" },
     dulce:    { t: "'DynaPuff'", x: "'Nunito'", url: "family=DynaPuff:wght@400;500;600;700&family=Nunito:wght@400;600;700;800" },
@@ -706,7 +706,7 @@
   if (T.fuente && FUENTES[T.fuente] && T.fuente !== "clasica") {
     const l = document.createElement("link"); l.rel = "stylesheet"; l.href = `https://fonts.googleapis.com/css2?${FU.url}&display=swap`; document.head.appendChild(l);
   }
-  document.documentElement.style.setProperty("--f-tit", `${FU.t}, Poppins, Nunito, sans-serif`);
+  document.documentElement.style.setProperty("--f-tit", `${FU.t}, Fredoka, Nunito, sans-serif`);
   document.documentElement.style.setProperty("--f-txt", `${FU.x}, Nunito, system-ui, sans-serif`);
   if (T.fuente === "moderna" || T.fuente === "japonesa") document.documentElement.classList.add("fuente-compacta");
 
