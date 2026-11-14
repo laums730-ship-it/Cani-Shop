@@ -2599,7 +2599,7 @@
   let pvista = (() => { try { return localStorage.getItem("ped-vista") || "lista"; } catch (e) { return "lista"; } })();
   const COLS = [["nuevo", "Nuevos"], ["confirmado", "Confirmados"], ["pagado", "Pagados"], ["entregado", "Entregados"]];
   function pintarTablero(q) {
-    let l = PEDS; if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
+    let l = PEDS; if (q) l = l.filter(p => sinTilde(`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).includes(sinTilde(q)));
     const DIA = 864e5, limite = Date.now() - 30 * DIA;
     $("#ped-tablero").innerHTML = COLS.map(([e, t]) => {
       let c = l.filter(p => p.estado === e);
@@ -2644,7 +2644,7 @@
     $("#ped-filtros").hidden = tab; $("#ped-lista").hidden = tab; $("#ped-tablero").hidden = !tab; if (!tab) $("#ped-tablero-nota").hidden = true;
     if (tab) return pintarTablero(q);
     let l = PEDS.filter(p => pfiltro === "todos" ? true : pfiltro === "porentregar" ? ["confirmado", "pagado"].includes(p.estado) : p.estado === pfiltro);
-    if (q) l = l.filter(p => (`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).toLowerCase().includes(q));
+    if (q) l = l.filter(p => sinTilde(`#${p.numero} ${p.numero} ${p.cliente} ${p.telefono}`).includes(sinTilde(q)));
     if (!l.length) { $("#ped-lista").innerHTML = `<div class="vacio">${PEDS.length ? "No hay pedidos aquí." : "Todavía no llegan pedidos. Cuando alguien compre en tu tienda, aparece aquí 💕"}</div>`; return; }
     $("#ped-lista").innerHTML = l.map(p => {
       const c = cuentas(p.items || [], p.envio, p.pagado), n = (p.items || []).reduce((a, i) => a + (i.en_scoop ? 0 : num(i.cant)), 0);
@@ -3266,7 +3266,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   const pedsDe = c => PEDS.filter(p => c.tel_norm && telWa(p.telefono) === c.tel_norm);
   function pintarClientes() {
     const q = $("#cli-buscar").value.trim().toLowerCase();
-    const l = CLIS.filter(c => !q || `${c.nombre} ${c.telefono} ${c.ciudad} ${c.tiktok}`.toLowerCase().includes(q));
+    const l = CLIS.filter(c => !q || sinTilde(`${c.nombre} ${c.telefono} ${c.ciudad} ${c.tiktok}`).includes(sinTilde(q)));
     $("#cli-total").textContent = CLIS.length;
     if (!l.length) { $("#cli-lista").innerHTML = `<div class="vacio">${CLIS.length ? "Nadie con esa búsqueda." : "Todavía no tienes clientes registrados. Se agregan solos con cada pedido 💕"}</div>`; return; }
     $("#cli-lista").innerHTML = l.map(c => {

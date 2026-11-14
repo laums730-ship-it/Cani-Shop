@@ -517,7 +517,7 @@
     if (cat) (PS.some(p => p.id === cat) ? selP : selC).add(cat);
     let base = PRODS;
     if (modo === "nuevos") base = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo));
-    if (q) { const t = q.toLowerCase(); base = base.filter(p => (p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t)); }
+    if (q) { const t = sinAcento(q).trim(); base = base.filter(p => sinAcento(p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).includes(t)); }
     const pasa = (p, sel) => !sel.size || (p.categorias || []).some(c => sel.has(c));
     const filtrar = () => {
       let l = base.filter(p => pasa(p, selP) && pasa(p, selC));
@@ -691,6 +691,9 @@
     const ps = (p.categorias || []).map(id => CATS.find(c => c.id === id)).filter(c => c && tipoDe(c) === "personaje");
     return ps.find(c => c.id !== "sanrio") || ps[0];
   };
+
+  // Búsqueda sin importar tildes ni mayúsculas (Album = Álbum)
+  const sinAcento = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
   // ---------- Tipografía ----------
   const FUENTES = {
@@ -1625,8 +1628,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       pop.innerHTML = pops.length ? `<p class="pop-tit">Búsquedas populares</p><div class="pop-chips">${pops.map(c => `<a class="pill" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>` : "";
       return;
     }
-    const t = q.toLowerCase();
-    const res = PRODS.filter(p => (p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).toLowerCase().includes(t));
+    const t = sinAcento(q).trim();
+    const res = PRODS.filter(p => sinAcento(p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).includes(t));
     pop.innerHTML = res.length ? `<p class="pop-tit">Productos</p><div class="pop-res">${res.slice(0, 6).map(p => `<a href="#/producto/${p.id}"><img src="${foto(p)}" alt=""><span>${esc(sinEmoji(p.nombre))}<b>${bs(p.precio)}</b></span></a>`).join("")}</div>
       <a class="ver-todo pop-todo" href="#/buscar/${encodeURIComponent(q)}">Ver los ${res.length} resultados</a>` : `<p class="pop-tit">No encontramos “${esc(q)}”</p>`;
   }
