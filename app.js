@@ -29,14 +29,24 @@
   const foto = p => (p.imagenes && p.imagenes[0]) || T.logo;
   const maxDe = (p, vari) => { const s = tieneVar(p) ? (p.variantes.find(v => v.nombre === vari) || {}).stock : p.stock; return typeof s === "number" ? s : 99; };
 
+  // Copia guardada en el teléfono: si Supabase no responde (límite, internet lento), se muestra lo último que se vio
+  const copiaGuardar = (k, v) => { try { localStorage.setItem("cani-" + k, JSON.stringify(v)); } catch (e) {} };
+  const copiaLeer = k => { try { return JSON.parse(localStorage.getItem("cani-" + k)); } catch (e) { return null; } };
+
   async function cargarProductos() {
     if (!SB.url || !SB.key) return;
     try {
       const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/productos?select=*&activo=eq.true&order=orden.asc,creado.desc`,
         { headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}` } });
       if (!r.ok) throw new Error(r.status);
-      PRODS = (await r.json()).map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
-    } catch (e) { console.warn("No se pudieron cargar los productos de Supabase", e); }
+      const crudo = await r.json();
+      PRODS = crudo.map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+      copiaGuardar("productos", crudo);
+    } catch (e) {
+      console.warn("No se pudieron cargar los productos de Supabase", e);
+      const viejo = copiaLeer("productos");
+      if (Array.isArray(viejo) && viejo.length) PRODS = viejo.map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+    }
   }
 
   // Ajustes que cambias desde el panel (avisos, banners, textos…)
@@ -47,8 +57,12 @@
         { headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}` } });
       if (!r.ok) throw new Error(r.status);
       const [fila] = await r.json();
-      if (fila && fila.datos) for (const [k, v] of Object.entries(fila.datos)) if (v !== null && v !== undefined) T[k] = v;
-    } catch (e) { console.warn("No se pudieron cargar los ajustes", e); }
+      if (fila && fila.datos) { copiaGuardar("ajustes", fila.datos); for (const [k, v] of Object.entries(fila.datos)) if (v !== null && v !== undefined) T[k] = v; }
+    } catch (e) {
+      console.warn("No se pudieron cargar los ajustes", e);
+      const viejo = copiaLeer("ajustes");
+      if (viejo) for (const [k, v] of Object.entries(viejo)) if (v !== null && v !== undefined) T[k] = v;
+    }
   }
 
   app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii…</p>`;
