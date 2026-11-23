@@ -1874,3 +1874,4 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .as-grupo>div{flex:1 1 0;min-width:0}
 .as-grupo .btn{width:auto;flex:none;white-space:nowrap;margin-left:0}
 @media (max-width:820px){.as-grupo{flex-wrap:wrap}.as-grupo>div{flex:1 1 220px}.as-grupo .btn{width:100%;box-sizing:border-box}}
+.as-limpiar{font:inherit;font-size:.8rem;font-weight:700;color:#b16a91;background:none;border:0;text-decoration:underline;cursor:pointer;padding:6px 0}

@@ -1629,20 +1629,19 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const noAS = p => !/pegamento/i.test(p.nombre || "");
   const simpleAS = p => p && noAS(p) && hayStock(p) && +p.precio > 0 && (p.imagenes || []).length;
   const libresAS = p => tieneVar(p) ? p.variantes.filter(v => disp(v.stock)) : [];
-  // Filtros de la página: personaje y color que elige quien compra
-  const filtroAS = { per: "", col: "" };
-  const leerFiltroAS = () => { try { filtroAS.per = sessionStorage.getItem("as-per") || ""; filtroAS.col = sessionStorage.getItem("as-col") || ""; } catch (e) {} };
-  const guardarFiltroAS = () => { try { sessionStorage.setItem("as-per", filtroAS.per); sessionStorage.setItem("as-col", filtroAS.col); } catch (e) {} };
+  // Filtros de la página: personajes y categorías (se puede elegir más de uno de cada tipo)
+  const filtroAS = { per: [], cat: [] };
+  const leerFiltroAS = () => { try { const r = k => (sessionStorage.getItem(k) || "").split(",").filter(Boolean); filtroAS.per = r("as-per"); filtroAS.cat = r("as-cat"); } catch (e) {} };
+  const guardarFiltroAS = () => { try { sessionStorage.setItem("as-per", filtroAS.per.join(",")); sessionStorage.setItem("as-cat", filtroAS.cat.join(",")); } catch (e) {} };
   const textoAS = p => sinAcento([p.nombre, ...libresAS(p).map(v => v.nombre)].join(" | "));
-  const perAS = () => PERS().find(c => c.id === filtroAS.per);
   const coincideVarAS = (v, t) => sinAcento(v.nombre).includes(sinAcento(t));
+  const nomCatAS = id => ((CATS.find(c => c.id === id) || {}).nombre) || "";
   const coincideAS = p => {
-    const per = perAS();
-    if (per && !((personajeDe(p) || {}).id === per.id || textoAS(p).includes(sinAcento(per.nombre)))) return false;
-    if (filtroAS.col && !textoAS(p).includes(sinAcento(filtroAS.col))) return false;
+    const ids = p.categorias || [];
+    if (filtroAS.per.length && !filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id))))) return false;
+    if (filtroAS.cat.length && !filtroAS.cat.some(id => ids.includes(id))) return false;
     return true;
   };
-  const coloresAS = () => ((T.scoops && T.scoops.colores) || ["Rosa", "Lila", "Celeste", "Verde", "Blanco", "Negro", "Rojo", "Morado", "Azul"]).filter(Boolean);
   const catDe = p => (p.categorias || [])[0] || "";
   function combosAS(monto) {
     const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
@@ -1662,7 +1661,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito"];
   function amigoSecreto(montoTxt) {
     leerFiltroAS();
-    if (filtroAS.per && !perAS()) filtroAS.per = "";
+    filtroAS.per = filtroAS.per.filter(id => PERS().some(c => c.id === id)); filtroAS.cat = filtroAS.cat.filter(id => CATEG().some(c => c.id === id));
     if (!asOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">El amigo secreto vuelve pronto.</p>`; return; }
     const montos = (AS.montos || [30, 50, 80, 100]).map(Number).filter(n => n > 0);
     let monto = +montoTxt || 0; if (!monto) { try { monto = +sessionStorage.getItem("as-monto") || 0; } catch (e) {} }
@@ -1695,9 +1694,11 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-filtros" id="as-filtros">
-        <h2 class="as-tit">¿Qué personaje o color prefieres?</h2>
-        ${PERS().length ? `<div class="as-fila"><span>Personaje</span><div>${[{ id: "", nombre: "Todos" }, ...PERS()].map(c => `<button type="button" class="as-chip ${filtroAS.per === c.id ? "on" : ""}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}</div></div>` : ""}
-        <div class="as-fila"><span>Color</span><div>${["", ...coloresAS()].map(c => `<button type="button" class="as-chip ${filtroAS.col === c ? "on" : ""}" data-ascol="${esc(c)}">${c ? `<i style="background:${hexDe(c)}"></i>${esc(c)}` : "Todos"}</button>`).join("")}</div></div>
+        <h2 class="as-tit">¿Qué personaje o categoría prefieres?</h2>
+        <p class="as-sub">Puedes elegir más de uno.</p>
+        ${PERS().length ? `<div class="as-fila"><span>Personajes</span><div>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}</div></div>` : ""}
+        ${CATEG().length ? `<div class="as-fila"><span>Categorías</span><div>${CATEG().map(c => `<button type="button" class="as-chip ${filtroAS.cat.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.cat.includes(c.id)}" data-ascat="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}</div></div>` : ""}
+        ${filtroAS.per.length || filtroAS.cat.length ? `<button type="button" class="as-limpiar" id="as-limpiar">Quitar filtros</button>` : ""}
       </div>
 
       <div class="as-llega">
@@ -1716,7 +1717,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[k] || "Combo"}</h3>
-              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => a.map((v, i) => `<option value="${esc(v.nombre)}"${(filtroAS.col || perAS()) && (!filtroAS.col || coincideVarAS(v, filtroAS.col)) && (!perAS() || coincideVarAS(v, perAS().nombre)) && !a.slice(0, i).some(w => (!filtroAS.col || coincideVarAS(w, filtroAS.col)) && (!perAS() || coincideVarAS(w, perAS().nombre))) ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""))(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
+              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
               <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
               ${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
             </div></article>`).join("")}</div>`
@@ -1734,8 +1735,10 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     </section>`;
     { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
     try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
-    app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => { filtroAS.per = b.dataset.asper; guardarFiltroAS(); amigoSecreto(monto); });
-    app.querySelectorAll("[data-ascol]").forEach(b => b.onclick = () => { filtroAS.col = b.dataset.ascol; guardarFiltroAS(); amigoSecreto(monto); });
+    const alt = (L, id) => { const k = L.indexOf(id); k >= 0 ? L.splice(k, 1) : L.push(id); guardarFiltroAS(); amigoSecreto(monto); };
+    app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => alt(filtroAS.per, b.dataset.asper));
+    app.querySelectorAll("[data-ascat]").forEach(b => b.onclick = () => alt(filtroAS.cat, b.dataset.ascat));
+    { const q = $("#as-limpiar"); if (q) q.onclick = () => { filtroAS.per = []; filtroAS.cat = []; guardarFiltroAS(); amigoSecreto(monto); }; }
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
   }
