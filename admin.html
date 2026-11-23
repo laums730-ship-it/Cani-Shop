@@ -3637,17 +3637,17 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const u = f => new URL(f, location.href).href, fondo = u("amigo-carta-fondo.webp"), est = u("estrella-rosa.svg");
     const e = t => String(t || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Carta de amigo secreto</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Comfortaa:wght@700&family=Caveat:wght@600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Comfortaa:wght@700&family=Sue+Ellen+Francisco&display=block" rel="stylesheet">
 <style>@page{size:150mm 100mm;margin:0}html,body{margin:0;color:#783746}
 .h{position:relative;width:150mm;height:100mm;margin:0 auto;overflow:hidden;background:#fef2f9;page-break-after:always;box-sizing:border-box}
 .h>img.f{position:absolute;inset:0;width:100%;height:100%;display:block}
-.msg{position:absolute;left:5.6%;width:44%;top:30.9%;height:39.1%;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Caveat,cursive;font-weight:600;font-size:6.4mm;line-height:7.71mm;color:#783746;padding-top:.6mm;box-sizing:border-box}
-.para,.de{position:absolute;font-family:Caveat,cursive;font-weight:600;color:#c8213c;white-space:nowrap;overflow:hidden;text-overflow:clip;display:flex;align-items:flex-end;box-sizing:border-box;padding-bottom:.4mm}
-.para{left:65.6%;width:30.6%;top:61.5%;height:8.2%;font-size:7.4mm}
-.de{left:22.4%;width:27.5%;top:79.6%;height:6.6%;font-size:6.6mm}
+.msg{position:absolute;left:5.6%;width:44%;top:30.9%;height:39.1%;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;font-family:'Sue Ellen Francisco',cursive;font-weight:400;font-size:8.6mm;line-height:7.71mm;color:#783746;padding-top:.6mm;box-sizing:border-box}
+.para,.de{position:absolute;font-family:'Sue Ellen Francisco',cursive;font-weight:400;color:#c8213c;white-space:nowrap;overflow:hidden;text-overflow:clip;display:flex;align-items:flex-end;box-sizing:border-box;padding-bottom:.4mm}
+.para{left:65.6%;width:30.6%;top:61.5%;height:8.2%;font-size:9.4mm}
+.de{left:22.4%;width:27.5%;top:79.6%;height:6.6%;font-size:8.6mm}
 .et{position:absolute;width:62mm;height:62mm;border-radius:50%;background:#fce3ee;border:1mm solid #c8213c;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;padding:6mm;top:19mm}
 .et b{font-family:Fredoka,sans-serif;font-size:5.6mm;line-height:1.1}
-.et span{font-family:Caveat,cursive;font-weight:600;font-size:8mm;margin:1.5mm 0;color:#c8213c}
+.et span{font-family:'Sue Ellen Francisco',cursive;font-weight:400;font-size:10mm;margin:1.5mm 0;color:#c8213c}
 .et small{font-family:Comfortaa,sans-serif;font-size:3mm}
 .et img{width:9mm;margin-bottom:1mm}
 .corte{position:absolute;left:0;right:0;top:5mm;text-align:center;font:3mm Comfortaa,sans-serif;color:#b4708a;margin:0}
@@ -3665,7 +3665,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
 <script>
 document.fonts.ready.then(()=>{
 const t=document.getElementById("msg");let k=1;
-while(t.scrollHeight>t.clientHeight+1&&k>.3){k-=.05;t.style.fontSize="calc(6.4mm*"+k+")";if(k<.62)t.style.lineHeight="3.85mm";}
+while(t.scrollHeight>t.clientHeight+1&&k>.3){k-=.05;t.style.fontSize="calc(8.6mm*"+k+")";if(k<.62)t.style.lineHeight="3.85mm";}
 ["para","de"].forEach(id=>{const n=document.getElementById(id);let q=1;while(n.scrollWidth>n.clientWidth+1&&q>.4){q-=.05;n.style.fontSize="calc("+getComputedStyle(n).fontSize+" * .95)";}});
 Promise.all([...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>print(),300));});<\/script></body></html>`);
     w.document.close();
