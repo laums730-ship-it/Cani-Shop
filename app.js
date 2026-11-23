@@ -1722,7 +1722,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, blog: () => blog(arg), "amigo-secreto": () => amigoSecreto(arg) }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, "amigo-secreto": () => amigoSecreto(arg) }[sec] || inicio)();
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
