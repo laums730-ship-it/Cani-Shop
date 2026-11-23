@@ -3634,45 +3634,39 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   FP.nota.addEventListener("input", verBotonAS);
   function imprimirAS(a) {
     const w = window.open("", "_blank"); if (!w) return toast("Permite las ventanas emergentes para imprimir", true);
-    const u = f => new URL(f, location.href).href, cani = u("cani-feliz.webp"), est = u("estrella-rosa.svg");
+    const u = f => new URL(f, location.href).href, fondo = u("amigo-carta-fondo.webp"), est = u("estrella-rosa.svg");
     const e = t => String(t || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    const estrellas = [[8, 7, 9, -14], [84, 5, 7, 12], [6, 52, 6, 10], [88, 46, 8, -8], [12, 88, 7, 16], [50, 90, 7, -12]].map(([x, y, s, r]) => `<img class="e" src="${est}" style="left:${x}%;top:${y}%;width:${s}mm;transform:rotate(${r}deg)" alt="">`).join("");
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Carta de amigo secreto</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Comfortaa:wght@700&family=Caveat:wght@600&display=block" rel="stylesheet">
-<style>@page{size:A6 portrait;margin:0}html,body{margin:0;color:#783746}
-.h{position:relative;width:105mm;height:148mm;margin:0 auto;overflow:hidden;background:#fffafc;page-break-after:always;box-sizing:border-box}
-.borde{position:absolute;inset:5mm;border:1.2mm dashed #fd95c8;border-radius:7mm}
-.e{position:absolute}
-.cab{position:absolute;left:0;right:0;top:12mm;text-align:center;font-family:Fredoka,sans-serif;font-size:7.5mm;line-height:1.1}
-.cab small{display:block;font-family:Comfortaa,sans-serif;font-size:3.2mm;margin-top:1.5mm;color:#b4708a}
-.para{position:absolute;left:14mm;right:14mm;top:34mm;font-family:Comfortaa,sans-serif;font-size:4mm}
-.para b{font-family:Caveat,cursive;font-size:8mm;font-weight:600;margin-left:1.5mm}
-.msg{position:absolute;left:14mm;right:14mm;top:47mm;bottom:48mm;display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Caveat,cursive;font-weight:600;font-size:8mm;line-height:1.3}
-.de{position:absolute;right:14mm;bottom:38mm;font-family:Comfortaa,sans-serif;font-size:4mm;text-align:right}
-.de b{display:block;font-family:Caveat,cursive;font-size:7.5mm;font-weight:600}
-.cani{position:absolute;left:12mm;bottom:11mm;width:30mm}
-.pie{position:absolute;right:12mm;bottom:13mm;font-family:Fredoka,sans-serif;font-size:3.6mm;color:#ee6fae}
-.et{position:absolute;width:62mm;height:62mm;border-radius:50%;background:#fce3ee;border:1mm solid #fd95c8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;padding:6mm}
+<style>@page{size:150mm 100mm;margin:0}html,body{margin:0;color:#783746}
+.h{position:relative;width:150mm;height:100mm;margin:0 auto;overflow:hidden;background:#fef2f9;page-break-after:always;box-sizing:border-box}
+.h>img.f{position:absolute;inset:0;width:100%;height:100%;display:block}
+.msg{position:absolute;left:5.6%;width:44%;top:30.9%;height:39.1%;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Caveat,cursive;font-weight:600;font-size:6.4mm;line-height:7.71mm;color:#783746;padding-top:.6mm;box-sizing:border-box}
+.para,.de{position:absolute;font-family:Caveat,cursive;font-weight:600;color:#c8213c;white-space:nowrap;overflow:hidden;text-overflow:clip;display:flex;align-items:flex-end;box-sizing:border-box;padding-bottom:.4mm}
+.para{left:65.6%;width:30.6%;top:61.5%;height:8.2%;font-size:7.4mm}
+.de{left:22.4%;width:27.5%;top:79.6%;height:6.6%;font-size:6.6mm}
+.et{position:absolute;width:62mm;height:62mm;border-radius:50%;background:#fce3ee;border:1mm solid #c8213c;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;padding:6mm;top:19mm}
 .et b{font-family:Fredoka,sans-serif;font-size:5.6mm;line-height:1.1}
-.et span{font-family:Caveat,cursive;font-weight:600;font-size:8mm;margin:1.5mm 0}
+.et span{font-family:Caveat,cursive;font-weight:600;font-size:8mm;margin:1.5mm 0;color:#c8213c}
 .et small{font-family:Comfortaa,sans-serif;font-size:3mm}
 .et img{width:9mm;margin-bottom:1mm}
-.corte{position:absolute;left:0;right:0;top:4mm;text-align:center;font:3mm Comfortaa,sans-serif;color:#b4708a}
+.corte{position:absolute;left:0;right:0;top:5mm;text-align:center;font:3mm Comfortaa,sans-serif;color:#b4708a;margin:0}
 @media screen{body{background:#eee;padding:20px}.h{box-shadow:0 6px 20px rgba(0,0,0,.15);margin-bottom:20px}}</style></head>
 <body>
-<div class="h"><div class="borde"></div>${estrellas}
-  <div class="cab">¡Feliz amigo secreto!<small>un regalito con mucho cariño</small></div>
-  <div class="para">Para:<b>${e(a.para || "ti")}</b></div>
+<div class="h"><img class="f" src="${fondo}" alt="">
   <div class="msg" id="msg">${e(a.msg || "¡Feliz Navidad! Espero que este regalito te saque una sonrisa.")}</div>
-  <div class="de">De:<b>${e(a.firma)}</b></div>
-  <img class="cani" src="${cani}" alt=""><div class="pie">Cani Shop</div>
+  <div class="para" id="para">${e(a.para || "ti")}</div>
+  <div class="de" id="de">${e(a.firma || "tu amigo secreto")}</div>
 </div>
 <div class="h"><p class="corte">Recorta y pega en el sobre</p>
-  <div class="et" style="left:21.5mm;top:12mm"><img src="${est}" alt=""><b>Para</b><span>${e(a.para || "ti")}</span><small>¡No lo abras antes del amigo secreto!</small></div>
-  <div class="et" style="left:21.5mm;top:80mm"><img src="${est}" alt=""><b>Amigo secreto</b><span>Cani Shop</span><small>hecho con cariño en Santa Cruz</small></div>
+  <div class="et" style="left:9mm"><img src="${est}" alt=""><b>Para</b><span>${e(a.para || "ti")}</span><small>¡No lo abras antes del amigo secreto!</small></div>
+  <div class="et" style="left:79mm"><img src="${est}" alt=""><b>Amigo secreto</b><span>Cani Shop</span><small>hecho con cariño en Santa Cruz</small></div>
 </div>
 <script>
-document.fonts.ready.then(()=>{const t=document.getElementById("msg");let k=1;while(t.scrollHeight>t.clientHeight+1&&k>.45){k-=.05;t.style.fontSize="calc(8mm*"+k+")";}
+document.fonts.ready.then(()=>{
+const t=document.getElementById("msg");let k=1;
+while(t.scrollHeight>t.clientHeight+1&&k>.3){k-=.05;t.style.fontSize="calc(6.4mm*"+k+")";if(k<.62)t.style.lineHeight="3.85mm";}
+["para","de"].forEach(id=>{const n=document.getElementById(id);let q=1;while(n.scrollWidth>n.clientWidth+1&&q>.4){q-=.05;n.style.fontSize="calc("+getComputedStyle(n).fontSize+" * .95)";}});
 Promise.all([...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>print(),300));});<\/script></body></html>`);
     w.document.close();
   }
