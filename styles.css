@@ -2017,3 +2017,16 @@ body.pol-abierto{overflow:hidden}
 .as-sep{flex:none;width:2px;height:22px;background:#fbd3e4;border-radius:2px;margin:0 4px}
 .as-desliza{display:none;margin:0;font-size:.74rem;color:#8a5566}
 @media (max-width:900px){.as-desliza{display:block}.as-tira{-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}}
+
+/* Amigo secreto: así llega tu regalo con fotos */
+.as-llega{display:block;padding:22px 24px 24px;border-radius:28px}
+.as-llega-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.as-pasos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.as-llega .as-paso{position:relative;display:block;background:#fff;border:1.5px solid #fbd3e4;border-radius:22px;padding:12px 14px 16px;text-align:center}
+.as-paso-img{aspect-ratio:1.15;display:grid;place-items:center;background:#fef2f9;border-radius:16px;margin-bottom:10px;overflow:hidden}
+.as-paso-img img,.as-paso-img svg{max-width:78%;max-height:92%;width:auto;height:auto;display:block}
+.as-paso-img svg{width:62%}
+.as-llega li>.as-paso-n{position:absolute;top:10px;left:10px;width:28px;height:28px;border-radius:50%;background:#c8213c;color:#fff;display:grid;place-items:center;font:600 .85rem var(--f-tit);box-shadow:0 3px 0 #8f1328}
+.as-llega .as-paso b{display:block;font-family:var(--f-tit);font-weight:600;font-size:1.02rem;color:#783746}
+.as-llega .as-paso p{margin:3px 0 0;font-size:.82rem;line-height:1.4;color:#8a5566}
+@media (max-width:700px){.as-llega .as-pasos{display:flex;grid-template-columns:none;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -24px;padding:0 24px 4px;scrollbar-width:none}.as-llega .as-pasos::-webkit-scrollbar{display:none}.as-llega .as-paso-img{aspect-ratio:1.25}.as-llega .as-paso{flex:0 0 74%;scroll-snap-align:center}}
