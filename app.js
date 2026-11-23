@@ -1688,7 +1688,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     return true;
   };
   const catDe = p => (p.categorias || [])[0] || "";
-  let asRonda = 0, asRondaMonto = 0, asIdx = 0;
+  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false;
   const semillaAS = n => () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
   function combosAS(monto) {
     const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
@@ -1716,7 +1716,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     if (!monto) monto = montos[1] || montos[0];
     if (monto < 15) monto = 15;
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
-    if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asRondaMonto = monto; }
+    if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; }
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
     const combos = combosAS(monto);
@@ -1769,6 +1769,12 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${combos.length > 1 ? `<div class="as-mas"><h3>También te puede gustar</h3><div class="as-mas-fila">${combos.map((c, k) => k === asIdx ? "" : `<button type="button" class="as-mini" data-asir="${k}"><span class="as-mini-f">${c.items.map(p => `<img src="${esc(foto(p))}" alt="" loading="lazy">`).join("")}</span><b>${bsAS(c.total)}</b><small>${esc(c.items.map(p => sinEmoji(p.nombre)).join(" + "))}</small></button>`).filter(Boolean).slice(0, 8).join("")}</div></div>` : ""}
         ${combos.length ? `<div class="as-dado-wrap"><button type="button" class="as-dado" id="as-dado"><span class="as-dado-ic" aria-hidden="true">🎲</span> Ver otro combo</button><small class="as-dado-n">Combo ${asIdx + 1} de ${combos.length}</small></div>` : ""}
       </div>
+      <div class="as-bloque as-sueltos">
+        <h3 class="as-sub-tit">¿Prefieres elegir tú? Regalos sueltos de hasta ${bsAS(monto)}</h3>
+        ${sueltos.length ? grilla(sueltos.slice(0, asMas ? 24 : 4)) : `<p class="vacio">No hay regalos de este monto por ahora. Prueba con otro presupuesto.</p>`}
+        ${sueltos.length > 4 ? `<div class="as-dado-wrap"><button type="button" class="as-vermas" id="as-vermas">${asMas ? "Ver menos" : `Ver más regalos (${Math.min(sueltos.length, 24) - 4} más)`}</button></div>` : ""}
+      </div>
+
       <div class="as-llega">
         <div class="as-llega-cab"><h2><span class="as-num">3</span>Escribe tu carta y haz tu pedido</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
         <ol class="as-pasos">
@@ -1784,10 +1790,6 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
       </div>
 
-      <div class="as-bloque">
-        <h2 class="as-tit">¿Prefieres elegir tú? Regalos sueltos de hasta ${bsAS(monto)}</h2>
-        ${sueltos.length ? grilla(sueltos.slice(0, 24)) : `<p class="vacio">No hay regalos de este monto por ahora. Prueba con otro presupuesto.</p>`}
-      </div>
       <div class="as-grupo">
         <img src="cani-charla.webp" alt="">
         <div><h2>¿Son varios del mismo grupo?</h2><p>Si tu oficina, curso o grupo de amigas pide 5 regalos o más, escríbenos: los armamos juntos, cada uno con su carta y su envoltorio, y coordinamos la entrega.</p></div>
@@ -1798,7 +1800,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
     { const d = $("#as-dado"); if (d) d.onclick = () => { asIdx++; if (asIdx >= combos.length) { asIdx = 0; asRonda++; } d.classList.add("rueda"); setTimeout(() => amigoSecreto(monto), 380); }; }
     app.querySelectorAll("[data-asir]").forEach(b => b.onclick = () => { asIdx = +b.dataset.asir; amigoSecreto(monto); const t = $(".as-combos"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); });
-    const alt = (L, id) => { asRonda = 0; asIdx = 0; const k = L.indexOf(id); k >= 0 ? L.splice(k, 1) : L.push(id); guardarFiltroAS(); amigoSecreto(monto); };
+    { const v = $("#as-vermas"); if (v) v.onclick = () => { asMas = !asMas; const y = window.scrollY; amigoSecreto(monto); window.scrollTo(0, y); }; }
+    const alt = (L, id) => { asMas = false; asRonda = 0; asIdx = 0; const k = L.indexOf(id); k >= 0 ? L.splice(k, 1) : L.push(id); guardarFiltroAS(); amigoSecreto(monto); };
     app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => alt(filtroAS.per, b.dataset.asper));
     app.querySelectorAll("[data-ascat]").forEach(b => b.onclick = () => alt(filtroAS.cat, b.dataset.ascat));
     { const q = $("#as-limpiar"); if (q) q.onclick = () => { asRonda = 0; asIdx = 0; filtroAS.per = []; filtroAS.cat = []; guardarFiltroAS(); amigoSecreto(monto); }; }

@@ -2180,3 +2180,13 @@ body.pol-abierto{overflow:hidden}
 .as-filtros .as-tit-s{font-size:1rem!important;margin:0!important}
 @media (max-width:700px){.as-tit,.as-llega-cab h2,.pol-promo-txt h2,.as-grupo h2{font-size:1.3rem!important}.as-num{width:30px;height:30px}}
 .as-llega .as-paso-n{display:none!important}
+
+/* Regalos sueltos dentro del paso 2, compactos */
+.as-sueltos{margin-top:34px}
+.as-sub-tit{font-size:1.05rem;color:#783746;margin:0 0 12px;font-weight:600}
+.as-sueltos .grilla{gap:12px}
+.as-vermas{font:inherit;font-weight:700;color:#c8213c;background:#fff;border:2px solid #c8213c;border-radius:999px;padding:10px 24px;cursor:pointer;box-shadow:0 4px 0 #fbd3e4}
+.as-vermas:active{transform:translateY(2px);box-shadow:0 1px 0 #fbd3e4}
+@media (max-width:700px){.as-vermas{width:100%}}
+.as-sueltos{max-width:880px;margin-left:auto;margin-right:auto}
+.as-sueltos .grilla{gap:14px!important}
