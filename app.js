@@ -1733,12 +1733,6 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
 
-      <ul class="as-confia">
-        <li><b>Pide con tiempo</b><span>Coordinamos la fecha de entrega por WhatsApp</span></li>
-        <li><b>Envíos a toda Bolivia</b><span>Con entrega en Santa Cruz</span></li>
-        <li><b>Ves tu carta antes de pagar</b><span>Vista previa en el carrito</span></li>
-      </ul>
-
       <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto es el presupuesto?</h2>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
