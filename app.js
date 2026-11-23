@@ -1685,6 +1685,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const montos = (AS.montos || [30, 50, 80, 100]).map(Number).filter(n => n > 0);
     let monto = +montoTxt || 0; if (!monto) { try { monto = +sessionStorage.getItem("as-monto") || 0; } catch (e) {} }
     if (!monto) monto = montos[1] || montos[0];
+    if (monto < 15) monto = 15;
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Sacramento&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
@@ -1697,7 +1698,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <div class="as-hero-txt">
           <span class="as-etq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>Temporada de amigo secreto</span>
           <h1><span class="as-h-caps">El regalo perfecto</span><em class="as-h-script">para tu amigo secreto</em></h1>
-          <p><b>Desde Bs 5.</b> Dinos cuánto es el presupuesto y armamos el regalo, con <b>carta</b> y <b>sobre</b> incluidos.</p>
+          <p><b>Desde Bs 15.</b> Dinos cuánto es el presupuesto y armamos el regalo, con <b>carta</b> y <b>sobre</b> incluidos.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
         </div>
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
@@ -1706,7 +1707,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       <h2 class="as-tit" id="as-elige">¿Cuánto es el presupuesto?</h2>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
-        <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="5" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
+        <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
       </div>
 
       <div class="as-filtros" id="as-filtros">
@@ -1763,7 +1764,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     { const q = $("#as-limpiar"); if (q) q.onclick = () => { filtroAS.per = []; filtroAS.cat = []; guardarFiltroAS(); amigoSecreto(monto); }; }
     app.querySelectorAll("select[data-asv]").forEach(sel => { const sync = () => { const p = PRODS.find(x => String(x.id) === sel.dataset.asv), v = p && (p.variantes || []).find(x => x.nombre === sel.value), im = sel.closest(".as-combo").querySelector(`a[data-asf="${CSS.escape(sel.dataset.asv)}"] img`); if (im && p) im.src = (v && v.imagen) || foto(p); }; sel.addEventListener("change", sync); sync(); });
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
-    const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
+    const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 15) location.hash = "#/amigo-secreto/" + n; };
   }
 
   // ---------- Polaroids: editor "Tus polaroids" ----------
