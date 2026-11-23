@@ -1733,6 +1733,12 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
 
+      <ul class="as-confia">
+        <li><b>Pide con tiempo</b><span>Coordinamos la fecha de entrega por WhatsApp</span></li>
+        <li><b>Envíos a toda Bolivia</b><span>Con entrega en Santa Cruz</span></li>
+        <li><b>Ves tu carta antes de pagar</b><span>Vista previa en el carrito</span></li>
+      </ul>
+
       <h2 class="as-tit" id="as-elige">¿Cuánto es el presupuesto?</h2>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
@@ -1749,6 +1755,26 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <p class="as-desliza">Desliza para ver más</p>
       </div>
 
+      <div class="as-bloque">
+        <h2 class="as-tit">Combos listos de hasta ${bsAS(monto)}</h2>
+        <p class="as-sub">Ya vienen armados con cositas que combinan y listos para regalar, con carta y envoltorio. Si prefieres elegir tú, mira los regalos sueltos más abajo.</p>
+        ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
+            <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
+            <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda * 3) % NOMBRES_COMBO.length] || "Combo"}</h3>
+              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + envoltorio</span><b>Gratis</b></li></ul>
+              <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
+              ${monto - c.total >= polPrecio() ? `<button type="button" class="as-pol-link" data-pol-add>Te alcanza para sumar 4 polaroids</button>` : ""}${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
+            </div></article>`).join("")}</div>`
+        : `<p class="vacio">Todavía no tenemos combos para este monto. Mira los regalos sueltos de abajo.</p>`}
+        ${combos.length > 1 ? `<div class="as-mas"><h3>También te puede gustar</h3><div class="as-mas-fila">${combos.map((c, k) => k === asIdx ? "" : `<button type="button" class="as-mini" data-asir="${k}"><span class="as-mini-f">${c.items.map(p => `<img src="${esc(foto(p))}" alt="" loading="lazy">`).join("")}</span><b>${bsAS(c.total)}</b><small>${esc(c.items.map(p => sinEmoji(p.nombre)).join(" + "))}</small></button>`).filter(Boolean).slice(0, 8).join("")}</div></div>` : ""}
+        ${combos.length ? `<div class="as-dado-wrap"><button type="button" class="as-dado" id="as-dado"><span class="as-dado-ic" aria-hidden="true">🎲</span> Ver otro combo</button><small class="as-dado-n">Combo ${asIdx + 1} de ${combos.length}</small></div>` : ""}
+      </div>
+      <div class="pol-promo">
+        <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente al árbol de Navidad" width="1400" height="933" loading="lazy">
+        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos</h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
+          <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
+      </div>
+
       <div class="as-llega">
         <div class="as-llega-cab"><h2>Así llega tu regalo</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
         <ol class="as-pasos">
@@ -1758,27 +1784,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         </ol>
       </div>
 
-      <div class="pol-promo">
-        <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente al árbol de Navidad" width="1400" height="933" loading="lazy">
-        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos</h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
-          <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
-      </div>
-
       <div class="as-bloque">
-        <h2 class="as-tit">Combos listos de hasta ${bsAS(monto)}</h2>
-        <p class="as-sub">Dos o tres cositas que combinan, para que tu regalo se vea más completo.</p>
-        ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
-            <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
-            <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda * 3) % NOMBRES_COMBO.length] || "Combo"}</h3>
-              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + envoltorio</span><b>Gratis</b></li></ul>
-              <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
-              ${monto - c.total >= polPrecio() ? `<button type="button" class="as-pol-link" data-pol-add>Te alcanza para sumar 4 polaroids</button>` : ""}${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
-            </div></article>`).join("")}</div>`
-        : `<p class="vacio">Todavía no tenemos combos para este monto. Mira los regalos sueltos de abajo.</p>`}
-        ${combos.length ? `<div class="as-dado-wrap"><button type="button" class="as-dado" id="as-dado"><span class="as-dado-ic" aria-hidden="true">🎲</span> Ver otro combo</button><small class="as-dado-n">${asIdx + 1} de ${combos.length}</small></div>` : ""}
-      </div>
-      <div class="as-bloque">
-        <h2 class="as-tit">Regalos sueltos de hasta ${bsAS(monto)}</h2>
+        <h2 class="as-tit">¿Prefieres elegir tú? Regalos sueltos de hasta ${bsAS(monto)}</h2>
         ${sueltos.length ? grilla(sueltos.slice(0, 24)) : `<p class="vacio">No hay regalos de este monto por ahora. Prueba con otro presupuesto.</p>`}
       </div>
       <div class="as-grupo">
@@ -1790,6 +1797,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
     try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
     { const d = $("#as-dado"); if (d) d.onclick = () => { asIdx++; if (asIdx >= combos.length) { asIdx = 0; asRonda++; } d.classList.add("rueda"); setTimeout(() => amigoSecreto(monto), 380); }; }
+    app.querySelectorAll("[data-asir]").forEach(b => b.onclick = () => { asIdx = +b.dataset.asir; amigoSecreto(monto); const t = $(".as-combos"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); });
     const alt = (L, id) => { asRonda = 0; asIdx = 0; const k = L.indexOf(id); k >= 0 ? L.splice(k, 1) : L.push(id); guardarFiltroAS(); amigoSecreto(monto); };
     app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => alt(filtroAS.per, b.dataset.asper));
     app.querySelectorAll("[data-ascat]").forEach(b => b.onclick = () => alt(filtroAS.cat, b.dataset.ascat));

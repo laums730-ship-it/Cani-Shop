@@ -2140,3 +2140,33 @@ body.pol-abierto{overflow:hidden}
 .as-dado-wrap{flex-direction:column;align-items:center;gap:8px}
 .as-dado-n{color:#8a5566;font-size:.8rem;font-weight:600}
 @media (max-width:700px){.as-combo{grid-template-columns:1fr!important}.as-combo-txt{padding:16px 18px 18px}.as-combo-fotos.as-n3 a:first-child img{aspect-ratio:2/1}}
+
+/* Mejoras UX: confianza, filtros compactos, más combos, hero móvil */
+.as-confia{list-style:none;margin:14px 0 6px;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.as-confia li{background:#fff;border:1.5px solid #fbd3e4;border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.as-confia b{font-size:.85rem;color:#8f1328}
+.as-confia span{font-size:.78rem;color:#8a5566;line-height:1.35}
+.as-mas{max-width:880px;margin:22px auto 0}
+.as-mas h3{font-size:.95rem;margin:0 0 10px;color:#783746}
+.as-mas-fila{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity}
+.as-mini{flex:0 0 172px;scroll-snap-align:start;text-align:left;font:inherit;background:#fff;border:2px solid #fbd3e4;border-radius:18px;padding:8px;display:flex;flex-direction:column;gap:5px;cursor:pointer;color:#783746}
+.as-mini:hover{border-color:#c8213c}
+.as-mini-f{display:flex;gap:3px}
+.as-mini-f img{flex:1;min-width:0;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#fef2f9}
+.as-mini b{color:#c8213c;font-size:1rem}
+.as-mini small{font-size:.72rem;line-height:1.3;color:#8a5566;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (min-width:701px){
+.as-filtros{display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
+.as-filtros .as-tit-s{margin:0;white-space:nowrap;font-size:1rem}
+.as-filtros .as-tit-s small{display:none}
+.as-filtros .as-tira{flex:1;min-width:0}
+.as-desliza{display:none}
+}
+@media (max-width:700px){
+.as-confia{grid-template-columns:1fr;gap:6px}
+.as-confia li{flex-direction:row;align-items:baseline;gap:8px;padding:8px 12px;flex-wrap:wrap}
+.as-hero-claro .as-foto{max-height:230px;object-fit:contain}
+}
+.as-confia{margin-bottom:26px}
+.as-filtros{margin-bottom:30px}
+.as-bloque .as-sub{margin-bottom:16px}
