@@ -1755,7 +1755,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="pol-promo">
-        <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente a un árbol de Navidad" width="1400" height="933" loading="lazy">
+        <img class="pol-promo-mano" src="polaroids-mano.webp" alt="Una mano sostiene cuatro polaroids de recuerdos navideños" width="900" height="775" loading="lazy">
         <div class="pol-promo-txt"><h2>Súmale recuerdos</h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
           <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
       </div>
