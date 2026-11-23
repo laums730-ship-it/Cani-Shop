@@ -1740,7 +1740,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <h2 class="as-tit">Combos listos de hasta ${bsAS(monto)}</h2>
         <p class="as-sub">Dos o tres cositas que combinan, para que tu regalo se vea más completo.</p>
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => `<article class="as-combo">
-            <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
+            <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[k] || "Combo"}</h3>
               <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
               <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
@@ -1764,6 +1764,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => alt(filtroAS.per, b.dataset.asper));
     app.querySelectorAll("[data-ascat]").forEach(b => b.onclick = () => alt(filtroAS.cat, b.dataset.ascat));
     { const q = $("#as-limpiar"); if (q) q.onclick = () => { filtroAS.per = []; filtroAS.cat = []; guardarFiltroAS(); amigoSecreto(monto); }; }
+    app.querySelectorAll("select[data-asv]").forEach(sel => { const sync = () => { const p = PRODS.find(x => String(x.id) === sel.dataset.asv), v = p && (p.variantes || []).find(x => x.nombre === sel.value), im = sel.closest(".as-combo").querySelector(`a[data-asf="${CSS.escape(sel.dataset.asv)}"] img`); if (im && p) im.src = (v && v.imagen) || foto(p); }; sel.addEventListener("change", sync); sync(); });
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
   }
