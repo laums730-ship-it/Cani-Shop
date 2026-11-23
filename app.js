@@ -1686,7 +1686,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     let monto = +montoTxt || 0; if (!monto) { try { monto = +sessionStorage.getItem("as-monto") || 0; } catch (e) {} }
     if (!monto) monto = montos[1] || montos[0];
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
-    if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Allura&family=Montserrat:wght@800&display=swap"; document.head.appendChild(l); }
+    if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
     const combos = combosAS(monto);
     const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
