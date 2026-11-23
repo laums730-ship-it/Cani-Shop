@@ -1702,11 +1702,11 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const dia = new Date().getDate();
     sale.sort((x, y) => (y.mezcla - x.mezcla) || (y.total - x.total) || ((x.items[0].id + dia) > (y.items[0].id + dia) ? 1 : -1));
     if (asRonda > 0) { const buenos = sale.slice(0, 60), rnd = semillaAS(asRonda * 7919 + Math.round(monto)); for (let i = buenos.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [buenos[i], buenos[j]] = [buenos[j], buenos[i]]; } sale.splice(0, buenos.length, ...buenos); }
-    const usados = new Set(), elegidos = [];
-    for (const c of sale) { if (c.items.some(p => usados.has(p.id))) continue; elegidos.push(c); c.items.forEach(p => usados.add(p.id)); if (elegidos.length === 3) break; }
+    const usos = {}, elegidos = [];
+    for (const c of sale) { if (c.items.some(p => (usos[p.id] || 0) >= 2)) continue; elegidos.push(c); c.items.forEach(p => usos[p.id] = (usos[p.id] || 0) + 1); if (elegidos.length === 10) break; }
     return elegidos;
   }
-  const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito"];
+  const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito", "El combo ternura", "El combo brillito", "El combo cositas lindas", "El combo kawaii", "El combo confeti", "El combo abrazo", "El combo chispa"];
   function amigoSecreto(montoTxt) {
     leerFiltroAS();
     filtroAS.per = filtroAS.per.filter(id => PERS().some(c => c.id === id)); filtroAS.cat = filtroAS.cat.filter(id => CATEG().some(c => c.id === id));
@@ -1769,7 +1769,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <p class="as-sub">Dos o tres cositas que combinan, para que tu regalo se vea más completo.</p>
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
-            <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda) % NOMBRES_COMBO.length] || "Combo"}</h3>
+            <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda * 3) % NOMBRES_COMBO.length] || "Combo"}</h3>
               <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + envoltorio</span><b>Gratis</b></li></ul>
               <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
               ${monto - c.total >= polPrecio() ? `<button type="button" class="as-pol-link" data-pol-add>Te alcanza para sumar 4 polaroids</button>` : ""}${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
