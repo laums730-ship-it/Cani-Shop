@@ -1790,10 +1790,22 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
       </div>
 
-      <div class="as-grupo">
-        <img src="cani-charla.webp" alt="">
-        <div><h2>¿Son varios del mismo grupo?</h2><p>Si tu oficina, curso o grupo de amigas pide 5 regalos o más, escríbenos: los armamos juntos, cada uno con su carta y su envoltorio, y coordinamos la entrega.</p></div>
-        <a class="btn btn-wa" href="${waURL(msgGrupo)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      <div class="as-grupo as-grupo2">
+        <div class="as-g-izq">
+          <img src="cani-charla.webp" alt="">
+          <div>
+            <h2>Armamos el amigo secreto de todo tu grupo</h2>
+            <p class="as-g-regalo"><b>Desde 4 regalos:</b> te regalamos 4 polaroids para tu compra</p>
+            <ul class="as-g-lista"><li>Una sola persona coordina todo</li><li>Cada regalo con su carta y su envoltorio</li><li>Entrega juntos, en un solo punto</li></ul>
+          </div>
+        </div>
+        <form class="as-g-form" id="as-g-form">
+          <label>¿Cuántos regalos?<input type="number" id="as-g-n" min="4" step="1" inputmode="numeric" placeholder="4" value="4"></label>
+          <label>Presupuesto por persona<input type="number" id="as-g-m" min="15" step="1" inputmode="numeric" placeholder="${esc(String(monto))}" value="${esc(String(monto))}"></label>
+          <label>¿Para cuándo lo necesitas?<input type="text" id="as-g-f" placeholder="Ej: 20 de diciembre" maxlength="40"></label>
+          <button class="btn btn-wa" type="submit">Pedir presupuesto para mi grupo</button>
+          <small>Se abre WhatsApp con tu mensaje ya escrito.</small>
+        </form>
       </div>
     </section>`;
     { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
@@ -1807,6 +1819,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     { const q = $("#as-limpiar"); if (q) q.onclick = () => { asRonda = 0; asIdx = 0; filtroAS.per = []; filtroAS.cat = []; guardarFiltroAS(); amigoSecreto(monto); }; }
     app.querySelectorAll("select[data-asv]").forEach(sel => { const sync = () => { const p = PRODS.find(x => String(x.id) === sel.dataset.asv), v = p && (p.variantes || []).find(x => x.nombre === sel.value), im = sel.closest(".as-combo").querySelector(`a[data-asf="${CSS.escape(sel.dataset.asv)}"] img`); if (im && p) im.src = (v && v.imagen) || foto(p); }; sel.addEventListener("change", sync); sync(); });
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
+    { const g = $("#as-g-form"); if (g) g.onsubmit = e => { e.preventDefault(); const n = Math.max(4, Math.round(+$("#as-g-n").value) || 4), m = Math.max(15, Math.round(+$("#as-g-m").value) || monto), fe = ($("#as-g-f").value || "").trim(); window.open(waURL(`¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto: queremos ${n} regalos de hasta ${bsAS(m)} cada uno${fe ? ", para el " + fe : ""}. ¿Nos arman el presupuesto? (Vi que por 4 regalos o más van 4 polaroids de regalo 📸)`), "_blank", "noopener"); }; }
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 15) location.hash = "#/amigo-secreto/" + n; };
   }
 
