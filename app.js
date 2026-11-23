@@ -1687,7 +1687,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     for (const p of L) if (out.length < 3 && !out.includes(p)) out.push(p);
     return out.length === 3 ? out : [];
   }
-  const LAZO_AS = `<svg class="as-lazo" viewBox="0 0 80 52" aria-hidden="true"><path d="M40 27C30 8 8 4 5 15c-3 13 22 14 35 12z" fill="#fd95c8"/><path d="M40 27C50 8 72 4 75 15c3 13-22 14-35 12z" fill="#fd95c8"/><path d="M40 27L23 49l9 2 9-19zM40 27l17 22-9 2-9-19z" fill="#ee6fae"/><rect x="33" y="20" width="14" height="14" rx="5" fill="#f47fb8"/></svg>`;
+  const LAZO_AS = `<svg class="as-lazo" viewBox="0 0 120 112" aria-hidden="true"><path d="M60 22C46 2 14 -2 8 12c-5 14 28 20 52 10z" fill="#c8213c"/><path d="M60 22C74 2 106 -2 112 12c5 14-28 20-52 10z" fill="#b01832"/><path d="M60 24C44 34 22 66 8 100l16 4c8-26 22-48 36-72zM60 24c16 10 38 42 52 76l-16 4c-8-26-22-48-36-72z" fill="#a3142c"/><path d="M60 24C50 40 40 60 34 84M60 24c10 16 20 36 26 60" stroke="#d93a52" stroke-width="2" fill="none" opacity=".55"/><rect x="50" y="14" width="20" height="20" rx="7" fill="#d62b46"/></svg>`;
   const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito"];
   function amigoSecreto(montoTxt) {
     leerFiltroAS();
@@ -1702,7 +1702,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
     const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
     app.innerHTML = `<section class="seccion as-pag">
-      <div class="as-hero">
+      <div class="as-hero${colgantes.length ? " as-hero-claro" : ""}">
         <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
         <div class="as-hero-txt">
           <span class="as-etq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>Temporada de amigo secreto</span>
@@ -1710,7 +1710,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <p>Dinos el presupuesto del grupo y te mostramos regalos kawaii que entran justito. Cada uno llega con <b>carta impresa</b> y <b>sobre temático</b>, sin costo.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
         </div>
-        ${colgantes.length ? `<div class="as-cuelgan">${colgantes.map((p, k) => `<a class="as-cuelga c${k + 1}" href="#/producto/${esc(p.id)}" aria-label="${esc(sinEmoji(p.nombre))}, ${bsAS(p.precio)}"><span class="as-cinta"></span>${LAZO_AS}<span class="as-pcard"><img src="${esc(foto(p))}" alt=""><b>${bsAS(p.precio)}</b></span></a>`).join("")}</div>` : `<div class="as-sobre-hero" aria-hidden="true">
+        ${colgantes.length ? `<div class="as-cuelgan">${colgantes.map((p, k) => `<a class="as-cuelga c${k + 1}" href="#/producto/${esc(p.id)}" aria-label="${esc(sinEmoji(p.nombre))}, ${bsAS(p.precio)}"><span class="as-cinta"></span>${LAZO_AS}<img class="as-pimg" src="${esc(foto(p))}" alt=""><b class="as-pbs">${bsAS(p.precio)}</b></a>`).join("")}</div>` : `<div class="as-sobre-hero" aria-hidden="true">
           <div class="as-carta"><small>Para:</small><b>tu amigo secreto</b><span></span><span></span><span class="c"></span></div>
           <div class="as-sobre-cuerpo"></div>
           <img class="as-sello" src="cani-feliz.webp" alt="">
