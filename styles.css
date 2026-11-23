@@ -1957,3 +1957,13 @@ body.pol-abierto{overflow:hidden}
 @media (max-width:700px){.as-h-caps{font-size:clamp(1rem,4.6vw,1.3rem)}}
 .as-hero-claro h1 em.as-h-script{font-family:"Sacramento","Allura","Brush Script MT",cursive;font-size:clamp(3rem,8vw,4.8rem);line-height:.95}
 .as-hero-claro h1 em.as-h-script{font-family:"Pacifico","Brush Script MT",cursive;font-size:clamp(1.9rem,5.2vw,3.1rem);line-height:1.15;margin-top:4px}
+
+.as-hero-claro{grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);gap:0}
+.as-hero-claro .as-h-caps{color:#8a2a3c;font-size:clamp(1.25rem,3.1vw,2.05rem);letter-spacing:.07em;margin-bottom:6px}
+.as-hero-claro h1 em.as-h-script{font-size:clamp(2.5rem,6.2vw,4.2rem);line-height:1.12;margin-top:2px}
+.as-hero-claro h1{margin-bottom:20px}
+.as-hero-claro p{font-size:clamp(1rem,1.6vw,1.2rem);max-width:520px;margin-bottom:26px}
+.as-hero-claro .as-hero-btn{font-size:1.05rem;padding:16px 30px}
+.as-foto{max-width:600px;object-position:50% 40%;margin-left:-30px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%);mask-image:linear-gradient(90deg,transparent,#000 8%)}
+@media (max-width:700px){.as-hero-claro{grid-template-columns:1fr}.as-foto{max-width:none;margin-left:-24px;-webkit-mask-image:linear-gradient(180deg,#000 72%,transparent);mask-image:linear-gradient(180deg,#000 72%,transparent)}.as-hero-claro .as-h-caps{font-size:clamp(1.05rem,5vw,1.4rem)}.as-hero-claro h1 em.as-h-script{font-size:clamp(2.3rem,11vw,3.2rem)}}
+@media (min-width:701px){.as-foto{height:500px;min-height:0;align-self:center}}

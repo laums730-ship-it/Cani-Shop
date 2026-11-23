@@ -1696,7 +1696,6 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       <div class="as-hero as-hero-claro">
         <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
         <div class="as-hero-txt">
-          <span class="as-etq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>Temporada de amigo secreto</span>
           <h1><span class="as-h-caps">El regalo perfecto</span><em class="as-h-script">para tu amigo secreto</em></h1>
           <p><b>Desde Bs 15.</b> Dinos cuánto es el presupuesto y armamos el regalo, con <b>carta</b> y <b>sobre</b> incluidos.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
