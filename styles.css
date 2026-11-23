@@ -2007,3 +2007,13 @@ body.pol-abierto{overflow:hidden}
 @media (min-width:701px){.as-foto{object-fit:contain;object-position:50% 0;margin:-44px 0 -44px 0;max-width:100%;width:100%;height:500px;justify-self:center;align-self:start;-webkit-mask-image:none;mask-image:none}}
 @media (max-width:700px){.as-foto{object-fit:contain;aspect-ratio:auto;height:auto;width:calc(100% + 48px);margin:-30px -24px 0;-webkit-mask-image:none;mask-image:none}}
 .as-foto{-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,#000 88%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,#000 88%,transparent);mask-composite:intersect}
+
+/* Amigo secreto: filtros en una sola fila */
+.as-tit-s{font-size:1.15rem!important;margin:0 0 10px}
+.as-tit-s small{font:600 .72rem var(--f-txt);color:#8a5566;background:#fef2f9;border:1px solid #fbd3e4;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:middle}
+.as-tira{display:flex;align-items:center;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:4px 2px 8px;margin:0 -2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.as-tira::-webkit-scrollbar{display:none}
+.as-tira .as-chip{flex:none;scroll-snap-align:start;white-space:nowrap}
+.as-sep{flex:none;width:2px;height:22px;background:#fbd3e4;border-radius:2px;margin:0 4px}
+.as-desliza{display:none;margin:0;font-size:.74rem;color:#8a5566}
+@media (max-width:900px){.as-desliza{display:block}.as-tira{-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}}

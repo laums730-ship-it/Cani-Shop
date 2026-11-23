@@ -1710,11 +1710,13 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-filtros" id="as-filtros">
-        <h2 class="as-tit">¿Qué personaje o categoría prefieres?</h2>
-        <p class="as-sub">Puedes elegir más de uno.</p>
-        ${PERS().length ? `<div class="as-fila"><span>Personajes</span><div>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}</div></div>` : ""}
-        ${CATEG().length ? `<div class="as-fila"><span>Categorías</span><div>${CATEG().map(c => `<button type="button" class="as-chip ${filtroAS.cat.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.cat.includes(c.id)}" data-ascat="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}</div></div>` : ""}
-        ${filtroAS.per.length || filtroAS.cat.length ? `<button type="button" class="as-limpiar" id="as-limpiar">Quitar filtros</button>` : ""}
+        <h2 class="as-tit as-tit-s">¿Alguna preferencia? <small>Opcional</small></h2>
+        <div class="as-tira" role="group" aria-label="Filtrar por personaje o categoría">
+          <button type="button" class="as-chip ${filtroAS.per.length || filtroAS.cat.length ? "" : "on"}" id="as-limpiar" aria-pressed="${!(filtroAS.per.length || filtroAS.cat.length)}">Todos</button>
+          ${PERS().length ? `<span class="as-sep" aria-hidden="true"></span>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
+          ${CATEG().length ? `<span class="as-sep" aria-hidden="true"></span>${CATEG().map(c => `<button type="button" class="as-chip ${filtroAS.cat.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.cat.includes(c.id)}" data-ascat="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
+        </div>
+        <p class="as-desliza">Desliza para ver más</p>
       </div>
 
       <div class="as-llega">
