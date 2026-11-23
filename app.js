@@ -235,9 +235,9 @@
         </div></div>`);
       const chk = $("#as-es"), campos = $("#as-car-campos");
       const PREV = { msg: "¡Feliz Navidad! Espero que este regalito te saque una sonrisa.", para: "ti", de: "Tu amigo secreto" };
-      const pintarPrev = (root) => {
+      const pintarPrev = (root, vals) => {
         if (!root || !root.clientWidth) return;
-        const f = fp, v = n => String(f.elements[n] ? f.elements[n].value : "").replace(/[|\n\r]+/g, " ").trim();
+        const f = fp, v = n => String(vals ? (vals[n] || "") : (f.elements[n] ? f.elements[n].value : "")).replace(/[|\n\r]+/g, " ").trim();
         const u = root.clientWidth / 150, set = (cls, txt, vacio) => { const el = root.querySelector(cls); el.textContent = txt || vacio; el.classList.toggle("fantasma", !txt); return el; };
         const m = set(".as-prev-msg", v("as_msg"), PREV.msg), p = set(".as-prev-para", v("as_para"), PREV.para), d = set(".as-prev-de", v("as_firma"), PREV.de);
         let k = 1; m.style.lineHeight = 7.71 * u + "px"; m.style.fontSize = 8.6 * u + "px";
@@ -245,6 +245,7 @@
         [[p, 9.4], [d, 8.6]].forEach(([el, mm]) => { let q = 1; el.style.fontSize = mm * u + "px"; while (el.scrollWidth > el.clientWidth + 1 && q > .4) { q -= .05; el.style.fontSize = mm * u * q + "px"; } });
       };
       const prevHoy = () => pintarPrev($("#as-prev"));
+      window.__pintarCarta = pintarPrev;
       if (!document.getElementById("fuente-carta")) { const l = document.createElement("link"); l.id = "fuente-carta"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Sue+Ellen+Francisco&display=swap"; document.head.appendChild(l); }
       ["as_para", "as_msg", "as_firma"].forEach(n => { const el = fp.elements[n]; if (el) el.addEventListener("input", prevHoy); });
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(prevHoy, 50));
@@ -257,7 +258,7 @@
       };
       const sync = () => { campos.hidden = !chk.checked; if (chk.checked) setTimeout(prevHoy, 30); try { localStorage.setItem("as-pedido", chk.checked ? "1" : ""); } catch (e) {} };
       chk.addEventListener("change", sync);
-      window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; { const pp = $("#pol-cart-precio"); if (pp) pp.textContent = bs(polPrecio()); } box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } sync(); };
+      window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; { const pp = $("#pol-cart-precio"); if (pp) pp.textContent = bs(polPrecio()); } box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } try { const g = JSON.parse(sessionStorage.getItem("as-carta") || "null"); if (g && (g.as_para || g.as_msg || g.as_firma)) { ["as_para", "as_msg", "as_firma"].forEach(n => { const el = fp.elements[n]; if (el && !el.value && g[n]) el.value = g[n]; }); if (!chk.checked) chk.checked = true; } } catch (e) {} sync(); };
     } }
   const lineaAS = f => {
     if (!f.get("as_es")) return null;
@@ -1771,13 +1772,20 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${sueltos.length > 4 ? `<div class="as-dado-wrap"><button type="button" class="as-vermas" id="as-vermas">${asMas ? "Ver menos" : `Ver más regalos (${Math.min(sueltos.length, 24) - 4} más)`}</button></div>` : ""}
       </div>
 
-      <div class="as-llega">
-        <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta y haz tu pedido</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
-        <ol class="as-pasos">
-          <li class="as-paso"><div class="as-paso-img"><img src="amigo-carrito.webp" alt="Carrito con cositas kawaii" width="320" height="318" loading="lazy"></div><span class="as-paso-n">1</span><b>Tus cositas</b><p>Elegidas para que entren en ${bsAS(monto)}.</p></li>
-          <li class="as-paso"><div class="as-paso-img"><img src="amigo-carta-manos.webp" alt="Manos sosteniendo tu carta navideña" width="320" height="267" loading="lazy"></div><span class="as-paso-n">2</span><b>Carta impresa</b><p>Con tu mensaje y su nombre, en papel lindo.</p></li>
-
-        </ol>
+      <div class="as-llega as-escribe">
+        <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta <small class="as-opc">Opcional</small></h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
+        <p class="as-sub-paso">La imprimimos en papel lindo y va con tu regalo. Al tocar “Lo quiero” la pasamos a tu pedido ya escrita.</p>
+        <div class="as-carta-grid">
+          <div class="as-carta-form">
+            <label>¿Para quién es?<input id="as-c-para" maxlength="40" placeholder="Su nombre"></label>
+            <label>Tu mensaje<textarea id="as-c-msg" rows="4" maxlength="280" placeholder="Ej: ¡Feliz Navidad! Espero que te guste mucho"></textarea></label>
+            <label>Firma<input id="as-c-de" maxlength="40" placeholder="Si lo dejas vacío: Tu amigo secreto"></label>
+          </div>
+          <div class="as-prev-wrap">
+            <p class="as-prev-tit">Así se verá tu carta</p>
+            <div class="as-prev" id="as-prev-pg"><img src="amigo-carta-fondo.webp" alt="" width="1536" height="1024" loading="lazy"><div class="as-prev-msg"></div><div class="as-prev-para"></div><div class="as-prev-de"></div></div>
+          </div>
+        </div>
       </div>
 
       <div class="pol-promo">
@@ -1809,6 +1817,15 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     { const d = $("#as-dado"); if (d) d.onclick = () => { asIdx++; if (asIdx >= combos.length) { asIdx = 0; asRonda++; } d.classList.add("rueda"); setTimeout(() => amigoSecreto(monto), 380); }; }
     app.querySelectorAll("[data-asir]").forEach(b => b.onclick = () => { asIdx = +b.dataset.asir; amigoSecreto(monto); const t = $(".as-combos"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); });
     { const v = $("#as-vermas"); if (v) v.onclick = () => { asMas = !asMas; const y = window.scrollY; amigoSecreto(monto); window.scrollTo(0, y); }; }
+    { const pg = $("#as-prev-pg"), ids = { as_para: "#as-c-para", as_msg: "#as-c-msg", as_firma: "#as-c-de" };
+      if (pg) {
+        const leer = () => { const o = {}; for (const k in ids) o[k] = ($(ids[k]).value || ""); return o; };
+        let g = null; try { g = JSON.parse(sessionStorage.getItem("as-carta") || "null"); } catch (e) {}
+        if (g) for (const k in ids) $(ids[k]).value = g[k] || "";
+        const pintar = () => { const o = leer(); try { sessionStorage.setItem("as-carta", JSON.stringify(o)); } catch (e) {} if (window.__pintarCarta) window.__pintarCarta(pg, o); };
+        Object.values(ids).forEach(i => $(i).addEventListener("input", pintar));
+        setTimeout(pintar, 60); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(pintar, 50));
+      } }
     const alt = (L, id) => { asMas = false; asRonda = 0; asIdx = 0; const k = L.indexOf(id); k >= 0 ? L.splice(k, 1) : L.push(id); guardarFiltroAS(); amigoSecreto(monto); };
     app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => alt(filtroAS.per, b.dataset.asper));
     app.querySelectorAll("[data-ascat]").forEach(b => b.onclick = () => alt(filtroAS.cat, b.dataset.ascat));

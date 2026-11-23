@@ -2222,7 +2222,7 @@ body.pol-abierto{overflow:hidden}
 .as-opc{margin-left:8px}
 .as-llega-cab{flex-wrap:wrap!important;gap:8px 12px!important}
 .as-llega-cab h2{min-width:0;flex:1 1 auto}
-@media (max-width:700px){.as-llega-cab h2{font-size:1.15rem!important}.as-llega-cab .as-gratis{flex:1 1 100%}}
+@media (max-width:700px){.as-llega-cab h2{font-size:1.3rem!important}.as-llega-cab .as-gratis{flex:1 1 100%}}
 /* Combo más compacto en celular */
 @media (max-width:700px){
 .as-combo-fotos{padding:10px!important;gap:6px!important;display:grid!important;grid-template-columns:repeat(3,1fr)!important}
@@ -2238,3 +2238,12 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 }
 @media (max-width:700px){.as-combo-fotos,.as-combo-fotos.as-n2{grid-template-columns:repeat(3,minmax(0,104px))!important;justify-content:center}}
 @media (max-width:700px){.as-combo-fotos.as-n2{grid-template-columns:repeat(2,minmax(0,104px))!important}}
+
+/* Paso 4: escribir la carta en la página */
+.as-carta-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start;margin-top:6px}
+.as-carta-form{display:grid;gap:12px}
+.as-carta-form label{display:grid;gap:5px;font-size:.8rem;font-weight:700;color:#8a5566}
+.as-carta-form input,.as-carta-form textarea{font:inherit;font-size:.95rem;color:#783746;border:2px solid #fbd3e4;border-radius:14px;padding:10px 14px;width:100%;box-sizing:border-box;background:#fff;resize:vertical}
+.as-carta-form input:focus,.as-carta-form textarea:focus{outline:none;border-color:#c8213c}
+.as-escribe .as-prev-wrap{margin:0}
+@media (max-width:700px){.as-carta-grid{grid-template-columns:1fr;gap:14px}}
