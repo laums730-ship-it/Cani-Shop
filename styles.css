@@ -1856,3 +1856,7 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 .as-car-check small{display:block;font-size:.74rem;opacity:.85}
 .as-car-campos{display:grid;gap:8px}
 .as-car-nota{margin:0;font-size:.72rem;opacity:.8}
+
+/* Amigo secreto: elegir color o personaje dentro del combo */
+.as-combo-txt li.as-var{display:block}
+.as-combo-txt li.as-var select{width:100%;font:inherit;font-size:.82rem;color:#783746;background:#fff;border:2px solid #f3d7e4;border-radius:12px;padding:7px 10px}

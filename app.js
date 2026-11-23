@@ -1626,7 +1626,9 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   window.__asOn = () => asOn();
   const asOn = () => { if (/[?&]prueba/.test(location.search)) return true; if (AS.activo === false) return false; const h = new Date(), md = String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0"); return md >= AS.desde && md <= AS.hasta; };
   const bsAS = n => Number(n) % 1 ? bs(n) : `${T.moneda} ${Number(n)}`;
-  const simpleAS = p => p && !tieneVar(p) && hayStock(p) && +p.precio > 0 && (p.imagenes || []).length;
+  const noAS = p => !/pegamento/i.test(p.nombre || "");
+  const simpleAS = p => p && noAS(p) && hayStock(p) && +p.precio > 0 && (p.imagenes || []).length;
+  const libresAS = p => tieneVar(p) ? p.variantes.filter(v => disp(v.stock)) : [];
   const catDe = p => (p.categorias || [])[0] || "";
   function combosAS(monto) {
     const L = PRODS.filter(simpleAS).filter(p => +p.precio < monto);
@@ -1652,7 +1654,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
     const combos = combosAS(monto);
-    const sueltos = PRODS.filter(p => hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
+    const sueltos = PRODS.filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
     const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
     app.innerHTML = `<section class="seccion as-pag">
       <div class="as-hero">
@@ -1692,7 +1694,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[k] || "Combo"}</h3>
-              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
+              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${libresAS(p).map(v => `<option value="${esc(v.nombre)}">${esc(v.nombre)}</option>`).join("")}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
               <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
               ${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
             </div></article>`).join("")}</div>`
@@ -1710,7 +1712,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     </section>`;
     { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
     try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
-    app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => agregar(p.id, null, 1)); setTimeout(() => abrir(true), 250); });
+    app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
   }
 
