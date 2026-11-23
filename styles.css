@@ -2237,3 +2237,4 @@ body.pol-abierto{overflow:hidden}
 body:has(.as-combos) .wa-flotante{display:none!important}
 }
 @media (max-width:700px){.as-combo-fotos,.as-combo-fotos.as-n2{grid-template-columns:repeat(3,minmax(0,104px))!important;justify-content:center}}
+@media (max-width:700px){.as-combo-fotos.as-n2{grid-template-columns:repeat(2,minmax(0,104px))!important}}
