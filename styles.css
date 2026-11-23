@@ -1979,3 +1979,6 @@ body.pol-abierto{overflow:hidden}
 .as-foto{max-width:460px}
 }
 @media (min-width:1000px){.as-hero-claro p{font-size:clamp(.78rem,1.05vw,.95rem)}.as-foto{-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%);mask-image:linear-gradient(90deg,transparent,#000 4%)}}
+.as-hero-claro h1 em.as-h-script{white-space:nowrap}
+@media (min-width:701px) and (max-width:999px){.as-hero-claro h1 em.as-h-script{font-size:clamp(1.5rem,3.2vw,2.3rem)}}
+@media (max-width:700px){.as-hero-claro h1 em.as-h-script{font-size:clamp(1.55rem,7.4vw,2.5rem);line-height:1.2}}
