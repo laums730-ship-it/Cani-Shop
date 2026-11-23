@@ -225,11 +225,37 @@
           <input name="as_para" maxlength="40" placeholder="¿Para quién es? (su nombre)">
           <textarea name="as_msg" rows="3" maxlength="280" placeholder="Mensaje de tu carta (ej: ¡Feliz Navidad! Espero que te guste mucho)"></textarea>
           <input name="as_firma" maxlength="40" placeholder="Firma (si lo dejas vacío: Tu amigo secreto)">
+          <div class="as-prev-wrap">
+            <p class="as-prev-tit">Así se verá tu carta</p>
+            <div class="as-prev" id="as-prev"><img src="amigo-carta-fondo.webp" alt="" width="1536" height="1024" loading="lazy"><div class="as-prev-msg"></div><div class="as-prev-para"></div><div class="as-prev-de"></div></div>
+            <button type="button" class="as-prev-ver" id="as-prev-ver">Ver más grande</button>
+          </div>
           <p class="as-car-nota">La imprimimos y la ponemos con tu regalo en su sobre.</p>
           <div class="pol-cart"><span class="pol-mini pol-mini-vacia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div><b>¿Le sumas 4 polaroids?</b><small id="pol-cart-precio"></small></div><button type="button" class="btn btn-sec pol-cart-btn" data-pol-add>Agregar</button></div>
         </div></div>`);
       const chk = $("#as-es"), campos = $("#as-car-campos");
-      const sync = () => { campos.hidden = !chk.checked; try { localStorage.setItem("as-pedido", chk.checked ? "1" : ""); } catch (e) {} };
+      const PREV = { msg: "¡Feliz Navidad! Espero que este regalito te saque una sonrisa.", para: "ti", de: "Tu amigo secreto" };
+      const pintarPrev = (root) => {
+        if (!root || !root.clientWidth) return;
+        const f = fp, v = n => String(f.elements[n] ? f.elements[n].value : "").replace(/[|\n\r]+/g, " ").trim();
+        const u = root.clientWidth / 150, set = (cls, txt, vacio) => { const el = root.querySelector(cls); el.textContent = txt || vacio; el.classList.toggle("fantasma", !txt); return el; };
+        const m = set(".as-prev-msg", v("as_msg"), PREV.msg), p = set(".as-prev-para", v("as_para"), PREV.para), d = set(".as-prev-de", v("as_firma"), PREV.de);
+        let k = 1; m.style.lineHeight = 7.71 * u + "px"; m.style.fontSize = 8.6 * u + "px";
+        while (m.scrollHeight > m.clientHeight + 1 && k > .3) { k -= .05; m.style.fontSize = 8.6 * u * k + "px"; if (k < .62) m.style.lineHeight = 3.85 * u + "px"; }
+        [[p, 9.4], [d, 8.6]].forEach(([el, mm]) => { let q = 1; el.style.fontSize = mm * u + "px"; while (el.scrollWidth > el.clientWidth + 1 && q > .4) { q -= .05; el.style.fontSize = mm * u * q + "px"; } });
+      };
+      const prevHoy = () => pintarPrev($("#as-prev"));
+      if (!document.getElementById("fuente-carta")) { const l = document.createElement("link"); l.id = "fuente-carta"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Sue+Ellen+Francisco&display=swap"; document.head.appendChild(l); }
+      ["as_para", "as_msg", "as_firma"].forEach(n => { const el = fp.elements[n]; if (el) el.addEventListener("input", prevHoy); });
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(prevHoy, 50));
+      $("#as-prev-ver").onclick = () => {
+        const velo = document.createElement("div"); velo.className = "as-prev-velo"; velo.setAttribute("role", "dialog"); velo.setAttribute("aria-label", "Tu carta");
+        velo.innerHTML = `<div class="as-prev-gran"><button type="button" class="as-prev-x" aria-label="Cerrar">×</button>${$("#as-prev").outerHTML.replace('id="as-prev"', "")}</div>`;
+        document.body.appendChild(velo); const cerrar = () => velo.remove();
+        velo.onclick = e => { if (e.target === velo || e.target.closest(".as-prev-x")) cerrar(); };
+        requestAnimationFrame(() => pintarPrev(velo.querySelector(".as-prev")));
+      };
+      const sync = () => { campos.hidden = !chk.checked; if (chk.checked) setTimeout(prevHoy, 30); try { localStorage.setItem("as-pedido", chk.checked ? "1" : ""); } catch (e) {} };
       chk.addEventListener("change", sync);
       window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; { const pp = $("#pol-cart-precio"); if (pp) pp.textContent = bs(polPrecio()); } box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } sync(); };
     } }

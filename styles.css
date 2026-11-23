@@ -2045,3 +2045,21 @@ body.pol-abierto{overflow:hidden}
 @media (max-width:700px){.as-llega .as-paso{flex:0 0 66%}.as-llega .as-paso-img{aspect-ratio:1.9}}
 .as-llega .as-paso-img{position:relative;display:block}
 .as-llega .as-paso-img img,.as-llega .as-paso-img svg{position:absolute;inset:5px;width:calc(100% - 10px);height:calc(100% - 10px);max-width:none;max-height:none;object-fit:contain}
+
+/* Amigo secreto: vista previa de la carta en el carrito */
+.as-prev-wrap{display:grid;gap:6px;justify-items:center}
+.as-prev-tit{margin:0;font-weight:700;font-size:.8rem;color:#783746;justify-self:start}
+.as-prev{position:relative;width:100%;aspect-ratio:3/2;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(120,55,70,.2);background:#fef2f9}
+.as-prev img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.as-prev-msg,.as-prev-para,.as-prev-de{position:absolute;font-family:"Sue Ellen Francisco",cursive;font-weight:400;color:#783746;box-sizing:border-box}
+.as-prev-msg{left:5.6%;width:44%;top:30.9%;height:39.1%;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;padding-top:.4%}
+.as-prev-para,.as-prev-de{color:#c8213c;white-space:nowrap;overflow:hidden;display:flex;align-items:flex-end}
+.as-prev-para{left:65.6%;width:30.6%;top:61.5%;height:8.2%}
+.as-prev-de{left:22.4%;width:27.5%;top:79.6%;height:6.6%}
+.as-prev .fantasma{opacity:.45}
+.as-prev-ver{font:inherit;font-size:.78rem;font-weight:700;color:#c8213c;background:none;border:0;text-decoration:underline;cursor:pointer;padding:2px 6px}
+.as-prev-velo{position:fixed;inset:0;z-index:400;background:rgba(60,20,30,.6);display:grid;place-items:center;padding:16px}
+.as-prev-gran{position:relative;width:min(100%,820px)}
+.as-prev-gran .as-prev{box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.as-prev-x{position:absolute;top:-14px;right:-6px;z-index:2;width:36px;height:36px;border-radius:50%;border:0;background:#fff;color:#783746;font-size:1.4rem;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.as-prev-para,.as-prev-de{line-height:1;overflow:visible}
