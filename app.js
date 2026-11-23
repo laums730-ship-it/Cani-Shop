@@ -1728,14 +1728,13 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
         <div class="as-hero-txt">
           <h1><span class="as-h-caps">El regalo perfecto</span><em class="as-h-script">para tu amigo secreto</em></h1>
-          <p><b>Desde Bs 15.</b> Dinos cuánto es el presupuesto y armamos el regalo, con <b>carta</b> y <b>envoltorio</b> incluidos.</p>
+          <p><b>Desde Bs 15.</b> Con <b>carta</b> y <b>envoltorio</b> incluidos.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
         </div>
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
 
       <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto quieres gastar?</h2>
-      <p class="as-sub-paso">Elige el presupuesto de tu regalo. Nosotras armamos todo con ese monto.</p>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
         <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
@@ -1743,7 +1742,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
 
       <div class="as-filtros" id="as-filtros">
         <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
-        <p class="as-sub-paso">Elige un personaje o categoría y te mostramos regalos de eso. Si no sabes, déjalo en “Todos”.</p>
+        <p class="as-sub-paso">Si no sabes, déjalo en “Todos”.</p>
         <div class="as-tira" role="group" aria-label="Filtrar por personaje o categoría">
           <button type="button" class="as-chip ${filtroAS.per.length || filtroAS.cat.length ? "" : "on"}" id="as-limpiar" aria-pressed="${!(filtroAS.per.length || filtroAS.cat.length)}">Todos</button>
           ${PERS().length ? `<span class="as-sep" aria-hidden="true"></span>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
@@ -1754,7 +1753,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
 
       <div class="as-bloque">
         <h2 class="as-tit"><span class="as-num">3</span>Elige tu combo de hasta ${bsAS(monto)}</h2>
-        <p class="as-sub">Ya vienen armados con cositas que combinan y listos para regalar, con carta y envoltorio. Si prefieres elegir tú, mira los regalos sueltos más abajo.</p>
+        <p class="as-sub">Listos para regalar, con carta y envoltorio.</p>
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda * 3) % NOMBRES_COMBO.length] || "Combo"}</h3>
@@ -1773,8 +1772,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-llega as-escribe">
-        <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta <small class="as-opc">Opcional</small></h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
-        <p class="as-sub-paso">La imprimimos en papel lindo y va con tu regalo. Al tocar “Lo quiero” la pasamos a tu pedido ya escrita.</p>
+        <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta <small class="as-opc">Opcional</small></h2><p class="as-gratis"><b>Sin costo</b></p></div>
+        <p class="as-sub-paso">La imprimimos y va con tu regalo.</p>
         <div class="as-carta-grid">
           <div class="as-carta-form">
             <label>¿Para quién es?<input id="as-c-para" maxlength="40" placeholder="Su nombre"></label>
@@ -1790,7 +1789,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
 
       <div class="pol-promo">
         <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente al árbol de Navidad" width="1400" height="933" loading="lazy">
-        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos <small class="as-opc">Opcional</small></h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
+        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos <small class="as-opc">Opcional</small></h2><p>4 polaroids con tus fotos por <b>${bs(polPrecio())}</b>. Van en una bolsita con el regalo.</p>
           <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
       </div>
 
@@ -1800,7 +1799,6 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <div>
             <h2>Armamos el amigo secreto de todo tu grupo</h2>
             <p class="as-g-regalo"><b>Desde 4 regalos:</b> te regalamos 4 polaroids para tu compra</p>
-            <ul class="as-g-lista"><li>Una sola persona coordina todo</li><li>Cada regalo con su carta y su envoltorio</li><li>Entrega juntos, en un solo punto</li></ul>
           </div>
         </div>
         <form class="as-g-form" id="as-g-form">
@@ -1808,7 +1806,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <label>Presupuesto por persona<input type="number" id="as-g-m" min="15" step="1" inputmode="numeric" placeholder="${esc(String(monto))}" value="${esc(String(monto))}"></label>
           <label>¿Para cuándo lo necesitas?<input type="text" id="as-g-f" placeholder="Ej: 20 de diciembre" maxlength="40"></label>
           <button class="btn btn-wa" type="submit">Pedir presupuesto para mi grupo</button>
-          <small>Se abre WhatsApp con tu mensaje ya escrito.</small>
+          <small>Se abre WhatsApp</small>
         </form>
       </div>
     </section>`;
