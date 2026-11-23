@@ -187,7 +187,7 @@
       fp.addEventListener("input", () => { try { const d = {}; for (const el of fp.elements) if (el.name && el.type !== "file" && el.name !== "nota") d[el.name] = el.value; localStorage.setItem("datos-pedido", JSON.stringify(d)); } catch (e) {} });
       const t = document.createElement("p"); t.className = "form-tit"; t.textContent = "Tus datos para el pedido"; fp.before(t);
     } }
-  const abrir = v => { $("#carrito").classList.toggle("abierto", v); $("#velo").classList.toggle("abierto", v); document.body.classList.toggle("carrito-abierto", v); if (v) $("#carrito").classList.remove("paso-datos"); };
+  const abrir = v => { if (v && window.__asCarrito) window.__asCarrito(); $("#carrito").classList.toggle("abierto", v); $("#velo").classList.toggle("abierto", v); document.body.classList.toggle("carrito-abierto", v); if (v) $("#carrito").classList.remove("paso-datos"); };
   // Carrito en dos pasos: 1) tus productos  2) tus datos
   { const pie = $("#carrito-pie"), fp = $("#form-pedido");
     if (pie && fp) {
@@ -199,6 +199,28 @@
     } }
   $("#btn-carrito").onclick = () => abrir(true);
   $("#cerrar-carrito").onclick = $("#velo").onclick = () => abrir(false);
+
+  // Amigo secreto: carta impresa y sobre temático sin costo
+  { const fp = $("#form-pedido"), nota = fp && fp.querySelector("[name=nota]");
+    if (nota) {
+      nota.insertAdjacentHTML("beforebegin", `<div class="as-car" id="as-car" hidden>
+        <label class="as-car-check"><input type="checkbox" name="as_es" id="as-es"><span><b>Es para amigo secreto</b><small>Incluye carta impresa y sobre temático, sin costo</small></span></label>
+        <div class="as-car-campos" id="as-car-campos" hidden>
+          <input name="as_para" maxlength="40" placeholder="¿Para quién es? (su nombre)">
+          <textarea name="as_msg" rows="3" maxlength="280" placeholder="Mensaje de tu carta (ej: ¡Feliz Navidad! Espero que te guste mucho)"></textarea>
+          <input name="as_firma" maxlength="40" placeholder="Firma (si lo dejas vacío: Tu amigo secreto)">
+          <p class="as-car-nota">La imprimimos y la ponemos con tu regalo en su sobre.</p>
+        </div></div>`);
+      const chk = $("#as-es"), campos = $("#as-car-campos");
+      const sync = () => { campos.hidden = !chk.checked; try { localStorage.setItem("as-pedido", chk.checked ? "1" : ""); } catch (e) {} };
+      chk.addEventListener("change", sync);
+      window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } sync(); };
+    } }
+  const lineaAS = f => {
+    if (!f.get("as_es")) return null;
+    const limpio = t => String(t || "").replace(/[|\n\r]+/g, " ").trim();
+    return { para: limpio(f.get("as_para")), msg: limpio(f.get("as_msg")), firma: limpio(f.get("as_firma")) || "Tu amigo secreto" };
+  };
 
   $("#form-pedido").addEventListener("submit", async e => {
     e.preventDefault();
@@ -216,7 +238,7 @@
           headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" },
           body: JSON.stringify({ p: {
             cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad,
-            direccion: envio.direccion, entrega: f.get("entrega") || "", nota: f.get("nota") || "",
+            direccion: envio.direccion, entrega: f.get("entrega") || "", nota: [f.get("nota") || "", (a => a ? `[Amigo secreto | Para: ${a.para} | Firma: ${a.firma} | Carta: ${a.msg}]` : "")(lineaAS(f))].filter(Boolean).join("\n"),
             items: items.map(i => ({ id: i.id, variante: i.variante || null, cant: i.cant }))
           } })
         });
@@ -233,7 +255,8 @@
       "🛍️ *Mi pedido*", ...lineas, "",
       "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, "",
       "🚚 *Entrega*", ...envio.lineas,
-      f.get("nota") ? "" : null, f.get("nota") ? `📝 *Nota:* ${f.get("nota")}` : null, "",
+      f.get("nota") ? "" : null, f.get("nota") ? `📝 *Nota:* ${f.get("nota")}` : null,
+      ...(a => a ? ["", "🎁 *Amigo secreto* (carta impresa + sobre temático, sin costo)", a.para ? `Para: ${a.para}` : null, `Firma: ${a.firma}`, a.msg ? `Carta: "${a.msg}"` : null] : [])(lineaAS(f)), "",
       `💰 *TOTAL: ${bs(total)}*`, vale ? vale : null, "",
       "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"
     ].filter(x => x !== null).join("\n");
@@ -241,7 +264,9 @@
     if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
     btn.disabled = false;
     if (numero) {
-      carrito = []; guardar(); if (e.target.elements.nota) e.target.elements.nota.value = ""; abrir(false);
+      carrito = []; guardar(); if (e.target.elements.nota) e.target.elements.nota.value = "";
+      ["as_para", "as_msg", "as_firma"].forEach(n => { if (e.target.elements[n]) e.target.elements[n].value = ""; }); if (e.target.elements.as_es) e.target.elements.as_es.checked = false; try { localStorage.removeItem("as-pedido"); } catch (x) {}
+      abrir(false);
       toast(`¡Pedido #${numero} enviado! 💕`);
     }
   });
@@ -1595,6 +1620,100 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       <div class="bl-card-txt"><small>${fechaBlog(b.fecha)}</small><h3>${esc(b.titulo)}</h3><p>${esc(b.resumen || "")}</p><span class="bl-leer">Leer nota <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
     </a>`;
 
+  // ---------- Amigo secreto por presupuesto ----------
+  // Muestra regalos y combos que entran en el presupuesto del amigo secreto, con lo que hay en stock.
+  const AS = Object.assign({ activo: true, desde: "11-20", hasta: "12-31", montos: [30, 50, 80, 100] }, T.amigoSecreto || {});
+  window.__asOn = () => asOn();
+  const asOn = () => { if (/[?&]prueba/.test(location.search)) return true; if (AS.activo === false) return false; const h = new Date(), md = String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0"); return md >= AS.desde && md <= AS.hasta; };
+  const bsAS = n => Number(n) % 1 ? bs(n) : `${T.moneda} ${Number(n)}`;
+  const simpleAS = p => p && !tieneVar(p) && hayStock(p) && +p.precio > 0 && (p.imagenes || []).length;
+  const catDe = p => (p.categorias || [])[0] || "";
+  function combosAS(monto) {
+    const L = PRODS.filter(simpleAS).filter(p => +p.precio < monto);
+    const min = monto * 0.7, sale = [];
+    for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+      const a = L[i], b = L[j], t = +a.precio + +b.precio;
+      if (t >= min && t <= monto) sale.push({ items: [a, b], total: t, mezcla: catDe(a) !== catDe(b) });
+      for (let k = j + 1; k < L.length && monto >= 50; k++) { const c = L[k], t3 = t + +c.precio; if (t3 >= min && t3 <= monto) sale.push({ items: [a, b, c], total: t3, mezcla: true }); }
+    }
+    // Primero los que más se acercan al monto y mezclan tipos de producto; sin repetir productos entre combos
+    const dia = new Date().getDate();
+    sale.sort((x, y) => (y.mezcla - x.mezcla) || (y.total - x.total) || ((x.items[0].id + dia) > (y.items[0].id + dia) ? 1 : -1));
+    const usados = new Set(), elegidos = [];
+    for (const c of sale) { if (c.items.some(p => usados.has(p.id))) continue; elegidos.push(c); c.items.forEach(p => usados.add(p.id)); if (elegidos.length === 3) break; }
+    return elegidos;
+  }
+  const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito"];
+  function amigoSecreto(montoTxt) {
+    if (!asOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">El amigo secreto vuelve pronto.</p>`; return; }
+    const montos = (AS.montos || [30, 50, 80, 100]).map(Number).filter(n => n > 0);
+    let monto = +montoTxt || 0; if (!monto) { try { monto = +sessionStorage.getItem("as-monto") || 0; } catch (e) {} }
+    if (!monto) monto = montos[1] || montos[0];
+    try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
+    if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
+    const combos = combosAS(monto);
+    const sueltos = PRODS.filter(p => hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
+    const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
+    app.innerHTML = `<section class="seccion as-pag">
+      <div class="as-hero">
+        <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
+        <div class="as-hero-txt">
+          <span class="as-etq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>Temporada de amigo secreto</span>
+          <h1>¿Te tocó<br><em>amigo secreto?</em></h1>
+          <p>Dinos el presupuesto del grupo y te mostramos regalos kawaii que entran justito. Cada uno llega con <b>carta impresa</b> y <b>sobre temático</b>, sin costo.</p>
+          <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
+        </div>
+        <div class="as-sobre-hero" aria-hidden="true">
+          <div class="as-carta"><small>Para:</small><b>tu amigo secreto</b><span></span><span></span><span class="c"></span></div>
+          <div class="as-sobre-cuerpo"></div>
+          <img class="as-sello" src="cani-feliz.webp" alt="">
+        </div>
+      </div>
+
+      <h2 class="as-tit" id="as-elige">¿Cuánto es el presupuesto?</h2>
+      <div class="as-montos" role="group" aria-label="Presupuesto">
+        ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
+        <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="5" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
+      </div>
+
+      <div class="as-llega">
+        <h2>Así llega tu regalo</h2>
+        <ol>
+          <li><span>1</span><div><b>Tus cositas</b><p>Elegidas para que entren en ${bsAS(monto)}.</p></div></li>
+          <li><span>2</span><div><b>Carta impresa</b><p>Con tu mensaje y su nombre, en papel lindo.</p></div></li>
+          <li><span>3</span><div><b>Sobre temático</b><p>Listo para entregar, con su etiqueta.</p></div></li>
+        </ol>
+        <p class="as-gratis">Carta y sobre: <b>sin costo adicional</b></p>
+      </div>
+
+      <div class="as-bloque">
+        <h2 class="as-tit">Combos listos de hasta ${bsAS(monto)}</h2>
+        <p class="as-sub">Dos o tres cositas que combinan, para que tu regalo se vea más completo.</p>
+        ${combos.length ? `<div class="as-combos">${combos.map((c, k) => `<article class="as-combo">
+            <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
+            <div class="as-combo-txt"><h3>${NOMBRES_COMBO[k] || "Combo"}</h3>
+              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
+              <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
+              ${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
+            </div></article>`).join("")}</div>`
+        : `<p class="vacio">Todavía no tenemos combos para este monto. Mira los regalos sueltos de abajo.</p>`}
+      </div>
+      <div class="as-bloque">
+        <h2 class="as-tit">Regalos sueltos de hasta ${bsAS(monto)}</h2>
+        ${sueltos.length ? grilla(sueltos.slice(0, 24)) : `<p class="vacio">No hay regalos de este monto por ahora. Prueba con otro presupuesto.</p>`}
+      </div>
+      <div class="as-grupo">
+        <img src="cani-charla.webp" alt="">
+        <div><h2>¿Son varios del mismo grupo?</h2><p>Si tu oficina, curso o grupo de amigas pide 5 regalos o más, escríbenos: los armamos juntos, cada uno con su carta y su sobre, y coordinamos la entrega.</p></div>
+        <a class="btn btn-wa" href="${waURL(msgGrupo)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
+    </section>`;
+    { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
+    try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
+    app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => agregar(p.id, null, 1)); setTimeout(() => abrir(true), 250); });
+    const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
+  }
+
   // ---------- Rutas ----------
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
@@ -1603,7 +1722,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
     $("#menu").classList.remove("abierto");
-    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, blog: () => blog(arg) }[sec] || inicio)();
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, blog: () => blog(arg), "amigo-secreto": () => amigoSecreto(arg) }[sec] || inicio)();
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
@@ -1659,5 +1778,6 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   // (franja antes del pie eliminada a pedido)
   { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega(T.avisoCarrito || AVISO_CARRITO_DEF)); }
   if (selOn()) document.querySelectorAll("#menu-sellitos, .pie-sellitos").forEach(a => a.hidden = false);
+  if (asOn()) document.querySelectorAll("#menu-amigo, .pie-amigo").forEach(a => a.hidden = false);
   pintarCarrito(); ruta();
 })();

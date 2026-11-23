@@ -1402,6 +1402,7 @@
   <div class="ed-pie ped-pie">
     <button class="btn" id="ped-guardar">Guardar</button>
     <button class="btn btn-sec" id="ped-nota">🧾 Nota de venta</button>
+    <button class="btn btn-sec" id="ped-as" type="button" hidden>Carta de amigo secreto</button>
     <button class="btn btn-sec" id="ped-wa" title="Escribir al cliente" aria-label="Escribir al cliente"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.8z"/><path d="M9 9.5c.3 1.9 2.6 4.2 4.5 4.5l1.3-1.2 2 1-.4 1.6c-3.6.4-8.2-4.2-7.8-7.8l1.6-.4 1 2z"/></svg></button>
     <button class="btn btn-peligro" id="ped-borrar" title="Borrar pedido" aria-label="Borrar pedido"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
   </div>
@@ -2729,7 +2730,7 @@
     $("#ped-sinstock").checked = !!(ED.extra || {}).sin_stock && !ED.stock_descontado;
     ajustarEstado();
     if (!p && EMP) { const d = EMP.filter(e => e.defecto); if (d.length) { ED.extra = ED.extra || {}; ED.extra.empaques = d.map(e => ({ id: e.id, nombre: e.nombre, cant: 1, costo: e.costo })); } }
-    pintarEmpPed(); pintarExtra(); pintarItems(); actualizarMapaPed(); pintarSelPed();
+    pintarEmpPed(); pintarExtra(); pintarItems(); actualizarMapaPed(); pintarSelPed(); verBotonAS();
     $("#ped-velo").hidden = $("#ped").hidden = false;
   }
   // Muestra solo lo que corresponde al estado elegido: fecha de pago (Pagado/Entregado), fecha de entrega (Entregado) y la opción de no descontar stock
@@ -3609,6 +3610,56 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     ].filter(x => x !== null).join("\n");
     window.open(`https://wa.me/${t}?text=${encodeURIComponent(msg)}`, "_blank");
   };
+
+  // ---------- Amigo secreto: carta impresa + etiqueta del sobre ----------
+  const leerAS = t => { const m = String(t || "").match(/\[Amigo secreto \| Para: ([^|]*)\| Firma: ([^|]*)\| Carta: ([^\]]*)\]/); return m ? { para: m[1].trim(), firma: m[2].trim() || "Tu amigo secreto", msg: m[3].trim() } : null; };
+  const verBotonAS = () => { const b = $("#ped-as"); if (b) b.hidden = !leerAS(FP.nota.value); };
+  FP.nota.addEventListener("input", verBotonAS);
+  function imprimirAS(a) {
+    const w = window.open("", "_blank"); if (!w) return toast("Permite las ventanas emergentes para imprimir", true);
+    const u = f => new URL(f, location.href).href, cani = u("cani-feliz.webp"), est = u("estrella-rosa.svg");
+    const e = t => String(t || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const estrellas = [[8, 7, 9, -14], [84, 5, 7, 12], [6, 52, 6, 10], [88, 46, 8, -8], [12, 88, 7, 16], [50, 90, 7, -12]].map(([x, y, s, r]) => `<img class="e" src="${est}" style="left:${x}%;top:${y}%;width:${s}mm;transform:rotate(${r}deg)" alt="">`).join("");
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Carta de amigo secreto</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Comfortaa:wght@700&family=Caveat:wght@600&display=block" rel="stylesheet">
+<style>@page{size:A6 portrait;margin:0}html,body{margin:0;color:#783746}
+.h{position:relative;width:105mm;height:148mm;margin:0 auto;overflow:hidden;background:#fffafc;page-break-after:always;box-sizing:border-box}
+.borde{position:absolute;inset:5mm;border:1.2mm dashed #fd95c8;border-radius:7mm}
+.e{position:absolute}
+.cab{position:absolute;left:0;right:0;top:12mm;text-align:center;font-family:Fredoka,sans-serif;font-size:7.5mm;line-height:1.1}
+.cab small{display:block;font-family:Comfortaa,sans-serif;font-size:3.2mm;margin-top:1.5mm;color:#b4708a}
+.para{position:absolute;left:14mm;right:14mm;top:34mm;font-family:Comfortaa,sans-serif;font-size:4mm}
+.para b{font-family:Caveat,cursive;font-size:8mm;font-weight:600;margin-left:1.5mm}
+.msg{position:absolute;left:14mm;right:14mm;top:47mm;bottom:48mm;display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Caveat,cursive;font-weight:600;font-size:8mm;line-height:1.3}
+.de{position:absolute;right:14mm;bottom:38mm;font-family:Comfortaa,sans-serif;font-size:4mm;text-align:right}
+.de b{display:block;font-family:Caveat,cursive;font-size:7.5mm;font-weight:600}
+.cani{position:absolute;left:12mm;bottom:11mm;width:30mm}
+.pie{position:absolute;right:12mm;bottom:13mm;font-family:Fredoka,sans-serif;font-size:3.6mm;color:#ee6fae}
+.et{position:absolute;width:62mm;height:62mm;border-radius:50%;background:#fce3ee;border:1mm solid #fd95c8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;padding:6mm}
+.et b{font-family:Fredoka,sans-serif;font-size:5.6mm;line-height:1.1}
+.et span{font-family:Caveat,cursive;font-weight:600;font-size:8mm;margin:1.5mm 0}
+.et small{font-family:Comfortaa,sans-serif;font-size:3mm}
+.et img{width:9mm;margin-bottom:1mm}
+.corte{position:absolute;left:0;right:0;top:4mm;text-align:center;font:3mm Comfortaa,sans-serif;color:#b4708a}
+@media screen{body{background:#eee;padding:20px}.h{box-shadow:0 6px 20px rgba(0,0,0,.15);margin-bottom:20px}}</style></head>
+<body>
+<div class="h"><div class="borde"></div>${estrellas}
+  <div class="cab">¡Feliz amigo secreto!<small>un regalito con mucho cariño</small></div>
+  <div class="para">Para:<b>${e(a.para || "ti")}</b></div>
+  <div class="msg" id="msg">${e(a.msg || "¡Feliz Navidad! Espero que este regalito te saque una sonrisa.")}</div>
+  <div class="de">De:<b>${e(a.firma)}</b></div>
+  <img class="cani" src="${cani}" alt=""><div class="pie">Cani Shop</div>
+</div>
+<div class="h"><p class="corte">Recorta y pega en el sobre</p>
+  <div class="et" style="left:21.5mm;top:12mm"><img src="${est}" alt=""><b>Para</b><span>${e(a.para || "ti")}</span><small>¡No lo abras antes del amigo secreto!</small></div>
+  <div class="et" style="left:21.5mm;top:80mm"><img src="${est}" alt=""><b>Amigo secreto</b><span>Cani Shop</span><small>hecho con cariño en Santa Cruz</small></div>
+</div>
+<script>
+document.fonts.ready.then(()=>{const t=document.getElementById("msg");let k=1;while(t.scrollHeight>t.clientHeight+1&&k>.45){k-=.05;t.style.fontSize="calc(8mm*"+k+")";}
+Promise.all([...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>print(),300));});<\/script></body></html>`);
+    w.document.close();
+  }
+  $("#ped-as").onclick = () => { const a = leerAS(FP.nota.value); if (a) imprimirAS(a); else toast("Este pedido no es de amigo secreto", true); };
 
   // ---------- Nota de venta ----------
   $("#ped-nota").onclick = () => {
