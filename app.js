@@ -1677,6 +1677,17 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     for (const c of sale) { if (c.items.some(p => usados.has(p.id))) continue; elegidos.push(c); c.items.forEach(p => usados.add(p.id)); if (elegidos.length === 3) break; }
     return elegidos;
   }
+  // Productos que cuelgan de cintas en el banner (3 distintos, cambian cada día)
+  function colgantesAS(monto) {
+    const dia = new Date().getDate(), L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio <= monto);
+    const mez = (id, k) => { let h = 0; for (const c of String(id) + "-" + k) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+    L.sort((a, b) => mez(a.id, dia) - mez(b.id, dia));
+    const out = [], cats = new Set();
+    for (const p of L) { const c = catDe(p); if (out.length < 3 && !cats.has(c)) { out.push(p); cats.add(c); } }
+    for (const p of L) if (out.length < 3 && !out.includes(p)) out.push(p);
+    return out.length === 3 ? out : [];
+  }
+  const LAZO_AS = `<svg class="as-lazo" viewBox="0 0 80 52" aria-hidden="true"><path d="M40 27C30 8 8 4 5 15c-3 13 22 14 35 12z" fill="#fd95c8"/><path d="M40 27C50 8 72 4 75 15c3 13-22 14-35 12z" fill="#fd95c8"/><path d="M40 27L23 49l9 2 9-19zM40 27l17 22-9 2-9-19z" fill="#ee6fae"/><rect x="33" y="20" width="14" height="14" rx="5" fill="#f47fb8"/></svg>`;
   const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito"];
   function amigoSecreto(montoTxt) {
     leerFiltroAS();
@@ -1687,7 +1698,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     if (!monto) monto = montos[1] || montos[0];
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
-    const combos = combosAS(monto);
+    const combos = combosAS(monto), colgantes = colgantesAS(monto);
     const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
     const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
     app.innerHTML = `<section class="seccion as-pag">
@@ -1699,11 +1710,11 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <p>Dinos el presupuesto del grupo y te mostramos regalos kawaii que entran justito. Cada uno llega con <b>carta impresa</b> y <b>sobre temático</b>, sin costo.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
         </div>
-        <div class="as-sobre-hero" aria-hidden="true">
+        ${colgantes.length ? `<div class="as-cuelgan">${colgantes.map((p, k) => `<a class="as-cuelga c${k + 1}" href="#/producto/${esc(p.id)}" aria-label="${esc(sinEmoji(p.nombre))}, ${bsAS(p.precio)}"><span class="as-cinta"></span>${LAZO_AS}<span class="as-pcard"><img src="${esc(foto(p))}" alt=""><b>${bsAS(p.precio)}</b></span></a>`).join("")}</div>` : `<div class="as-sobre-hero" aria-hidden="true">
           <div class="as-carta"><small>Para:</small><b>tu amigo secreto</b><span></span><span></span><span class="c"></span></div>
           <div class="as-sobre-cuerpo"></div>
           <img class="as-sello" src="cani-feliz.webp" alt="">
-        </div>
+        </div>`}
       </div>
 
       <h2 class="as-tit" id="as-elige">¿Cuánto es el presupuesto?</h2>
