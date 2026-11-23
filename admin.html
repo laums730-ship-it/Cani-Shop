@@ -764,7 +764,15 @@
     .tr-modal textarea.desc:focus{border-color:var(--rosa-fuerte);outline:none}
     .tr-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px;flex-wrap:wrap}
     .tr-borrar{border:0;background:none;font:700 .8rem var(--f-txt);color:var(--rojo);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-  </style>
+  .pol-adm-pack{margin-top:10px}
+.pol-adm-pack h4{margin:0 0 8px;font-size:.9rem}
+.pol-adm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px}
+@media (min-width:700px){.pol-adm-grid{grid-template-columns:repeat(4,1fr)}}
+.pol-adm-grid figure{margin:0;background:#fff;padding:6px 6px 0;border-radius:4px;box-shadow:0 2px 8px rgba(120,55,70,.2);border:1px solid #f3e6ec;min-width:0}
+.pol-adm-grid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.pol-adm-falta{aspect-ratio:1;display:grid;place-items:center;font-size:.75rem;color:#b16a91;background:#fdf1f6;text-align:center}
+.pol-adm-grid figcaption{padding:8px 2px 10px;font-size:.8rem;text-align:center;overflow-wrap:anywhere;font-style:italic}
+</style>
 </head>
 <body>
 
@@ -1279,6 +1287,13 @@
       <div class="campo"><label>TikTok</label><input name="tiktok" placeholder="@canishopbo"></div>
     </section>
 
+    <section class="caja">
+      <h2>📸 Fotos de polaroids</h2>
+      <p class="ayuda">Las fotos que suben tus clientas se guardan en Supabase. Este botón borra las de pedidos entregados hace más de 30 días y las de packs que nunca llegaron a pedido (más de 7 días), para que no se llene el espacio.</p>
+      <button type="button" class="btn btn-sec" id="pol-limpiar">Limpiar fotos viejas</button>
+      <p class="ayuda" id="pol-limpiar-r" role="status"></p>
+    </section>
+
     <div class="guardar-barra"><button class="btn" id="aj-guardar" type="submit">Guardar cambios</button></div>
    </form>
   </main>
@@ -1365,6 +1380,7 @@
     <div class="campo"><label>Nota</label><textarea name="nota" rows="2"></textarea></div>
 
     <div id="ped-extra"></div>
+    <div id="ped-pol"></div>
     <div class="sep"></div>
     <div class="campo"><label>Productos</label>
       <div class="agregar-prod">
@@ -2730,7 +2746,7 @@
     $("#ped-sinstock").checked = !!(ED.extra || {}).sin_stock && !ED.stock_descontado;
     ajustarEstado();
     if (!p && EMP) { const d = EMP.filter(e => e.defecto); if (d.length) { ED.extra = ED.extra || {}; ED.extra.empaques = d.map(e => ({ id: e.id, nombre: e.nombre, cant: 1, costo: e.costo })); } }
-    pintarEmpPed(); pintarExtra(); pintarItems(); actualizarMapaPed(); pintarSelPed(); verBotonAS();
+    pintarEmpPed(); pintarExtra(); pintarItems(); actualizarMapaPed(); pintarSelPed(); verBotonAS(); pintarPol();
     $("#ped-velo").hidden = $("#ped").hidden = false;
   }
   // Muestra solo lo que corresponde al estado elegido: fecha de pago (Pagado/Entregado), fecha de entrega (Entregado) y la opción de no descontar stock
@@ -3449,6 +3465,7 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   const esScoop = i => i.id === "happy" || i.id === "scoop" || i.id === "video-scoop" || i.id === "caja-scoop" || i.id === "carta-scoop";
   function txtStock(i) {
     if (esScoop(i)) return "🍬 Se arma a pedido";
+    if (i.id === "pack-polaroids") return "📸 Se imprime a pedido";
     const s = stockDe(i);
     return s === null ? "Este producto ya no existe en tu catálogo" : ED.stock_descontado ? "Stock descontado ✔" : sinDescuento() ? `Sin descontar stock (en el sistema hay ${s})` : s < num(i.cant) ? `⚠️ Solo hay ${s} en stock` : `Stock: ${s}`;
   }
@@ -3660,6 +3677,66 @@ Promise.all([...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.
     w.document.close();
   }
   $("#ped-as").onclick = () => { const a = leerAS(FP.nota.value); if (a) imprimirAS(a); else toast("Este pedido no es de amigo secreto", true); };
+
+
+  // ---------- Polaroids: fotos del pedido y limpieza ----------
+  let polTok = 0;
+  async function firmarPol(k) {
+    return Promise.all((k.fotos || []).map(async f => { try { const { data } = await db.storage.from("polaroids").createSignedUrl(`${k.carpeta}/${f}`, 3600); return data ? data.signedUrl : ""; } catch (e) { return ""; } }));
+  }
+  async function pintarPol() {
+    const box = $("#ped-pol"); if (!box) return;
+    const L = ((ED && ED.extra) || {}).polaroids || [], tok = ++polTok;
+    if (!L.length) { box.innerHTML = ""; return; }
+    box.innerHTML = `<div class="extra-box"><b>📸 Polaroids</b><p class="ayuda" style="margin:6px 0 0">Cargando las fotos…</p></div>`;
+    const packs = await Promise.all(L.map(async k => ({ k, urls: await firmarPol(k) })));
+    if (tok !== polTok) return;
+    box.innerHTML = `<div class="extra-box pol-adm"><b>📸 Polaroids</b>` + packs.map((pk, j) => `
+      <div class="pol-adm-pack"><h4>Pack ${j + 1} · 4 fotos</h4>
+        <div class="pol-adm-grid">${pk.urls.map((u, n) => `<figure>${u ? `<img src="${esc(u)}" alt="Polaroid ${n + 1}" loading="lazy">` : `<div class="pol-adm-falta">No se pudo cargar</div>`}<figcaption>${esc((pk.k.textos || [])[n] || "—")}</figcaption></figure>`).join("")}</div>
+        <button type="button" class="btn btn-sec btn-sm" data-pol-dl="${j}">⬇️ Descargar fotos</button>
+      </div>`).join("") + `</div>`;
+  }
+  $("#ped-pol").addEventListener("click", async e => {
+    const b = e.target.closest("[data-pol-dl]"); if (!b || !ED) return;
+    const L = (ED.extra || {}).polaroids || [], j = +b.dataset.polDl, k = L[j]; if (!k) return;
+    b.disabled = true; const t0 = b.textContent; b.textContent = "Descargando…";
+    try {
+      const urls = await firmarPol(k);
+      for (let n = 0; n < urls.length; n++) {
+        if (!urls[n]) continue;
+        const blob = await (await fetch(urls[n])).blob(), a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = `pedido-${ED.numero}-polaroid-${j * 4 + n + 1}.jpg`;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        await new Promise(ok => setTimeout(ok, 350));
+      }
+    } catch (err) { toast("No se pudieron descargar: " + err.message, true); }
+    b.disabled = false; b.textContent = t0;
+  });
+  $("#pol-limpiar").onclick = async () => {
+    const out = $("#pol-limpiar-r"), btn = $("#pol-limpiar"); btn.disabled = true; out.textContent = "Revisando las fotos…";
+    try {
+      const bk = db.storage.from("polaroids"), dia = 864e5, ahora = Date.now();
+      const { data: cs, error: e1 } = await bk.list("pack", { limit: 1000 }); if (e1) throw e1;
+      const { data: peds, error: e2 } = await db.from("pedidos").select("numero,estado,entregado_en,extra").limit(5000); if (e2) throw e2;
+      const mapa = {}; (peds || []).forEach(p => ((p.extra || {}).polaroids || []).forEach(k => { mapa[k.carpeta] = p; }));
+      const borrar = []; let carpetas = 0;
+      for (const c of (cs || [])) {
+        const ruta = "pack/" + c.name, { data: fs } = await bk.list(ruta, { limit: 20 });
+        if (!fs || !fs.length) continue;
+        const ult = Math.max(...fs.map(f => new Date(f.created_at || f.updated_at || ahora).getTime())), ped = mapa[ruta];
+        const viejoEntregado = ped && ped.estado === "entregado" && ped.entregado_en && ahora - new Date(ped.entregado_en).getTime() > 30 * dia;
+        const huerfano = !ped && ahora - ult > 7 * dia;
+        if (viejoEntregado || huerfano) { carpetas++; fs.forEach(f => borrar.push(`${ruta}/${f.name}`)); }
+      }
+      if (!borrar.length) { out.textContent = "No hay fotos viejas para borrar. ¡Todo en orden!"; }
+      else if (confirm(`Se borrarán ${borrar.length} foto(s) de ${carpetas} pack(s) viejos.\n\nEsto no se puede deshacer. ¿Seguimos?`)) {
+        const { error } = await bk.remove(borrar); if (error) throw error;
+        out.textContent = `Listo: se borraron ${borrar.length} foto(s) viejas 💕`;
+      } else out.textContent = "No se borró nada.";
+    } catch (err) { out.textContent = "No se pudo limpiar: " + (err.message || err); }
+    btn.disabled = false;
+  };
 
   // ---------- Nota de venta ----------
   $("#ped-nota").onclick = () => {

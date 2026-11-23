@@ -130,6 +130,11 @@
   let carrito = [];
   try { carrito = JSON.parse(localStorage.getItem("carrito") || "[]"); } catch (e) {}
   const guardar = () => { try { localStorage.setItem("carrito", JSON.stringify(carrito)); } catch (e) {} pintarCarrito(); };
+  // Packs de polaroids (complemento de Amigo secreto): se guardan aparte del carrito de productos
+  let packsPol = [];
+  try { packsPol = (JSON.parse(localStorage.getItem("cani-polaroids") || "[]") || []).filter(k => k && /^pack\/[a-z0-9]{8,32}$/.test(k.carpeta)); } catch (e) {}
+  const guardarPol = () => { try { localStorage.setItem("cani-polaroids", JSON.stringify(packsPol)); } catch (e) {} pintarCarrito(); };
+  const polPrecio = () => Number((T.polaroids || {}).precio) > 0 ? Number(T.polaroids.precio) : 15;
   const agregar = (id, variante, cant) => {
     const ex = carrito.find(i => i.id === id && i.variante === variante);
     ex ? ex.cant += cant : carrito.push({ id, variante, cant });
@@ -155,10 +160,20 @@
     const b = $("#btn-carrito"); b.classList.remove("salta"); void b.offsetWidth; b.classList.add("salta");
   }
   function pintarCarrito() {
-    const n = carrito.reduce((a, i) => a + i.cant, 0);
+    const n = carrito.reduce((a, i) => a + i.cant, 0) + packsPol.length;
     const c = $("#contador"); c.textContent = n; c.dataset.v = n;
     const items = carrito.map((i, k) => ({ ...i, k, p: PRODS.find(p => p.id === i.id) })).filter(i => i.p);
-    $("#carrito-items").innerHTML = items.length ? items.map(i => `
+    const htmlPol = packsPol.map((k, j) => `
+      <div class="item item-pol">
+        <span class="pol-mini">${k.thumb ? `<img src="${esc(k.thumb)}" alt="">` : ""}</span>
+        <div>
+          <h4>Pack 4 polaroids</h4>
+          <small>${bs(polPrecio())}</small><br>
+          <small>Con tus 4 fotos${(k.textos || []).some(Boolean) ? " y sus textos" : ""}</small>
+        </div>
+        <button class="quitar" data-quitar-pol="${j}">Quitar</button>
+      </div>`).join("");
+    $("#carrito-items").innerHTML = items.length || packsPol.length ? items.map(i => `
       <div class="item">
         <img src="${esc(((i.p.variantes || []).find(v => v.nombre === i.variante) || {}).imagen || foto(i.p))}" alt="">
         <div>
@@ -168,9 +183,9 @@
           <div class="cantidad"><button data-menos="${i.k}">−</button><span>${i.cant}</span><button data-mas="${i.k}">+</button></div>
         </div>
         <button class="quitar" data-quitar="${i.k}">Quitar</button>
-      </div>`).join("") : `<div class="carrito-vacio"><div class="cv-cani" aria-hidden="true"></div><p>Hay tantas cositas lindas esperándote…</p><a class="btn cv-btn" href="#/catalogo" data-cerrar-carrito>Ver la tienda</a></div>`;
-    $("#subtotal").textContent = bs(items.reduce((a, i) => a + i.p.precio * i.cant, 0));
-    $("#carrito-pie").style.display = items.length ? "" : "none";
+      </div>`).join("") + htmlPol : `<div class="carrito-vacio"><div class="cv-cani" aria-hidden="true"></div><p>Hay tantas cositas lindas esperándote…</p><a class="btn cv-btn" href="#/catalogo" data-cerrar-carrito>Ver la tienda</a></div>`;
+    $("#subtotal").textContent = bs(items.reduce((a, i) => a + i.p.precio * i.cant, 0) + packsPol.length * polPrecio());
+    $("#carrito-pie").style.display = items.length || packsPol.length ? "" : "none";
   }
   $("#carrito-items").addEventListener("click", e => {
     if (e.target.closest("[data-cerrar-carrito]")) { abrir(false); return; }
@@ -178,6 +193,7 @@
     if (d.mas) { const it = carrito[d.mas], p = PRODS.find(x => x.id === it.id); if (p && it.cant >= maxDe(p, it.variante)) return toast("No hay más stock de este modelo"); it.cant++; }
     else if (d.menos) { carrito[d.menos].cant--; if (carrito[d.menos].cant < 1) carrito.splice(d.menos, 1); }
     else if (d.quitar) carrito.splice(d.quitar, 1);
+    else if (d.quitarPol !== undefined) { packsPol.splice(+d.quitarPol, 1); guardarPol(); return; }
     else return;
     guardar();
   });
@@ -210,11 +226,12 @@
           <textarea name="as_msg" rows="3" maxlength="280" placeholder="Mensaje de tu carta (ej: ¡Feliz Navidad! Espero que te guste mucho)"></textarea>
           <input name="as_firma" maxlength="40" placeholder="Firma (si lo dejas vacío: Tu amigo secreto)">
           <p class="as-car-nota">La imprimimos y la ponemos con tu regalo en su sobre.</p>
+          <div class="pol-cart"><span class="pol-mini pol-mini-vacia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div><b>¿Le sumas 4 polaroids?</b><small id="pol-cart-precio"></small></div><button type="button" class="btn btn-sec pol-cart-btn" data-pol-add>Agregar</button></div>
         </div></div>`);
       const chk = $("#as-es"), campos = $("#as-car-campos");
       const sync = () => { campos.hidden = !chk.checked; try { localStorage.setItem("as-pedido", chk.checked ? "1" : ""); } catch (e) {} };
       chk.addEventListener("change", sync);
-      window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } sync(); };
+      window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; { const pp = $("#pol-cart-precio"); if (pp) pp.textContent = bs(polPrecio()); } box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } sync(); };
     } }
   const lineaAS = f => {
     if (!f.get("as_es")) return null;
@@ -226,7 +243,7 @@
     e.preventDefault();
     const f = new FormData(e.target), btn = e.target.querySelector("button[type=submit]");
     const items = carrito.filter(i => PRODS.some(p => p.id === i.id));
-    if (!items.length) return;
+    if (!items.length && !packsPol.length) return;
     // Abrir la ventana de WhatsApp ya (si no, el navegador la bloquea)
     const ventana = window.open("", "_blank");
     btn.disabled = true;
@@ -239,7 +256,8 @@
           body: JSON.stringify({ p: {
             cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad,
             direccion: envio.direccion, entrega: f.get("entrega") || "", nota: [f.get("nota") || "", (a => a ? `[Amigo secreto | Para: ${a.para} | Firma: ${a.firma} | Carta: ${a.msg}]` : "")(lineaAS(f))].filter(Boolean).join("\n"),
-            items: items.map(i => ({ id: i.id, variante: i.variante || null, cant: i.cant }))
+            items: items.map(i => ({ id: i.id, variante: i.variante || null, cant: i.cant })),
+            polaroids: packsPol.map(k => ({ carpeta: k.carpeta, textos: k.textos || [] }))
           } })
         });
         if (r.ok) numero = await r.json();
@@ -250,7 +268,8 @@
       const p = PRODS.find(x => x.id === i.id);
       return `• ${i.cant} x ${p.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(p.precio * i.cant)}`;
     });
-    const total = items.reduce((a, i) => a + PRODS.find(p => p.id === i.id).precio * i.cant, 0);
+    packsPol.forEach(k => lineas.push(`• 1 x Pack 4 polaroids — ${bs(polPrecio())}`, `   📸 Pack 4 polaroids (fotos subidas en la web, código ${k.carpeta.slice(5)})`));
+    const total = items.reduce((a, i) => a + PRODS.find(p => p.id === i.id).precio * i.cant, 0) + packsPol.length * polPrecio();
     const msg = [`🌸 *NUEVO PEDIDO · ${String(T.nombre).toUpperCase()}* 🌸`, numero ? `Pedido #${numero}` : null, "",
       "🛍️ *Mi pedido*", ...lineas, "",
       "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, "",
@@ -264,7 +283,7 @@
     if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
     btn.disabled = false;
     if (numero) {
-      carrito = []; guardar(); if (e.target.elements.nota) e.target.elements.nota.value = "";
+      carrito = []; packsPol = []; guardarPol(); guardar(); if (e.target.elements.nota) e.target.elements.nota.value = "";
       ["as_para", "as_msg", "as_firma"].forEach(n => { if (e.target.elements[n]) e.target.elements[n].value = ""; }); if (e.target.elements.as_es) e.target.elements.as_es.checked = false; try { localStorage.removeItem("as-pedido"); } catch (x) {}
       abrir(false);
       toast(`¡Pedido #${numero} enviado! 💕`);
@@ -1711,6 +1730,12 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <p class="as-gratis">Carta y sobre: <b>sin costo adicional</b></p>
       </div>
 
+      <div class="pol-promo">
+        <div class="pol-abanico" aria-hidden="true"><i class="p1"></i><i class="p2"></i><i class="p3"><img src="cani-feliz.webp" alt=""></i><i class="p4"></i></div>
+        <div class="pol-promo-txt"><h2>Súmale recuerdos</h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
+          <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
+      </div>
+
       <div class="as-bloque">
         <h2 class="as-tit">Combos listos de hasta ${bsAS(monto)}</h2>
         <p class="as-sub">Dos o tres cositas que combinan, para que tu regalo se vea más completo.</p>
@@ -1719,7 +1744,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[k] || "Combo"}</h3>
               <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
               <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
-              ${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
+              ${monto - c.total >= polPrecio() ? `<button type="button" class="as-pol-link" data-pol-add>Te alcanza para sumar 4 polaroids</button>` : ""}${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
             </div></article>`).join("")}</div>`
         : `<p class="vacio">Todavía no tenemos combos para este monto. Mira los regalos sueltos de abajo.</p>`}
       </div>
@@ -1742,6 +1767,102 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
   }
+
+  // ---------- Polaroids: editor "Tus polaroids" ----------
+  const asegurarCaveat = () => { if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); } };
+  const SVG_CAM = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
+  const SVG_X = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+  function abrirPolaroids() {
+    asegurarCaveat();
+    const viejo = document.getElementById("pol-ed"); if (viejo) viejo.remove();
+    const rnd = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+    const F = [null, null, null, null];   // { url, bmp, w, h, x, y, texto }
+    let subiendo = false;
+    const velo = document.createElement("div");
+    velo.className = "pol-velo"; velo.id = "pol-ed"; velo.setAttribute("role", "dialog"); velo.setAttribute("aria-modal", "true"); velo.setAttribute("aria-label", "Tus polaroids");
+    velo.innerHTML = `<div class="pol-hoja">
+      <button type="button" class="pol-x" aria-label="Cerrar">${SVG_X}</button>
+      <h2>Tus polaroids</h2>
+      <p class="pol-sub">Elige 4 fotos. Las imprimimos con marco blanco, como polaroid.</p>
+      <div class="pol-grid" id="pol-grid"></div>
+      <label class="btn btn-sec pol-varias">${SVG_CAM}Subir varias a la vez<input type="file" accept="image/*" multiple hidden id="pol-multi"></label>
+      <button type="button" class="btn pol-ok" id="pol-ok" disabled>Agregar al pedido · ${bs(polPrecio())}</button>
+      <p class="pol-msg" id="pol-msg" role="status"></p>
+      <p class="pol-chica">Listas en 2 a 3 días junto con tu pedido</p>
+    </div>`;
+    document.body.appendChild(velo); document.body.classList.add("pol-abierto");
+    const cerrar = () => { if (subiendo) return; F.forEach(f => f && f.url && URL.revokeObjectURL(f.url)); velo.remove(); document.body.classList.remove("pol-abierto"); document.removeEventListener("keydown", tecla); };
+    const tecla = e => { if (e.key === "Escape") cerrar(); };
+    document.addEventListener("keydown", tecla);
+    const msg = t => { $("#pol-msg").textContent = t || ""; };
+    const lista = () => F.every(Boolean);
+    const sync = () => { const ok = $("#pol-ok"); ok.disabled = !lista() || subiendo; };
+    async function cargar(file, i) {
+      if (!file || !/^image\//.test(file.type || "image/")) return false;
+      try {
+        const bmp = await createImageBitmap(file);
+        if (F[i] && F[i].url) URL.revokeObjectURL(F[i].url);
+        F[i] = { url: URL.createObjectURL(file), bmp, w: bmp.width, h: bmp.height, x: .5, y: .5, texto: (F[i] || {}).texto || "" };
+        return true;
+      } catch (e) { msg("No pudimos abrir esa foto. Prueba con otra."); return false; }
+    }
+    const pintar = () => {
+      $("#pol-grid").innerHTML = F.map((f, i) => `<div class="pol-slot" data-i="${i}"><div class="pol-marco">${f
+        ? `<div class="pol-foto" data-pan="${i}"><img src="${f.url}" alt="Foto ${i + 1}" draggable="false" style="object-position:${f.x * 100}% ${f.y * 100}%"><button type="button" class="pol-q" data-q="${i}" aria-label="Quitar foto ${i + 1}">${SVG_X}</button></div>`
+        : `<label class="pol-vacio">${SVG_CAM}<span>Agregar foto</span><input type="file" accept="image/*" hidden data-uno="${i}"></label>`}
+        <input class="pol-txt" data-t="${i}" maxlength="20" placeholder="Texto abajo (opcional)" aria-label="Texto abajo de la foto ${i + 1}" value="${esc(f ? f.texto : "")}"${f ? "" : " disabled"}></div>
+        ${f && Math.min(f.w, f.h) < 800 ? `<small class="pol-peq">Esta foto es pequeña, puede salir borrosa</small>` : ""}</div>`).join("");
+      sync();
+    };
+    pintar();
+    velo.addEventListener("click", e => { if (e.target === velo || e.target.closest(".pol-x")) cerrar(); const q = e.target.closest("[data-q]"); if (q) { const i = +q.dataset.q; if (F[i].url) URL.revokeObjectURL(F[i].url); F[i] = null; msg(""); pintar(); } });
+    velo.addEventListener("input", e => { const t = e.target.closest("[data-t]"); if (t && F[+t.dataset.t]) F[+t.dataset.t].texto = t.value.slice(0, 20); });
+    velo.addEventListener("change", async e => {
+      const uno = e.target.closest("[data-uno]");
+      if (uno) { msg(""); if (await cargar(uno.files[0], +uno.dataset.uno)) pintar(); uno.value = ""; return; }
+      if (e.target.id === "pol-multi") {
+        msg(""); const fs = [...e.target.files]; let k = 0;
+        for (let i = 0; i < 4 && k < fs.length; i++) if (!F[i]) await cargar(fs[k++], i);
+        pintar(); e.target.value = "";
+      }
+    });
+    // Arrastrar con el dedo para acomodar el encuadre
+    let pan = null;
+    velo.addEventListener("pointerdown", e => { const z = e.target.closest("[data-pan]"); if (!z || e.target.closest(".pol-q")) return; const f = F[+z.dataset.pan]; pan = { f, z, img: z.querySelector("img"), sx: e.clientX, sy: e.clientY, x0: f.x, y0: f.y }; z.setPointerCapture(e.pointerId); });
+    velo.addEventListener("pointermove", e => {
+      if (!pan) return; const { f, z, img } = pan, box = z.clientWidth, a = f.w / f.h;
+      if (a > 1) { const ov = box * (a - 1); f.x = Math.min(1, Math.max(0, pan.x0 - (e.clientX - pan.sx) / ov)); }
+      else if (a < 1) { const ov = box * (1 / a - 1); f.y = Math.min(1, Math.max(0, pan.y0 - (e.clientY - pan.sy) / ov)); }
+      img.style.objectPosition = `${f.x * 100}% ${f.y * 100}%`;
+    });
+    const finPan = () => { pan = null; }; velo.addEventListener("pointerup", finPan); velo.addEventListener("pointercancel", finPan);
+    // Recorte cuadrado según el encuadre, máximo 2000 px, JPG calidad 0,9
+    const recortar = (f, lado, q) => new Promise(ok => {
+      const s = Math.min(f.w, f.h), c = document.createElement("canvas"), out = Math.min(lado, s); c.width = c.height = out;
+      c.getContext("2d").drawImage(f.bmp, (f.w - s) * f.x, (f.h - s) * f.y, s, s, 0, 0, out, out);
+      c.toBlob(b => ok(b), "image/jpeg", q);
+    });
+    $("#pol-ok").onclick = async () => {
+      if (!lista() || subiendo) return;
+      if (!(SB.url && SB.key)) return msg("No pudimos conectar con la tienda. Inténtalo de nuevo en un momento.");
+      subiendo = true; sync(); const id = rnd();
+      try {
+        for (let i = 0; i < 4; i++) {
+          msg(`Subiendo tus fotos… ${i + 1} de 4`);
+          const blob = await recortar(F[i], 2000, .9);
+          const r = await fetch(`${SB.url.replace(/\/$/, "")}/storage/v1/object/polaroids/pack/${id}/${i + 1}.jpg`, { method: "POST", headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "image/jpeg" }, body: blob });
+          if (!r.ok) throw new Error("subida " + (i + 1) + " " + r.status);
+        }
+        const mini = await recortar(F[0], 160, .7), thumb = await new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(mini); });
+        packsPol.push({ carpeta: `pack/${id}`, textos: F.map(f => (f.texto || "").trim().slice(0, 20)), thumb });
+        subiendo = false; guardarPol(); cerrar(); toast("¡Pack de polaroids agregado!"); setTimeout(() => abrir(true), 250);
+      } catch (e) {
+        console.warn("No se pudieron subir las polaroids", e); subiendo = false; sync();
+        msg("No pudimos subir tus fotos. Revisa tu internet e inténtalo otra vez.");
+      }
+    };
+  }
+  document.addEventListener("click", e => { if (e.target.closest("[data-pol-add]")) { e.preventDefault(); abrirPolaroids(); } });
 
   // ---------- Rutas ----------
   function ruta() {
