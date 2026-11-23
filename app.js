@@ -1739,7 +1739,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <li><b>Ves tu carta antes de pagar</b><span>Vista previa en el carrito</span></li>
       </ul>
 
-      <h2 class="as-tit" id="as-elige">¿Cuánto es el presupuesto?</h2>
+      <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto es el presupuesto?</h2>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
         <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
@@ -1756,7 +1756,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-bloque">
-        <h2 class="as-tit">Combos listos de hasta ${bsAS(monto)}</h2>
+        <h2 class="as-tit"><span class="as-num">2</span>Elige tu combo de hasta ${bsAS(monto)}</h2>
         <p class="as-sub">Ya vienen armados con cositas que combinan y listos para regalar, con carta y envoltorio. Si prefieres elegir tú, mira los regalos sueltos más abajo.</p>
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
@@ -1769,19 +1769,19 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${combos.length > 1 ? `<div class="as-mas"><h3>También te puede gustar</h3><div class="as-mas-fila">${combos.map((c, k) => k === asIdx ? "" : `<button type="button" class="as-mini" data-asir="${k}"><span class="as-mini-f">${c.items.map(p => `<img src="${esc(foto(p))}" alt="" loading="lazy">`).join("")}</span><b>${bsAS(c.total)}</b><small>${esc(c.items.map(p => sinEmoji(p.nombre)).join(" + "))}</small></button>`).filter(Boolean).slice(0, 8).join("")}</div></div>` : ""}
         ${combos.length ? `<div class="as-dado-wrap"><button type="button" class="as-dado" id="as-dado"><span class="as-dado-ic" aria-hidden="true">🎲</span> Ver otro combo</button><small class="as-dado-n">Combo ${asIdx + 1} de ${combos.length}</small></div>` : ""}
       </div>
-      <div class="pol-promo">
-        <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente al árbol de Navidad" width="1400" height="933" loading="lazy">
-        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos</h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
-          <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
-      </div>
-
       <div class="as-llega">
-        <div class="as-llega-cab"><h2>Así llega tu regalo</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
+        <div class="as-llega-cab"><h2><span class="as-num">3</span>Escribe tu carta y haz tu pedido</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
         <ol class="as-pasos">
           <li class="as-paso"><div class="as-paso-img"><img src="amigo-carrito.webp" alt="Carrito con cositas kawaii" width="320" height="318" loading="lazy"></div><span class="as-paso-n">1</span><b>Tus cositas</b><p>Elegidas para que entren en ${bsAS(monto)}.</p></li>
           <li class="as-paso"><div class="as-paso-img"><img src="amigo-carta-manos.webp" alt="Manos sosteniendo tu carta navideña" width="320" height="267" loading="lazy"></div><span class="as-paso-n">2</span><b>Carta impresa</b><p>Con tu mensaje y su nombre, en papel lindo.</p></li>
 
         </ol>
+      </div>
+
+      <div class="pol-promo">
+        <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente al árbol de Navidad" width="1400" height="933" loading="lazy">
+        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos <small class="as-opc">Opcional</small></h2><p>4 polaroids con sus fotos juntas, por <b>${bs(polPrecio())}</b>. Las imprimimos con marco blanco y van en una bolsita junto al regalo.</p>
+          <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
       </div>
 
       <div class="as-bloque">

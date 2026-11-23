@@ -2170,3 +2170,13 @@ body.pol-abierto{overflow:hidden}
 .as-confia{margin-bottom:26px}
 .as-filtros{margin-bottom:30px}
 .as-bloque .as-sub{margin-bottom:16px}
+
+/* Pasos y títulos del mismo tamaño */
+.as-tit,.as-llega-cab h2,.pol-promo-txt h2,.as-grupo h2{font-size:1.5rem!important;line-height:1.2;margin-top:0;margin-bottom:12px;font-weight:600}
+.as-tit,.as-llega-cab h2{display:flex;align-items:center;gap:10px}
+.as-llega-cab h2,.as-grupo h2{margin-bottom:0}
+.as-num{flex:none;width:34px;height:34px;border-radius:50%;background:#c8213c;color:#fff;display:inline-grid;place-items:center;font-size:1.05rem;font-weight:700;box-shadow:0 3px 0 #8f1328}
+.as-opc{font-size:.7rem;font-weight:700;color:#8a5566;background:#fff;border:1.5px solid #fbd3e4;border-radius:999px;padding:2px 9px;vertical-align:middle;margin-left:6px;letter-spacing:.04em;text-transform:uppercase}
+.as-filtros .as-tit-s{font-size:1rem!important;margin:0!important}
+@media (max-width:700px){.as-tit,.as-llega-cab h2,.pol-promo-txt h2,.as-grupo h2{font-size:1.3rem!important}.as-num{width:30px;height:30px}}
+.as-llega .as-paso-n{display:none!important}
