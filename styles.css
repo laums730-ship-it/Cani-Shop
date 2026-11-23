@@ -1984,3 +1984,23 @@ body.pol-abierto{overflow:hidden}
 @media (max-width:700px){.as-hero-claro h1 em.as-h-script{font-size:clamp(1.55rem,7.4vw,2.5rem);line-height:1.2}}
 .as-hero-claro p{white-space:normal;max-width:520px}
 @media (min-width:1000px){.as-hero-claro p{white-space:normal;max-width:520px;font-size:clamp(1rem,1.5vw,1.2rem)}}
+/* Amigo secreto: paleta del banner (rojo cinta + vino + rosa muy claro) */
+.as-monto{background:#fef2f9;box-shadow:0 5px 0 #fbd3e4}
+.as-solapa{background:linear-gradient(to bottom right,#fbdcea 50%,transparent 50.5%) left/50% 100% no-repeat,linear-gradient(to bottom left,#fbdcea 50%,transparent 50.5%) right/50% 100% no-repeat}
+.as-monto.on{background:#c8213c;color:#fff;box-shadow:0 5px 0 #8f1328}
+.as-monto.on .as-solapa{background:linear-gradient(to bottom right,#d9435b 50%,transparent 50.5%) left/50% 100% no-repeat,linear-gradient(to bottom left,#d9435b 50%,transparent 50.5%) right/50% 100% no-repeat}
+.as-otro{border-color:#f1a9bd}.as-otro input{border-color:#fbd3e4}
+.as-llega,.pol-promo,.as-car{background:#fef2f9;box-shadow:inset 0 0 0 1.5px #fbd3e4}
+.as-llega li>span{background:#c8213c;color:#fff;box-shadow:0 3px 0 #8f1328}
+.as-gratis{box-shadow:0 3px 0 #fbd3e4;color:#783746}
+.as-combo{border-color:#fbd3e4;box-shadow:0 6px 0 #fbd3e4}
+.as-combo-fotos{background:#fef2f9}
+.as-combo-txt li.as-incl b{background:#fde3ee;color:#8f1328}
+.as-combo-pie{border-top-color:#fbd3e4}
+.as-combo-pie strong{color:#c8213c}
+.as-llevar,.pol-promo-btn{background:#c8213c;color:#fff;box-shadow:0 4px 0 #8f1328}
+.as-chip.on{background:#c8213c;border-color:#c8213c;color:#fff}
+.as-chip{border-color:#fbd3e4}
+.as-grupo{background:#fef2f9;box-shadow:inset 0 0 0 1.5px #fbd3e4}
+.as-car-check input{accent-color:#c8213c}
+.as-combo-txt li.as-var select{border-color:#fbd3e4}
