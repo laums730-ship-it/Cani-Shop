@@ -216,11 +216,11 @@
   $("#btn-carrito").onclick = () => abrir(true);
   $("#cerrar-carrito").onclick = $("#velo").onclick = () => abrir(false);
 
-  // Amigo secreto: carta impresa y sobre temático sin costo
+  // Amigo secreto: carta impresa y envoltorio sin costo
   { const fp = $("#form-pedido"), nota = fp && fp.querySelector("[name=nota]");
     if (nota) {
       nota.insertAdjacentHTML("beforebegin", `<div class="as-car" id="as-car" hidden>
-        <label class="as-car-check"><input type="checkbox" name="as_es" id="as-es"><span><b>Es para amigo secreto</b><small>Incluye carta impresa y sobre temático, sin costo</small></span></label>
+        <label class="as-car-check"><input type="checkbox" name="as_es" id="as-es"><span><b>Es para amigo secreto</b><small>Incluye carta impresa y envoltorio, sin costo</small></span></label>
         <div class="as-car-campos" id="as-car-campos" hidden>
           <input name="as_para" maxlength="40" placeholder="¿Para quién es? (su nombre)">
           <textarea name="as_msg" rows="3" maxlength="280" placeholder="Mensaje de tu carta (ej: ¡Feliz Navidad! Espero que te guste mucho)"></textarea>
@@ -230,7 +230,7 @@
             <div class="as-prev" id="as-prev"><img src="amigo-carta-fondo.webp" alt="" width="1536" height="1024" loading="lazy"><div class="as-prev-msg"></div><div class="as-prev-para"></div><div class="as-prev-de"></div></div>
             <button type="button" class="as-prev-ver" id="as-prev-ver">Ver más grande</button>
           </div>
-          <p class="as-car-nota">La imprimimos y la ponemos con tu regalo en su sobre.</p>
+          <p class="as-car-nota">La imprimimos y la ponemos con tu regalo.</p>
           <div class="pol-cart"><span class="pol-mini pol-mini-vacia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div><b>¿Le sumas 4 polaroids?</b><small id="pol-cart-precio"></small></div><button type="button" class="btn btn-sec pol-cart-btn" data-pol-add>Agregar</button></div>
         </div></div>`);
       const chk = $("#as-es"), campos = $("#as-car-campos");
@@ -301,7 +301,7 @@
       "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, "",
       "🚚 *Entrega*", ...envio.lineas,
       f.get("nota") ? "" : null, f.get("nota") ? `📝 *Nota:* ${f.get("nota")}` : null,
-      ...(a => a ? ["", "🎁 *Amigo secreto* (carta impresa + sobre temático, sin costo)", a.para ? `Para: ${a.para}` : null, `Firma: ${a.firma}`, a.msg ? `Carta: "${a.msg}"` : null] : [])(lineaAS(f)), "",
+      ...(a => a ? ["", "🎁 *Amigo secreto* (carta impresa + envoltorio, sin costo)", a.para ? `Para: ${a.para}` : null, `Firma: ${a.firma}`, a.msg ? `Carta: "${a.msg}"` : null] : [])(lineaAS(f)), "",
       `💰 *TOTAL: ${bs(total)}*`, vale ? vale : null, "",
       "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"
     ].filter(x => x !== null).join("\n");
@@ -1723,7 +1723,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
         <div class="as-hero-txt">
           <h1><span class="as-h-caps">El regalo perfecto</span><em class="as-h-script">para tu amigo secreto</em></h1>
-          <p><b>Desde Bs 15.</b> Dinos cuánto es el presupuesto y armamos el regalo, con <b>carta</b> y <b>sobre</b> incluidos.</p>
+          <p><b>Desde Bs 15.</b> Dinos cuánto es el presupuesto y armamos el regalo, con <b>carta</b> y <b>envoltorio</b> incluidos.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
         </div>
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
@@ -1746,11 +1746,11 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-llega">
-        <div class="as-llega-cab"><h2>Así llega tu regalo</h2><p class="as-gratis">Carta y sobre: <b>sin costo adicional</b></p></div>
+        <div class="as-llega-cab"><h2>Así llega tu regalo</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
         <ol class="as-pasos">
           <li class="as-paso"><div class="as-paso-img"><img src="amigo-carrito.webp" alt="Carrito con cositas kawaii" width="320" height="318" loading="lazy"></div><span class="as-paso-n">1</span><b>Tus cositas</b><p>Elegidas para que entren en ${bsAS(monto)}.</p></li>
           <li class="as-paso"><div class="as-paso-img"><img src="amigo-carta-manos.webp" alt="Manos sosteniendo tu carta navideña" width="320" height="267" loading="lazy"></div><span class="as-paso-n">2</span><b>Carta impresa</b><p>Con tu mensaje y su nombre, en papel lindo.</p></li>
-          <li class="as-paso"><div class="as-paso-img"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="14" y="30" width="92" height="64" rx="8" fill="#fbd3e4"/><path d="M14 38l46 32 46-32" fill="none" stroke="#f1a9bd" stroke-width="3" stroke-linejoin="round"/><circle cx="60" cy="68" r="12" fill="#c8213c"/><path d="M60 62l2 4 4 .6-3 3 .8 4.2-3.8-2-3.8 2 .8-4.2-3-3 4-.6z" fill="#fff"/></svg></div><span class="as-paso-n">3</span><b>Sobre temático</b><p>Listo para entregar, con su etiqueta.</p></li>
+
         </ol>
       </div>
 
@@ -1778,7 +1778,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
       <div class="as-grupo">
         <img src="cani-charla.webp" alt="">
-        <div><h2>¿Son varios del mismo grupo?</h2><p>Si tu oficina, curso o grupo de amigas pide 5 regalos o más, escríbenos: los armamos juntos, cada uno con su carta y su sobre, y coordinamos la entrega.</p></div>
+        <div><h2>¿Son varios del mismo grupo?</h2><p>Si tu oficina, curso o grupo de amigas pide 5 regalos o más, escríbenos: los armamos juntos, cada uno con su carta y su envoltorio, y coordinamos la entrega.</p></div>
         <a class="btn btn-wa" href="${waURL(msgGrupo)}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
       </div>
     </section>`;

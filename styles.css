@@ -2063,3 +2063,7 @@ body.pol-abierto{overflow:hidden}
 .as-prev-gran .as-prev{box-shadow:0 12px 40px rgba(0,0,0,.35)}
 .as-prev-x{position:absolute;top:-14px;right:-6px;z-index:2;width:36px;height:36px;border-radius:50%;border:0;background:#fff;color:#783746;font-size:1.4rem;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .as-prev-para,.as-prev-de{line-height:1;overflow:visible}
+
+.as-llega .as-pasos{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:700px){.as-llega .as-paso{flex:0 0 78%}}
+@media (min-width:701px){.as-llega .as-paso-img{aspect-ratio:3.5}}
