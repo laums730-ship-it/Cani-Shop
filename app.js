@@ -1691,7 +1691,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
     const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
     app.innerHTML = `<section class="seccion as-pag">
-      <div class="as-hero">
+      <div class="as-hero as-hero-claro">
         <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
         <div class="as-hero-txt">
           <span class="as-etq"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z"/></svg>Temporada de amigo secreto</span>
@@ -1699,11 +1699,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           <p>Dinos el presupuesto del grupo y te mostramos regalos kawaii que entran justito. Cada uno llega con <b>carta impresa</b> y <b>sobre temático</b>, sin costo.</p>
           <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
         </div>
-        <div class="as-sobre-hero" aria-hidden="true">
-          <div class="as-carta"><small>Para:</small><b>tu amigo secreto</b><span></span><span></span><span class="c"></span></div>
-          <div class="as-sobre-cuerpo"></div>
-          <img class="as-sello" src="cani-feliz.webp" alt="">
-        </div>
+        <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
 
       <h2 class="as-tit" id="as-elige">¿Cuánto es el presupuesto?</h2>
