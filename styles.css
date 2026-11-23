@@ -2223,3 +2223,17 @@ body.pol-abierto{overflow:hidden}
 .as-llega-cab{flex-wrap:wrap!important;gap:8px 12px!important}
 .as-llega-cab h2{min-width:0;flex:1 1 auto}
 @media (max-width:700px){.as-llega-cab h2{font-size:1.15rem!important}.as-llega-cab .as-gratis{flex:1 1 100%}}
+/* Combo más compacto en celular */
+@media (max-width:700px){
+.as-combo-fotos{padding:10px!important;gap:6px!important;display:grid!important;grid-template-columns:repeat(3,1fr)!important}
+.as-combo-fotos.as-n2{grid-template-columns:repeat(2,1fr)!important}
+.as-combo-fotos.as-n3 a:first-child{grid-column:auto!important}
+.as-combo-fotos.as-n3 a:first-child img,.as-combo-fotos img{aspect-ratio:1!important;height:auto!important;border-radius:12px!important}
+.as-combo-txt{padding:12px 14px 14px!important;gap:8px!important}
+.as-combo-txt h3{font-size:1.15rem!important}
+.as-combo-txt li{font-size:.84rem!important}
+.as-combo-txt select{font-size:.85rem!important;padding:6px 10px!important;min-height:0!important}
+.as-combo .btn{padding:9px 18px!important;font-size:.9rem!important}
+body:has(.as-combos) .wa-flotante{display:none!important}
+}
+@media (max-width:700px){.as-combo-fotos,.as-combo-fotos.as-n2{grid-template-columns:repeat(3,minmax(0,104px))!important;justify-content:center}}
