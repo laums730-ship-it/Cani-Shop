@@ -1860,3 +1860,17 @@ button.vid-item{background:none;border:0;padding:0;font:inherit;color:inherit;cu
 /* Amigo secreto: elegir color o personaje dentro del combo */
 .as-combo-txt li.as-var{display:block}
 .as-combo-txt li.as-var select{width:100%;font:inherit;font-size:.82rem;color:#783746;background:#fff;border:2px solid #f3d7e4;border-radius:12px;padding:7px 10px}
+
+/* Amigo secreto: filtros de personaje y color */
+.as-filtros{margin:18px 0 6px}
+.as-fila{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+.as-fila>span{flex:none;width:76px;font-weight:700;font-size:.82rem;padding-top:9px;color:#783746}
+.as-fila>div{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.as-chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:.82rem;font-weight:700;color:#783746;background:#fff;border:2px solid #f3d7e4;border-radius:999px;padding:6px 14px;cursor:pointer}
+.as-chip i{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.as-chip.on{background:#fd95c8;border-color:#fd95c8;color:#fff}
+@media (max-width:560px){.as-fila{flex-direction:column;gap:4px}.as-fila>span{width:auto;padding-top:0}}
+/* Amigo secreto: bloque de grupos bien acomodado */
+.as-grupo>div{flex:1 1 0;min-width:0}
+.as-grupo .btn{width:auto;flex:none;white-space:nowrap;margin-left:0}
+@media (max-width:820px){.as-grupo{flex-wrap:wrap}.as-grupo>div{flex:1 1 220px}.as-grupo .btn{width:100%;box-sizing:border-box}}

@@ -1629,9 +1629,23 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const noAS = p => !/pegamento/i.test(p.nombre || "");
   const simpleAS = p => p && noAS(p) && hayStock(p) && +p.precio > 0 && (p.imagenes || []).length;
   const libresAS = p => tieneVar(p) ? p.variantes.filter(v => disp(v.stock)) : [];
+  // Filtros de la página: personaje y color que elige quien compra
+  const filtroAS = { per: "", col: "" };
+  const leerFiltroAS = () => { try { filtroAS.per = sessionStorage.getItem("as-per") || ""; filtroAS.col = sessionStorage.getItem("as-col") || ""; } catch (e) {} };
+  const guardarFiltroAS = () => { try { sessionStorage.setItem("as-per", filtroAS.per); sessionStorage.setItem("as-col", filtroAS.col); } catch (e) {} };
+  const textoAS = p => sinAcento([p.nombre, ...libresAS(p).map(v => v.nombre)].join(" | "));
+  const perAS = () => PERS().find(c => c.id === filtroAS.per);
+  const coincideVarAS = (v, t) => sinAcento(v.nombre).includes(sinAcento(t));
+  const coincideAS = p => {
+    const per = perAS();
+    if (per && !((personajeDe(p) || {}).id === per.id || textoAS(p).includes(sinAcento(per.nombre)))) return false;
+    if (filtroAS.col && !textoAS(p).includes(sinAcento(filtroAS.col))) return false;
+    return true;
+  };
+  const coloresAS = () => ((T.scoops && T.scoops.colores) || ["Rosa", "Lila", "Celeste", "Verde", "Blanco", "Negro", "Rojo", "Morado", "Azul"]).filter(Boolean);
   const catDe = p => (p.categorias || [])[0] || "";
   function combosAS(monto) {
-    const L = PRODS.filter(simpleAS).filter(p => +p.precio < monto);
+    const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
     const min = monto * 0.7, sale = [];
     for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
       const a = L[i], b = L[j], t = +a.precio + +b.precio;
@@ -1647,6 +1661,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   }
   const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito"];
   function amigoSecreto(montoTxt) {
+    leerFiltroAS();
+    if (filtroAS.per && !perAS()) filtroAS.per = "";
     if (!asOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">El amigo secreto vuelve pronto.</p>`; return; }
     const montos = (AS.montos || [30, 50, 80, 100]).map(Number).filter(n => n > 0);
     let monto = +montoTxt || 0; if (!monto) { try { monto = +sessionStorage.getItem("as-monto") || 0; } catch (e) {} }
@@ -1654,7 +1670,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
     const combos = combosAS(monto);
-    const sueltos = PRODS.filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
+    const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
     const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
     app.innerHTML = `<section class="seccion as-pag">
       <div class="as-hero">
@@ -1678,6 +1694,12 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="5" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
       </div>
 
+      <div class="as-filtros" id="as-filtros">
+        <h2 class="as-tit">¿Qué personaje o color prefieres?</h2>
+        ${PERS().length ? `<div class="as-fila"><span>Personaje</span><div>${[{ id: "", nombre: "Todos" }, ...PERS()].map(c => `<button type="button" class="as-chip ${filtroAS.per === c.id ? "on" : ""}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}</div></div>` : ""}
+        <div class="as-fila"><span>Color</span><div>${["", ...coloresAS()].map(c => `<button type="button" class="as-chip ${filtroAS.col === c ? "on" : ""}" data-ascol="${esc(c)}">${c ? `<i style="background:${hexDe(c)}"></i>${esc(c)}` : "Todos"}</button>`).join("")}</div></div>
+      </div>
+
       <div class="as-llega">
         <h2>Así llega tu regalo</h2>
         <ol>
@@ -1694,7 +1716,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[k] || "Combo"}</h3>
-              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${libresAS(p).map(v => `<option value="${esc(v.nombre)}">${esc(v.nombre)}</option>`).join("")}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
+              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => a.map((v, i) => `<option value="${esc(v.nombre)}"${(filtroAS.col || perAS()) && (!filtroAS.col || coincideVarAS(v, filtroAS.col)) && (!perAS() || coincideVarAS(v, perAS().nombre)) && !a.slice(0, i).some(w => (!filtroAS.col || coincideVarAS(w, filtroAS.col)) && (!perAS() || coincideVarAS(w, perAS().nombre))) ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""))(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + sobre</span><b>Gratis</b></li></ul>
               <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
               ${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
             </div></article>`).join("")}</div>`
@@ -1712,6 +1734,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     </section>`;
     { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
     try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
+    app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => { filtroAS.per = b.dataset.asper; guardarFiltroAS(); amigoSecreto(monto); });
+    app.querySelectorAll("[data-ascol]").forEach(b => b.onclick = () => { filtroAS.col = b.dataset.ascol; guardarFiltroAS(); amigoSecreto(monto); });
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 5) location.hash = "#/amigo-secreto/" + n; };
   }
