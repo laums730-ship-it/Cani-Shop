@@ -1982,3 +1982,5 @@ body.pol-abierto{overflow:hidden}
 .as-hero-claro h1 em.as-h-script{white-space:nowrap}
 @media (min-width:701px) and (max-width:999px){.as-hero-claro h1 em.as-h-script{font-size:clamp(1.5rem,3.2vw,2.3rem)}}
 @media (max-width:700px){.as-hero-claro h1 em.as-h-script{font-size:clamp(1.55rem,7.4vw,2.5rem);line-height:1.2}}
+.as-hero-claro p{white-space:normal;max-width:520px}
+@media (min-width:1000px){.as-hero-claro p{white-space:normal;max-width:520px;font-size:clamp(1rem,1.5vw,1.2rem)}}
