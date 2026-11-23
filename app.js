@@ -1733,14 +1733,16 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
 
-      <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto es el presupuesto?</h2>
+      <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto quieres gastar?</h2>
+      <p class="as-sub-paso">Elige el presupuesto de tu regalo. Nosotras armamos todo con ese monto.</p>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
         <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
       </div>
 
       <div class="as-filtros" id="as-filtros">
-        <h2 class="as-tit as-tit-s">¿Alguna preferencia? <small>Opcional</small></h2>
+        <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
+        <p class="as-sub-paso">Elige un personaje o categoría y te mostramos regalos de eso. Si no sabes, déjalo en “Todos”.</p>
         <div class="as-tira" role="group" aria-label="Filtrar por personaje o categoría">
           <button type="button" class="as-chip ${filtroAS.per.length || filtroAS.cat.length ? "" : "on"}" id="as-limpiar" aria-pressed="${!(filtroAS.per.length || filtroAS.cat.length)}">Todos</button>
           ${PERS().length ? `<span class="as-sep" aria-hidden="true"></span>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
@@ -1750,7 +1752,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-bloque">
-        <h2 class="as-tit"><span class="as-num">2</span>Elige tu combo de hasta ${bsAS(monto)}</h2>
+        <h2 class="as-tit"><span class="as-num">3</span>Elige tu combo de hasta ${bsAS(monto)}</h2>
         <p class="as-sub">Ya vienen armados con cositas que combinan y listos para regalar, con carta y envoltorio. Si prefieres elegir tú, mira los regalos sueltos más abajo.</p>
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
@@ -1770,7 +1772,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       </div>
 
       <div class="as-llega">
-        <div class="as-llega-cab"><h2><span class="as-num">3</span>Escribe tu carta y haz tu pedido</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
+        <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta y haz tu pedido</h2><p class="as-gratis">Carta y envoltorio: <b>sin costo adicional</b></p></div>
         <ol class="as-pasos">
           <li class="as-paso"><div class="as-paso-img"><img src="amigo-carrito.webp" alt="Carrito con cositas kawaii" width="320" height="318" loading="lazy"></div><span class="as-paso-n">1</span><b>Tus cositas</b><p>Elegidas para que entren en ${bsAS(monto)}.</p></li>
           <li class="as-paso"><div class="as-paso-img"><img src="amigo-carta-manos.webp" alt="Manos sosteniendo tu carta navideña" width="320" height="267" loading="lazy"></div><span class="as-paso-n">2</span><b>Carta impresa</b><p>Con tu mensaje y su nombre, en papel lindo.</p></li>
