@@ -2121,3 +2121,22 @@ body.pol-abierto{overflow:hidden}
 .pol-promo-foto{position:static!important;order:2;flex:none;width:54%;height:auto;aspect-ratio:1400/933;object-fit:cover;margin:-26px -30px -26px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 24%);mask-image:linear-gradient(90deg,transparent,#000 24%)}
 .pol-promo-txt{flex:1;max-width:none;min-width:0;padding-right:8px}
 }
+
+/* Combos: uno a la vez, tarjeta grande */
+.as-combos{display:block!important;max-width:880px;margin:0 auto}
+.as-combo{display:grid!important;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);flex-direction:initial}
+.as-combo:hover{transform:none}
+.as-combo-fotos{align-content:center;padding:14px;gap:8px}
+.as-combo-fotos.as-n2,.as-combo-fotos.as-n3{grid-template-columns:1fr 1fr}
+.as-combo-fotos.as-n3 a:first-child{grid-column:1/-1}
+.as-combo-fotos.as-n3 a:first-child img{aspect-ratio:2/1}
+.as-combo-fotos img{border-radius:16px}
+.as-combo-txt{padding:22px 24px;gap:12px}
+.as-combo-txt h3{font-size:1.45rem;color:#783746}
+.as-combo-txt li{font-size:.92rem;align-items:baseline}
+.as-combo-txt li span{white-space:normal;overflow:visible;text-overflow:clip}
+.as-combo-txt li b{white-space:nowrap}
+.as-combo-txt li.as-var{margin-top:-2px}
+.as-dado-wrap{flex-direction:column;align-items:center;gap:8px}
+.as-dado-n{color:#8a5566;font-size:.8rem;font-weight:600}
+@media (max-width:700px){.as-combo{grid-template-columns:1fr!important}.as-combo-txt{padding:16px 18px 18px}.as-combo-fotos.as-n3 a:first-child img{aspect-ratio:2/1}}
