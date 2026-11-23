@@ -690,7 +690,7 @@
       const dispo = hayStock(p), sinElegir = tieneVar(p) && !vari;
       const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
       $("#pdx-pan").innerHTML = `
-        <a class="pdx-volver" href="#/catalogo">← Volver</a>
+        <a class="pdx-volver" href="${(window.__hashPrev && window.__hashPrev().startsWith("#/amigo-secreto")) ? esc(window.__hashPrev()) : "#/catalogo"}">← Volver</a>
         ${per ? `<a class="pdx-per" href="#/catalogo/${per.id}">${esc(per.nombre)}</a>` : ""}
         <h1 class="pdx-tit">${esc(sinEmoji(p.nombre))}</h1>
         ${frase ? `<p class="pdx-frase">${esc(frase)}</p>` : ""}
@@ -1927,6 +1927,13 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     cerrarBuscar();
     window.scrollTo(0, 0);
   }
+  { let ant = "", act = location.hash, yAS = 0;
+    window.__hashPrev = () => ant;
+    window.addEventListener("hashchange", () => {
+      ant = act; act = location.hash;
+      if (ant.startsWith("#/amigo-secreto") && !act.startsWith("#/amigo-secreto")) yAS = window.scrollY;
+      if (act.startsWith("#/amigo-secreto") && ant.startsWith("#/producto") && yAS) { [150, 500, 1200].forEach(t => setTimeout(() => { if (location.hash.startsWith("#/amigo-secreto")) window.scrollTo(0, yAS); }, t)); }
+    }); }
   window.addEventListener("hashchange", ruta);
 
   $("#btn-menu").onclick = () => $("#menu").classList.toggle("abierto");
