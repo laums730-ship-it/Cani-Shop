@@ -1737,7 +1737,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
 
       <div class="as-form-pasos">
       <section class="as-card"><div class="as-card-n">1</div><div class="as-card-c">
-      <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto es tu presupuesto?</h2>
+      <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuál es tu presupuesto?</h2>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
         <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
