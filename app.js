@@ -1845,20 +1845,20 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     // ---- Paso a paso estilo Scoops: una pantalla por paso, Cani habla, botón Continuar ----
     { const hero = app.querySelector(".as-hero"), grupo = app.querySelector(".as-grupo2"), cards = [...app.querySelectorAll(".as-card")], pol = app.querySelector(".pol-promo"), sec = app.querySelector(".as-pag");
       if (hero && pol && grupo && cards.length === 4 && sec) {
-        const bub = t => `<div class="asw-charla"><div class="asw-cani" aria-hidden="true"></div><p class="asw-globo">${esc(t)}</p></div>`;
+        const bub = t => `<p class="asw-sub">${esc(t)}</p>`;
         const mk = (nodos, k) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.k = k; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
-        const FR = { pres: "Dime tu presupuesto y yo armo el regalo.", gusto: "Elige un personaje o categoría. Si no sabes, sigue.", combo: combos.length ? "¡Mira! Armé estos combos para ti. Toca el dado para ver más." : "Uy, no hay combos de este monto. Prueba con otro presupuesto.", carta: "Escribe un mensajito y lo imprimimos sin costo.", pol: "¿Le sumamos 4 polaroids con tus fotos? Es opcional." };
+        const FR = { pres: "Elige un presupuesto y armamos tu regalo.", gusto: "Elige un personaje o categoría. Si no sabes, sigue.", combo: combos.length ? "Toca el dado para ver más combos." : "No hay combos de este monto. Prueba con otro presupuesto.", carta: "La imprimimos sin costo y va con tu regalo.", pol: "Es opcional. 4 fotos con marco blanco." };
         ["pres", "gusto", "combo", "carta"].forEach((k, i) => { const c = cards[i], h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FR[k])); });
-        pol.insertAdjacentHTML("beforebegin", bub(FR.pol)); const polBub = pol.previousElementSibling;
-        grupo.insertAdjacentHTML("beforebegin", `<h2 class="as-tit asw-h">Para grupos de amigos</h2>` + bub("Cuéntame cuántos son y te armo el presupuesto."));
+        pol.insertAdjacentHTML("beforebegin", `<h2 class="as-tit asw-h">¿Quieres sumar polaroids?</h2>` + bub(FR.pol)); const polBub = pol.previousElementSibling, polTit = polBub.previousElementSibling;
+        grupo.insertAdjacentHTML("beforebegin", `<h2 class="as-tit asw-h">Para grupos de amigos</h2>` + bub("Cuéntanos cuántos son y armamos el presupuesto."));
         const modo = document.createElement("div");
-        modo.innerHTML = `<h2 class="as-tit asw-h">Amigo secreto</h2>${bub("¿Es para una persona o para todo un grupo de amigos?")}
+        modo.innerHTML = `<h2 class="as-tit asw-h">Amigo secreto</h2>${bub("¿Es para una persona o para todo un grupo?")}
           <div class="asw-modos" role="radiogroup" aria-label="Tipo de amigo secreto">
-            <button type="button" class="asw-modo" data-m="uno" role="radio"><img src="amigo-carrito.webp" alt=""><span class="asw-modo-t"><b>Para una persona</b><small>Un regalo armado con carta y envoltorio</small></span></button>
-            <button type="button" class="asw-modo" data-m="grupo" role="radio"><img src="polaroids-mano.webp" alt=""><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
+            <button type="button" class="asw-modo" data-m="uno" role="radio"><span class="asw-modo-t"><b>Para una persona</b><small>Un regalo armado con carta y envoltorio</small></span></button>
+            <button type="button" class="asw-modo" data-m="grupo" role="radio"><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
           </div>`;
         sec.querySelector(".as-form-pasos").before(modo);
-        const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), carta: mk([cards[3]], "carta"), pol: mk([polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
+        const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
         const ruta = () => asModo === "grupo" ? ["portada", "modo", "grupo"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
         sec.classList.add("asw");
         sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);

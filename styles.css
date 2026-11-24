@@ -2342,3 +2342,16 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .en-asw .toast{bottom:auto;top:74px;transform:translate(-50%,-170px)}
 .en-asw .toast.ver{transform:translate(-50%,0)}
 @media (max-width:700px){.asw-modo-t{align-items:flex-start;text-align:left}.asw-modo b{font-size:1.1rem}}
+
+/* Subtítulo en vez de Cani; cartas rojas del paso 2 */
+.asw-sub{margin:-2px 0 20px;font-size:1.05rem;color:#8a5566;line-height:1.4;max-width:640px}
+.asw-modos{grid-template-columns:1fr 1fr;gap:22px;max-width:960px}
+.asw-modo{position:relative;aspect-ratio:4/3;justify-content:center;border:0!important;border-radius:22px;padding:26px;background:#c8213c center/cover no-repeat;box-shadow:0 7px 0 #8f1328,0 14px 26px rgba(143,19,40,.22);color:#fff;overflow:hidden}
+.asw-modo::before{content:"";position:absolute;inset:12px;border:2px dashed rgba(255,255,255,.45);border-radius:14px}
+.asw-modo:active{transform:translateY(4px);box-shadow:0 3px 0 #8f1328}
+.asw-modo b{color:#fff!important;font-size:1.6rem;line-height:1.15;text-wrap:balance}
+.asw-modo small{color:#ffe4ec;font-size:1rem}
+.asw-modo-t{position:relative;z-index:1;gap:8px}
+.asw-modo.sel{background-color:#a8132c;outline:4px solid #fd95c8;outline-offset:3px}
+.asw-modo.sel::after{content:"✓";position:absolute;top:16px;right:18px;width:30px;height:30px;border-radius:50%;background:#fff;color:#c8213c;display:grid;place-items:center;font-weight:800}
+@media (max-width:700px){.asw-modos{grid-template-columns:1fr;gap:16px}.asw-modo{aspect-ratio:16/9;flex-direction:column;text-align:center;padding:18px}.asw-modo b{font-size:1.35rem}.asw-modo-t{align-items:center;text-align:center}}
