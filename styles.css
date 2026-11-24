@@ -2744,3 +2744,14 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 .asw [data-k=carta] .as-gratis b{color:#fff}
 .asw [data-k=carta] .asw-sub{font-weight:700;color:#783746}
 @media (max-width:820px){.sl-ancha .sl-der{gap:8px}.sl-ancha .sl-der .sl-link2{margin:0;font-size:.82rem;line-height:1.2}.sl-ancha .sl-tocó{padding:10px 12px}.sl-ancha .sl-sala:not(.sl-sala-ban){max-width:min(100%,calc((100dvh - 430px)*.8))}}
+
+.sl-acc{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.sl-acc .sl-link2{margin:0;font-size:.82rem;color:#8a5566}
+.sl-sheet{position:fixed;inset:0;z-index:500;background:rgba(60,20,30,.55);display:grid;place-items:end center;padding:0}
+.sl-sheet-c{background:#fff;width:min(100%,440px);border-radius:24px 24px 0 0;padding:18px 18px 22px;max-height:80dvh;overflow:auto;display:grid;gap:8px}
+@media (min-width:700px){.sl-sheet{place-items:center}.sl-sheet-c{border-radius:24px}}
+.sl-sheet-c h3{font-family:var(--f-tit);font-size:1.25rem;margin:0;color:#783746}
+.sl-sheet-c p{margin:0 0 4px;color:#8a5566;font-size:.88rem}
+.sl-q{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border:2px solid #fbd3e4;border-radius:14px}
+.sl-q span{font-weight:700;color:#783746}
+.sl-q button{font:inherit;font-weight:700;font-size:.85rem;color:#fff;background:#c8213c;border:0;border-radius:999px;padding:6px 14px;cursor:pointer}
