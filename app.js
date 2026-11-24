@@ -1952,16 +1952,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const salaGuardar = (c, t) => { try { localStorage.setItem("sala-" + c, t); const L = JSON.parse(localStorage.getItem("salas-mias") || "[]").filter(x => x !== c); L.unshift(c); localStorage.setItem("salas-mias", JSON.stringify(L.slice(0, 6))); } catch (e) {} };
   const gustosChips = () => PERS().concat(CATEG()).filter(c => !/happy\s*box/i.test(c.nombre)).map(c => `<button type="button" class="sl-gusto" data-g="${esc(c.nombre)}">${esc(c.nombre)}</button>`).join("");
   const leerGustos = root => [...root.querySelectorAll(".sl-gusto.on")].map(b => b.dataset.g).join(", ");
-  const GAL_COL = ["#c8213c", "#fd95c8", "#8f1328", "#ffffff", "#f06a8f", "#783746"];
-  const galleta = i => { const c = GAL_COL[i % GAL_COL.length], c2 = GAL_COL[(i + 2) % GAL_COL.length], t = i % 4;
-    const acc = t === 0 ? `<path d="M50 14 L36 6 L36 22 Z M50 14 L64 6 L64 22 Z" fill="${c}" stroke="#7a1427" stroke-width="1.5" stroke-linejoin="round"/><circle cx="50" cy="14" r="3.5" fill="${c}" stroke="#7a1427" stroke-width="1.5"/>`
-      : t === 1 ? `<path d="M30 20 Q50 -8 70 20 Z" fill="#c8213c" stroke="#7a1427" stroke-width="1.5" stroke-linejoin="round"/><rect x="28" y="17" width="44" height="7" rx="3.5" fill="#fff" stroke="#e8c9d3"/><circle cx="50" cy="0" r="5" fill="#fff" stroke="#e8c9d3"/>`
-      : t === 2 ? `<path d="M34 46 Q50 56 66 46 L66 54 Q50 64 34 54 Z" fill="${c}" stroke="#7a1427" stroke-width="1.5" stroke-linejoin="round"/>`
-      : `<path d="M50 20 C40 6 28 14 38 22 C42 26 50 24 50 20 C50 24 58 26 62 22 C72 14 60 6 50 20 Z" fill="${c}" stroke="#7a1427" stroke-width="1.5"/>`;
-    return `<svg viewBox="0 0 100 118" aria-hidden="true"><g fill="#d89a5a" stroke="#a8682f" stroke-width="2" stroke-linejoin="round"><circle cx="50" cy="32" r="22"/><ellipse cx="22" cy="64" rx="15" ry="11"/><ellipse cx="78" cy="64" rx="15" ry="11"/><rect x="28" y="48" width="44" height="42" rx="16"/><ellipse cx="36" cy="100" rx="13" ry="15"/><ellipse cx="64" cy="100" rx="13" ry="15"/></g>
-      <g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 62 q4-5 8 0 t8 0 M72 62 q4-5 8 0 t8 0 M28 106 q4-5 8 0 t8 0 M56 106 q4-5 8 0 t8 0"/></g>
-      <circle cx="42" cy="30" r="2.6" fill="#4a2a1a"/><circle cx="58" cy="30" r="2.6" fill="#4a2a1a"/><circle cx="37" cy="37" r="3.5" fill="#f4a3b5" opacity=".8"/><circle cx="63" cy="37" r="3.5" fill="#f4a3b5" opacity=".8"/><path d="M44 38 q6 6 12 0" fill="none" stroke="#4a2a1a" stroke-width="2.2" stroke-linecap="round"/>
-      <circle cx="50" cy="62" r="3.6" fill="${c2}"/><circle cx="50" cy="76" r="3.6" fill="${c2}"/>${acc}</svg>`; };
+  const galleta = i => `<img src="galleta-${(i % 12) + 1}.webp" alt="" width="140" height="160">`;
   const SLOTS = [[34, 63], [64, 64], [23, 86], [74, 87], [12, 66], [88, 64], [47, 52], [27, 53], [73, 54], [8, 88], [92, 90]];
   const escena = (personas, yo) => `<div class="sl-sala"><img src="sala-fondo.webp" alt="" width="1400" height="788">${personas.slice(0, SLOTS.length).map((n, i) => `<div class="sl-gal ${n === yo ? "yo" : ""}" style="left:${SLOTS[i][0]}%;top:${SLOTS[i][1]}%">${galleta(i)}<span>${esc(n)}</span></div>`).join("")}</div>${personas.length > SLOTS.length ? `<p class="sl-mas">y ${personas.length - SLOTS.length} más: ${personas.slice(SLOTS.length).map(esc).join(", ")}</p>` : ""}`;
   function sala(arg) {

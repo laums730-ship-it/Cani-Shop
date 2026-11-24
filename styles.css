@@ -2666,3 +2666,6 @@ body.en-asw .sl-pag{max-width:760px;margin:0 auto;padding:0 18px 40px}
 @media (prefers-reduced-motion:reduce){.sl-gal{animation:none}}
 .sl-mas{margin:8px 0 0;font-size:.85rem;color:#8a5566}
 .sl-cuenta{margin:8px 0 14px;font-weight:700;color:#8a5566;text-align:center}
+.sl-gal img{width:100%;height:auto;display:block;filter:drop-shadow(0 1.1cqw 0 rgba(120,20,40,.22))}
+.sl-gal svg{display:none}
+@media (max-width:640px){.sl-gal{width:12.5cqw}.sl-gal span{font-size:max(9px,2.3cqw);padding:.4cqw 1.6cqw}}
