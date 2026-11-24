@@ -57,3 +57,7 @@ quita esas fotos y vuelve a subirlas desde tu celular o compu.
 ## Hosting
 El plan gratis de Vercel (Hobby) es solo para uso no comercial; una tienda requiere el plan Pro.
 Alternativa gratis que sí permite tiendas: **Cloudflare Pages**. Supabase gratis sí permite uso comercial.
+
+
+## Código comprimido
+Los archivos `app.js` y `styles.css` de la raíz están comprimidos (la gente descarga menos). Los editables están en `fuente/`. Después de cambiar algo en `fuente/`, correr `./build.sh` para regenerarlos.

@@ -1,0 +1,2260 @@
+(async () => {
+  const T = window.TIENDA, SB = window.SUPABASE || {};
+  let CATS = window.CATEGORIAS || [];
+  let PRODS = window.PRODUCTOS || [];
+  const $ = s => document.querySelector(s);
+  // ---------- Sin emojis en toda la tienda ----------
+  const RX_EMO = /(?![©®™♡])\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu;
+  const limpiarTxt = t => t.replace(RX_EMO, "").replace(/ {2,}/g, " ").replace(/ +([!?.,:;)])/g, "$1");
+  const limpiarNodo = raiz => {
+    if (raiz.nodeType === 3) { const v = limpiarTxt(raiz.nodeValue); if (v !== raiz.nodeValue) raiz.nodeValue = v; return; }
+    if (raiz.nodeType !== 1 || raiz.closest("script,style,textarea")) return;
+    const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+    for (let n; (n = w.nextNode());) { if (n.parentElement && n.parentElement.closest("script,style,textarea")) continue; const v = limpiarTxt(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
+    raiz.querySelectorAll && raiz.querySelectorAll("[placeholder],[title],[aria-label]").forEach(el => ["placeholder", "title", "aria-label"].forEach(a => { const v = el.getAttribute(a); if (v) { const l = limpiarTxt(v); if (l !== v) el.setAttribute(a, l); } }));
+  };
+  limpiarNodo(document.body);
+  new MutationObserver(ms => ms.forEach(m => { if (m.type === "characterData") limpiarNodo(m.target); else m.addedNodes.forEach(limpiarNodo); }))
+    .observe(document.body, { childList: true, subtree: true, characterData: true });
+  const _ph = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "placeholder");
+  if (_ph && _ph.set) Object.defineProperty(HTMLInputElement.prototype, "placeholder", { get: _ph.get, set(v) { _ph.set.call(this, limpiarTxt(String(v))); }, configurable: true });
+  const app = $("#app");
+  const bs = n => `${T.moneda} ${Number(n).toFixed(2).replace(".", ",")}`;
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // stock puede ser número (cantidad) o true/false
+  const disp = x => x === true || (typeof x === "number" && x > 0);
+  const tieneVar = p => Array.isArray(p.variantes) && p.variantes.length > 0;
+  const hayStock = p => tieneVar(p) ? p.variantes.some(v => disp(v.stock)) : (p.stock === undefined || disp(p.stock));
+  const sinEmoji = t => String(t ?? "").replace(/(?!♡)[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D\u20E3]/gu, "").replace(/[ \t]{2,}/g, " ").replace(/^[ \t]+|[ \t]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+  const foto = p => (p.imagenes && p.imagenes[0]) || T.logo;
+  const maxDe = (p, vari) => { const s = tieneVar(p) ? (p.variantes.find(v => v.nombre === vari) || {}).stock : p.stock; return typeof s === "number" ? s : 99; };
+
+  // Copia guardada en el teléfono: si Supabase no responde (límite, internet lento), se muestra lo último que se vio
+  const copiaGuardar = (k, v) => { try { localStorage.setItem("cani-" + k, JSON.stringify(v)); } catch (e) {} };
+  const copiaLeer = k => { try { return JSON.parse(localStorage.getItem("cani-" + k)); } catch (e) { return null; } };
+
+  async function cargarProductos() {
+    if (!SB.url || !SB.key) return;
+    try {
+      const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/productos?select=*&activo=eq.true&order=orden.asc,creado.desc`,
+        { headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}` } });
+      if (!r.ok) throw new Error(r.status);
+      const crudo = await r.json();
+      PRODS = crudo.map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+      copiaGuardar("productos", crudo);
+    } catch (e) {
+      console.warn("No se pudieron cargar los productos de Supabase", e);
+      const viejo = copiaLeer("productos");
+      if (Array.isArray(viejo) && viejo.length) PRODS = viejo.map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+    }
+  }
+
+  // Ajustes que cambias desde el panel (avisos, banners, textos…)
+  async function cargarAjustes() {
+    if (!SB.url || !SB.key) return;
+    try {
+      const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/ajustes?id=eq.tienda&select=datos`,
+        { headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}` } });
+      if (!r.ok) throw new Error(r.status);
+      const [fila] = await r.json();
+      if (fila && fila.datos) { copiaGuardar("ajustes", fila.datos); for (const [k, v] of Object.entries(fila.datos)) if (v !== null && v !== undefined) T[k] = v; }
+    } catch (e) {
+      console.warn("No se pudieron cargar los ajustes", e);
+      const viejo = copiaLeer("ajustes");
+      if (viejo) for (const [k, v] of Object.entries(viejo)) if (v !== null && v !== undefined) T[k] = v;
+    }
+  }
+
+  // Arranque rápido: si ya visitó antes, se muestra al instante lo último guardado en el teléfono
+  // y mientras tanto se pide lo nuevo a Supabase (si cambió algo, se actualiza la pantalla sola).
+  const crudoCopia = () => { try { return (localStorage.getItem("cani-productos") || "") + (localStorage.getItem("cani-ajustes") || ""); } catch (e) { return ""; } };
+  const vProd = copiaLeer("productos"), vAj = copiaLeer("ajustes"), antesCopia = crudoCopia();
+  if (Array.isArray(vProd) && vProd.length) {
+    PRODS = vProd.map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+    if (vAj) for (const [k, v] of Object.entries(vAj)) if (v !== null && v !== undefined) T[k] = v;
+    window.__refrescoDatos = Promise.all([cargarAjustes(), cargarProductos()]).then(() => {
+      if (crudoCopia() === antesCopia) return;
+      if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
+      const sec = (location.hash.split("/")[1] || "");
+      if (["", "catalogo", "novedades", "todo"].includes(sec) && window.scrollY < 80 && typeof window.__rutaRefrescar === "function") window.__rutaRefrescar();
+    });
+  } else {
+    app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii…</p>`;
+    await Promise.all([cargarAjustes(), cargarProductos()]);
+  }
+  if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
+  const inicial = n => String(n || "?").replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+  const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji circ-letra">${esc(inicial(c.nombre))}</span>`;
+
+  // ---------- Datos fijos ----------
+  document.title = `${T.nombre} · Tienda kawaii en Santa Cruz, Bolivia`;
+  $("#pie-nombre").textContent = $("#pie-nombre2").textContent = T.nombre;
+  $("#anio").textContent = new Date().getFullYear();
+
+  // Logo: si la imagen existe se muestra; si no, queda el nombre con letras rosadas
+  const logo = $("#logo"), logoTxt = $("#logo-texto");
+  logo.style.display = "none";
+  if (T.logo) {
+    logo.onload = () => { logo.style.display = ""; logoTxt.style.display = "none"; };
+    logo.onerror = () => logo.remove();
+    logo.src = T.logo; logo.alt = T.nombre;
+  }
+  document.querySelectorAll(".gato").forEach(g => g.remove());
+
+  $("#wa-flotante").href = `https://wa.me/${T.whatsapp}`;
+  { const pl = $("#pie-logo"); if (pl) { if (T.logo) { pl.src = T.logo; pl.alt = T.nombre; } else pl.remove(); } }
+  { const pm = $(".pie-marca"); if (pm) {
+    if (T.pieTexto && $("#pie-texto")) $("#pie-texto").textContent = T.pieTexto;
+    if (T.ubicacion) pm.insertAdjacentHTML("beforeend", `<p class="pie-dato">${esc(T.ubicacion)}</p>`);
+    if (T.whatsapp && !/^5917000000/.test(T.whatsapp)) pm.insertAdjacentHTML("beforeend", `<p class="pie-dato">WhatsApp: +${esc(T.whatsapp)}</p>`);
+  } }
+  // Formas de entrega en el carrito
+  const ENT = (T.entregas || []).filter(Boolean);
+  if (!$("#sel-entrega")) {} else if (ENT.length) $("#sel-entrega").innerHTML = `<option value="" disabled selected>¿Cómo quieres recibirlo?</option>` + ENT.map(x => `<option>${esc(x)}</option>`).join("");
+  else $("#sel-entrega").remove();
+  $("#pie-redes").insertAdjacentHTML("beforeend", [
+    T.instagram && `<a href="${T.instagram}" target="_blank" rel="noopener">Instagram</a>`,
+    T.tiktok && `<a href="${T.tiktok}" target="_blank" rel="noopener">TikTok</a>`,
+    `<a href="https://wa.me/${T.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>`
+  ].filter(Boolean).join(""));
+
+  // Barra de avisos con flechas
+  const AV = (T.avisos || []).filter(Boolean); if (!AV.length) AV.push("");
+  let ia = 0, reloj; const av = $("#aviso-texto");
+  const mostrarAviso = d => {
+    ia = (ia + d + AV.length) % AV.length;
+    av.style.opacity = 0;
+    setTimeout(() => { av.textContent = AV[ia]; av.style.opacity = 1; }, 200);
+    clearInterval(reloj); reloj = setInterval(() => mostrarAviso(1), 4500);
+  };
+  av.textContent = AV[0];
+  if (AV.length > 1) reloj = setInterval(() => mostrarAviso(1), 4500);
+  else $("#aviso-prev").style.visibility = $("#aviso-sig").style.visibility = "hidden";
+  $("#aviso-prev").onclick = () => mostrarAviso(-1);
+  $("#aviso-sig").onclick = () => mostrarAviso(1);
+
+  // Stickers dibujados
+  const STK = {
+    lapiz: `<svg viewBox="0 0 80 80"><g transform="rotate(-40 40 40)"><rect x="30" y="6" width="20" height="10" rx="4" fill="#f7a1bd"/><rect x="30" y="15" width="20" height="5" fill="#d9d4e8"/><rect x="30" y="20" width="20" height="38" fill="#ffc6d9"/><rect x="36" y="20" width="8" height="38" fill="#ffd9e6"/><circle cx="40" cy="30" r="3" fill="#fff"/><path d="M38 27c0-3 4-3 4 0-2 2-2 2-2 4 0-2 0-2-2-4z" fill="#f07aa3"/><circle cx="40" cy="44" r="2.5" fill="#ffe58a"/><path d="M30 58h20l-10 16z" fill="#ffe3c2"/><path d="M36.5 68.5h7L40 74z" fill="#7a5c63"/></g></svg>`,
+    estrella: `<svg viewBox="0 0 64 64"><path d="M32 4l8.6 17.4 19.2 2.8-13.9 13.6 3.3 19.1L32 47.9 14.8 57l3.3-19.1L4.2 24.2l19.2-2.8z" fill="#ffd84d" stroke="#f5b82e" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 22l5-1" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="26" cy="33" r="2" fill="#7a5c22"/><circle cx="38" cy="33" r="2" fill="#7a5c22"/><path d="M29 38c2 2 4 2 6 0" stroke="#7a5c22" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="22" cy="38" r="2.5" fill="#ffa5b9" opacity=".8"/><circle cx="42" cy="38" r="2.5" fill="#ffa5b9" opacity=".8"/></svg>`,
+    corazon: `<svg viewBox="0 0 32 32"><path d="M16 28S3 20 3 11a6.5 6.5 0 0 1 13-1 6.5 6.5 0 0 1 13 1c0 9-13 17-13 17z" fill="#fd95c8"/><ellipse cx="10" cy="10" rx="2.5" ry="1.5" fill="#fff" opacity=".7"/></svg>`
+  };
+  const sticker = (tipo, clase, estilo = "") => `<span class="sticker ${clase}" style="${estilo}" aria-hidden="true">${STK[tipo]}</span>`;
+
+  // ---------- Carrito ----------
+  let carrito = [];
+  try { carrito = JSON.parse(localStorage.getItem("carrito") || "[]"); } catch (e) {}
+  const guardar = () => { try { localStorage.setItem("carrito", JSON.stringify(carrito)); } catch (e) {} pintarCarrito(); };
+  // Packs de polaroids (complemento de Amigo secreto): se guardan aparte del carrito de productos
+  let packsPol = [];
+  try { packsPol = (JSON.parse(localStorage.getItem("cani-polaroids") || "[]") || []).filter(k => k && /^pack\/[a-z0-9]{8,32}$/.test(k.carpeta)); } catch (e) {}
+  const guardarPol = () => { try { localStorage.setItem("cani-polaroids", JSON.stringify(packsPol)); } catch (e) {} pintarCarrito(); };
+  const polPrecio = () => Number((T.polaroids || {}).precio) > 0 ? Number(T.polaroids.precio) : 15;
+  const agregar = (id, variante, cant) => {
+    const ex = carrito.find(i => i.id === id && i.variante === variante);
+    ex ? ex.cant += cant : carrito.push({ id, variante, cant });
+    guardar(); avisoAgregado(id, variante);
+  };
+  // Ventanita "¡Agregado!" con la foto, y botones para ver el carrito o seguir comprando
+  function avisoAgregado(id, variante) {
+    const p = PRODS.find(x => x.id === id); if (!p) return toast("Agregado al carrito");
+    let box = $("#agregado");
+    if (!box) {
+      document.body.insertAdjacentHTML("beforeend", `<div class="agregado" id="agregado" role="dialog" aria-live="polite" hidden><div class="ag-in">
+        <div class="ag-cab"><span class="ag-ok"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>¡Agregado al carrito!</b><button type="button" class="ag-x" aria-label="Cerrar">✕</button></div>
+        <div class="ag-prod"><img id="ag-img" alt=""><div><span id="ag-nom"></span><small id="ag-var"></small></div></div>
+        <div class="ag-btns"><button type="button" class="btn btn-sec ag-seguir">Seguir comprando</button><button type="button" class="btn ag-ver">Ver carrito</button></div>
+      </div></div>`);
+      box = $("#agregado");
+      const cerrar = () => { box.classList.remove("ver"); setTimeout(() => box.hidden = true, 250); };
+      box.addEventListener("click", e => { if (e.target === box || e.target.closest(".ag-x,.ag-seguir")) cerrar(); if (e.target.closest(".ag-ver")) { cerrar(); abrir(true); } });
+    }
+    const v = (p.variantes || []).find(x => x.nombre === variante);
+    $("#ag-img").src = (v && v.imagen) || foto(p); $("#ag-nom").textContent = sinEmoji(p.nombre); $("#ag-var").textContent = variante || "";
+    box.hidden = false; requestAnimationFrame(() => box.classList.add("ver"));
+    const b = $("#btn-carrito"); b.classList.remove("salta"); void b.offsetWidth; b.classList.add("salta");
+  }
+  function pintarCarrito() {
+    const n = carrito.reduce((a, i) => a + i.cant, 0) + packsPol.length;
+    const c = $("#contador"); c.textContent = n; c.dataset.v = n;
+    const items = carrito.map((i, k) => ({ ...i, k, p: PRODS.find(p => p.id === i.id) })).filter(i => i.p);
+    const htmlPol = packsPol.map((k, j) => `
+      <div class="item item-pol">
+        <span class="pol-mini">${k.thumb ? `<img src="${esc(k.thumb)}" alt="">` : ""}</span>
+        <div>
+          <h4>Pack 4 polaroids</h4>
+          <small>${bs(polPrecio())}</small><br>
+          <small>Con tus 4 fotos${(k.textos || []).some(Boolean) ? " y sus textos" : ""}</small>
+        </div>
+        <button class="quitar" data-quitar-pol="${j}">Quitar</button>
+      </div>`).join("");
+    $("#carrito-items").innerHTML = items.length || packsPol.length ? items.map(i => `
+      <div class="item">
+        <img src="${esc(((i.p.variantes || []).find(v => v.nombre === i.variante) || {}).imagen || foto(i.p))}" alt="">
+        <div>
+          <h4>${esc(sinEmoji(i.p.nombre))}</h4>
+          ${i.variante ? `<small>${esc(i.variante)}</small><br>` : ""}
+          <small>${bs(i.p.precio)}</small>
+          <div class="cantidad"><button data-menos="${i.k}">−</button><span>${i.cant}</span><button data-mas="${i.k}">+</button></div>
+        </div>
+        <button class="quitar" data-quitar="${i.k}">Quitar</button>
+      </div>`).join("") + htmlPol : `<div class="carrito-vacio"><div class="cv-cani" aria-hidden="true"></div><p>Hay tantas cositas lindas esperándote…</p><a class="btn cv-btn" href="#/catalogo" data-cerrar-carrito>Ver la tienda</a></div>`;
+    $("#subtotal").textContent = bs(items.reduce((a, i) => a + i.p.precio * i.cant, 0) + packsPol.length * polPrecio());
+    $("#carrito-pie").style.display = items.length || packsPol.length ? "" : "none";
+  }
+  $("#carrito-items").addEventListener("click", e => {
+    if (e.target.closest("[data-cerrar-carrito]")) { abrir(false); return; }
+    const d = e.target.dataset;
+    if (d.mas) { const it = carrito[d.mas], p = PRODS.find(x => x.id === it.id); if (p && it.cant >= maxDe(p, it.variante)) return toast("No hay más stock de este modelo"); it.cant++; }
+    else if (d.menos) { carrito[d.menos].cant--; if (carrito[d.menos].cant < 1) carrito.splice(d.menos, 1); }
+    else if (d.quitar) carrito.splice(d.quitar, 1);
+    else if (d.quitarPol !== undefined) { packsPol.splice(+d.quitarPol, 1); guardarPol(); return; }
+    else return;
+    guardar();
+  });
+  // Recordar los datos del formulario del carrito (nombre, WhatsApp, etc.)
+  { const fp = $("#form-pedido");
+    if (fp) {
+      fp.addEventListener("input", () => { try { const d = {}; for (const el of fp.elements) if (el.name && el.type !== "file" && el.name !== "nota") d[el.name] = el.value; localStorage.setItem("datos-pedido", JSON.stringify(d)); } catch (e) {} });
+      const t = document.createElement("p"); t.className = "form-tit"; t.textContent = "Tus datos para el pedido"; fp.before(t);
+    } }
+  const abrir = v => { if (v && window.__asCarrito) window.__asCarrito(); $("#carrito").classList.toggle("abierto", v); $("#velo").classList.toggle("abierto", v); document.body.classList.toggle("carrito-abierto", v); if (v) $("#carrito").classList.remove("paso-datos"); };
+  // Carrito en dos pasos: 1) tus productos  2) tus datos
+  { const pie = $("#carrito-pie"), fp = $("#form-pedido");
+    if (pie && fp) {
+      fp.insertAdjacentHTML("beforebegin", `<button type="button" class="btn car-seguir" id="car-seguir">Continuar con mis datos <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button type="button" class="car-volver" id="car-volver"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg> Volver a mis productos</button>`);
+      $("#car-seguir").onclick = () => { $("#carrito").classList.add("paso-datos"); $("#carrito").scrollTop = 0; const sc = $("#carrito .carrito-pie"); if (sc) sc.scrollIntoView({ block: "start" }); };
+      $("#car-volver").onclick = () => $("#carrito").classList.remove("paso-datos");
+      { const t = $("#carrito .form-tit"); if (t) $("#car-volver").after(t); }
+    } }
+  $("#btn-carrito").onclick = () => abrir(true);
+  $("#cerrar-carrito").onclick = $("#velo").onclick = () => abrir(false);
+
+  // Amigo secreto: carta impresa y envoltorio sin costo
+  { const fp = $("#form-pedido"), nota = fp && fp.querySelector("[name=nota]");
+    if (nota) {
+      nota.insertAdjacentHTML("beforebegin", `<div class="as-car" id="as-car" hidden>
+        <label class="as-car-check"><input type="checkbox" name="as_es" id="as-es"><span><b>Es para amigo secreto</b><small>Incluye carta impresa y envoltorio, sin costo</small></span></label>
+        <div class="as-car-campos" id="as-car-campos" hidden>
+          <input name="as_para" maxlength="40" placeholder="¿Para quién es? (su nombre)">
+          <textarea name="as_msg" rows="3" maxlength="280" placeholder="Mensaje de tu carta (ej: ¡Feliz Navidad! Espero que te guste mucho)"></textarea>
+          <input name="as_firma" maxlength="40" placeholder="Firma (si lo dejas vacío: Tu amigo secreto)">
+          <div class="as-prev-wrap">
+            <p class="as-prev-tit">Así se verá tu carta</p>
+            <div class="as-prev" id="as-prev"><img src="amigo-carta-fondo.webp" alt="" width="1536" height="1024" loading="lazy"><div class="as-prev-msg"></div><div class="as-prev-para"></div><div class="as-prev-de"></div></div>
+            <button type="button" class="as-prev-ver" id="as-prev-ver">Ver más grande</button>
+          </div>
+          <p class="as-car-nota">La imprimimos y la ponemos con tu regalo.</p>
+          <div class="pol-cart"><span class="pol-mini pol-mini-vacia"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div><b>¿Le sumas 4 polaroids?</b><small id="pol-cart-precio"></small></div><button type="button" class="btn btn-sec pol-cart-btn" data-pol-add>Agregar</button></div>
+        </div></div>`);
+      const chk = $("#as-es"), campos = $("#as-car-campos");
+      const PREV = { msg: "¡Feliz Navidad! Espero que este regalito te saque una sonrisa.", para: "ti", de: "Tu amigo secreto" };
+      const pintarPrev = (root, vals) => {
+        if (!root || !root.clientWidth) return;
+        const f = fp, v = n => String(vals ? (vals[n] || "") : (f.elements[n] ? f.elements[n].value : "")).replace(/[|\n\r]+/g, " ").trim();
+        const u = root.clientWidth / 150, set = (cls, txt, vacio) => { const el = root.querySelector(cls); el.textContent = txt || vacio; el.classList.toggle("fantasma", !txt); return el; };
+        const m = set(".as-prev-msg", v("as_msg"), PREV.msg), p = set(".as-prev-para", v("as_para"), PREV.para), d = set(".as-prev-de", v("as_firma"), PREV.de);
+        let k = 1; m.style.lineHeight = 7.71 * u + "px"; m.style.fontSize = 8.6 * u + "px";
+        while (m.scrollHeight > m.clientHeight + 1 && k > .3) { k -= .05; m.style.fontSize = 8.6 * u * k + "px"; if (k < .62) m.style.lineHeight = 3.85 * u + "px"; }
+        [[p, 9.4], [d, 8.6]].forEach(([el, mm]) => { let q = 1; el.style.fontSize = mm * u + "px"; while (el.scrollWidth > el.clientWidth + 1 && q > .4) { q -= .05; el.style.fontSize = mm * u * q + "px"; } });
+      };
+      const prevHoy = () => pintarPrev($("#as-prev"));
+      window.__pintarCarta = pintarPrev;
+      if (!document.getElementById("fuente-carta")) { const l = document.createElement("link"); l.id = "fuente-carta"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Sue+Ellen+Francisco&display=swap"; document.head.appendChild(l); }
+      ["as_para", "as_msg", "as_firma"].forEach(n => { const el = fp.elements[n]; if (el) el.addEventListener("input", prevHoy); });
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(prevHoy, 50));
+      $("#as-prev-ver").onclick = () => {
+        const velo = document.createElement("div"); velo.className = "as-prev-velo"; velo.setAttribute("role", "dialog"); velo.setAttribute("aria-label", "Tu carta");
+        velo.innerHTML = `<div class="as-prev-gran"><button type="button" class="as-prev-x" aria-label="Cerrar">×</button>${$("#as-prev").outerHTML.replace('id="as-prev"', "")}</div>`;
+        document.body.appendChild(velo); const cerrar = () => velo.remove();
+        velo.onclick = e => { if (e.target === velo || e.target.closest(".as-prev-x")) cerrar(); };
+        requestAnimationFrame(() => pintarPrev(velo.querySelector(".as-prev")));
+      };
+      const sync = () => { campos.hidden = !chk.checked; if (chk.checked) setTimeout(prevHoy, 30); try { localStorage.setItem("as-pedido", chk.checked ? "1" : ""); } catch (e) {} };
+      chk.addEventListener("change", sync);
+      window.__asCarrito = () => { const box = $("#as-car"); if (!box) return; { const pp = $("#pol-cart-precio"); if (pp) pp.textContent = bs(polPrecio()); } box.hidden = !(window.__asOn && window.__asOn()); let m = ""; try { m = localStorage.getItem("as-pedido"); } catch (e) {} if (m === "1" && !chk.checked) { chk.checked = true; } try { const g = JSON.parse(sessionStorage.getItem("as-carta") || "null"); if (g && (g.as_para || g.as_msg || g.as_firma)) { ["as_para", "as_msg", "as_firma"].forEach(n => { const el = fp.elements[n]; if (el && !el.value && g[n]) el.value = g[n]; }); if (!chk.checked) chk.checked = true; } } catch (e) {} sync(); };
+    } }
+  const lineaAS = f => {
+    if (!f.get("as_es")) return null;
+    const limpio = t => String(t || "").replace(/[|\n\r]+/g, " ").trim();
+    return { para: limpio(f.get("as_para")), msg: limpio(f.get("as_msg")), firma: limpio(f.get("as_firma")) || "Tu amigo secreto" };
+  };
+
+  $("#form-pedido").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = new FormData(e.target), btn = e.target.querySelector("button[type=submit]");
+    const items = carrito.filter(i => PRODS.some(p => p.id === i.id));
+    if (!items.length && !packsPol.length) return;
+    // Abrir la ventana de WhatsApp ya (si no, el navegador la bloquea)
+    const ventana = window.open("", "_blank");
+    btn.disabled = true;
+    let numero = null; const envio = datosEnvio(f);
+    if (SB.url && SB.key) {
+      try {
+        const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/rpc/crear_pedido`, {
+          method: "POST",
+          headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ p: {
+            cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad,
+            direccion: envio.direccion, entrega: f.get("entrega") || "", nota: [f.get("nota") || "", (() => { try { const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); return sl ? `[Sala ${sl.codigo} | Para: ${String(sl.para || "").replace(/[|\[\]\n]/g, " ")}]` : ""; } catch (e) { return ""; } })(), (a => a ? `[Amigo secreto | Para: ${a.para} | Firma: ${a.firma} | Carta: ${a.msg}]` : "")(lineaAS(f))].filter(Boolean).join("\n"),
+            items: items.map(i => ({ id: i.id, variante: i.variante || null, cant: i.cant })),
+            polaroids: packsPol.map(k => ({ carpeta: k.carpeta, textos: k.textos || [] }))
+          } })
+        });
+        if (r.ok) numero = await r.json();
+      } catch (err) { console.warn("No se pudo guardar el pedido", err); }
+    }
+    const vale = await lineaVale(f.get("telefono"));
+    const lineas = items.map(i => {
+      const p = PRODS.find(x => x.id === i.id);
+      return `• ${i.cant} x ${p.nombre}${i.variante ? ` (${i.variante})` : ""} — ${bs(p.precio * i.cant)}`;
+    });
+    packsPol.forEach(k => lineas.push(`• 1 x Pack 4 polaroids — ${bs(polPrecio())}`, `   📸 Pack 4 polaroids (fotos subidas en la web, código ${k.carpeta.slice(5)})`));
+    const total = items.reduce((a, i) => a + PRODS.find(p => p.id === i.id).precio * i.cant, 0) + packsPol.length * polPrecio();
+    const msg = [`🌸 *NUEVO PEDIDO · ${String(T.nombre).toUpperCase()}* 🌸`, numero ? `Pedido #${numero}` : null, "",
+      "🛍️ *Mi pedido*", ...lineas, "",
+      "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, `WhatsApp: ${f.get("telefono")}`, "",
+      "🚚 *Entrega*", ...envio.lineas,
+      f.get("nota") ? "" : null, f.get("nota") ? `📝 *Nota:* ${f.get("nota")}` : null,
+      ...(() => { try { const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); return sl ? ["", `👥 *Sala de amigo secreto:* ${sl.codigo}`] : []; } catch (e) { return []; } })(), ...(a => a ? ["", "🎁 *Amigo secreto* (carta impresa + envoltorio, sin costo)", a.para ? `Para: ${a.para}` : null, `Firma: ${a.firma}`, a.msg ? `Carta: "${a.msg}"` : null] : [])(lineaAS(f)), "",
+      `💰 *TOTAL: ${bs(total)}*`, vale ? vale : null, "",
+      "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"
+    ].filter(x => x !== null).join("\n");
+    const url = waURL(msg);
+    if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
+    btn.disabled = false;
+    if (numero) {
+      carrito = []; packsPol = []; guardarPol(); guardar(); if (e.target.elements.nota) e.target.elements.nota.value = "";
+      ["as_para", "as_msg", "as_firma"].forEach(n => { if (e.target.elements[n]) e.target.elements[n].value = ""; }); if (e.target.elements.as_es) e.target.elements.as_es.checked = false; try { localStorage.removeItem("as-pedido"); sessionStorage.removeItem("as-sala"); } catch (x) {}
+      abrir(false);
+      toast(`¡Pedido #${numero} enviado! 💕`);
+    }
+  });
+
+  // ---------- WhatsApp y datos de envío ----------
+  const waURL = msg => `https://api.whatsapp.com/send?phone=${T.whatsapp}&text=${encodeURIComponent(msg)}`;
+  const esOtroDepto = v => /otra ciudad|otro departamento|departamento|interior|provincia/i.test(v || "");
+  const esRecojo = v => /recojo|retiro|recoger/i.test(v || "");
+  const DEPTOS = ["La Paz", "El Alto", "Cochabamba", "Oruro", "Potosí", "Sucre", "Tarija", "Trinidad (Beni)", "Cobija (Pando)", "Montero", "Warnes"];
+  const envioHTML = () => `<div class="envio-datos" hidden>
+      <p class="envio-tit">Datos para el envío a otro departamento</p>
+      <input name="env_nombre" placeholder="Nombre de quien recibe" autocomplete="name">
+      <input name="env_ci" placeholder="Carnet de Identidad" inputmode="numeric">
+      <input name="env_cel" type="tel" inputmode="tel" placeholder="Celular de quien recibe">
+      <input name="env_destino" list="deptos-bo" placeholder="Destino (ciudad o departamento)">
+      <datalist id="deptos-bo">${DEPTOS.map(d => `<option value="${d}">`).join("")}</datalist>
+    </div>`;
+  function ajustarEntrega(form) {
+    const v = (form.querySelector("[name=entrega]") || {}).value || "", otro = esOtroDepto(v), recojo = esRecojo(v);
+    const box = form.querySelector(".envio-datos");
+    if (box) { box.hidden = !otro; box.querySelectorAll("input").forEach(i => i.required = otro); }
+    ["ciudad", "direccion"].forEach(n => { const i = form.querySelector(`[name=${n}]`); if (!i) return; const ver = !otro && !recojo; i.hidden = !ver; i.required = ver && (n === "ciudad" || i.dataset.req === "1"); if (!ver) i.value = ""; });
+    const ubi = form.querySelector(".ubi"); if (ubi) { ubi.hidden = otro || recojo; if (ubi.hidden) ubi.querySelector("input").value = ""; }
+  }
+  function datosEnvio(f) {
+    const ent = f.get("entrega") || "";
+    if (esOtroDepto(ent)) {
+      const d = { n: f.get("env_nombre"), ci: f.get("env_ci"), cel: f.get("env_cel"), des: f.get("env_destino") };
+      return { ciudad: d.des, direccion: `Envío a ${d.des} · Recibe: ${d.n} · CI: ${d.ci} · Cel: ${d.cel}`,
+        lineas: [ent, `Recibe: ${d.n}`, `Carnet de Identidad: ${d.ci}`, `Celular: ${d.cel}`, `Destino: ${d.des}`] };
+    }
+    if (esRecojo(ent)) return { ciudad: "Santa Cruz", direccion: "", lineas: [ent] };
+    const dir = [f.get("direccion"), f.get("ciudad")].filter(x => x && x.trim()).join(", ");
+    return { ciudad: f.get("ciudad") || "", direccion: f.get("direccion") || "", lineas: [ent, dir ? `Dirección: ${dir}` : null].filter(Boolean) };
+  }
+  { const fp = $("#form-pedido"), sel = $("#sel-entrega");
+    if (fp && sel) {
+      sel.insertAdjacentHTML("afterend", envioHTML()); sel.addEventListener("change", () => ajustarEntrega(fp));
+      try { const d = JSON.parse(localStorage.getItem("datos-pedido") || "{}"); for (const [k, v] of Object.entries(d)) { const el = fp.elements[k]; if (el && v) el.value = v; } } catch (e) {}
+      ajustarEntrega(fp);
+    } }
+
+  let tt; function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("ver"), 1800); }
+
+  // ---------- Vistas ----------
+  let cardN = 0;
+  const tarjeta = p => { const img2 = (p.imagenes || [])[1], per = personajeDe(p); return `
+    <a class="tarjeta ${img2 ? "doble" : ""}" href="#/producto/${p.id}">
+      <div class="foto"><img class="f1 ${(p.imagenes || []).length ? "" : "sin-foto"}" ${(cardN++ < 4) ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" width="400" height="400" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" decoding="async" width="400" height="400" src="${esc(img2)}" alt="">` : ""}
+        ${!hayStock(p) ? `<span class="etiqueta agotado">Agotado</span>` : p.nuevo ? `<span class="etiqueta">Nuevo</span>` : ""}</div>
+      <div class="info">${per ? `<span class="t-per">${esc(per.nombre)}</span>` : ""}<h3>${esc(sinEmoji(p.nombre))}</h3><div class="precio">${bs(p.precio)}</div>
+        <span class="ver-mas">${hayStock(p) ? "Ver opciones →" : "Ver detalles →"}</span></div>
+    </a>`; };
+  const grilla = lista => lista.length ? `<div class="grilla">${lista.map(tarjeta).join("")}</div>` : `<p class="vacio">No encontramos productos 😿</p>`;
+
+  const ESTRELLA_SVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.4l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z" fill="#fd95c8" stroke="#ee6fae" stroke-width="1.2" stroke-linejoin="round"/></svg>');
+  let estrellaSrc = "estrella.webp";
+  { const pre = new Image(); pre.onerror = () => { estrellaSrc = ESTRELLA_SVG; }; pre.src = estrellaSrc; }
+  function estrellitas(el) {
+    const r = el.getBoundingClientRect(), N = 16;
+    const vis = Math.max(r.top, 0), visFin = Math.min(r.bottom, innerHeight);
+    for (let i = 0; i < N; i++) {
+      const st = document.createElement("img");
+      st.src = estrellaSrc; st.alt = ""; st.className = "estrellita";
+      const tam = Math.round(20 + Math.random() * 24);
+      const x0 = r.left + scrollX + r.width * (.2 + Math.random() * .6) - tam / 2;
+      const y0 = scrollY + vis + (visFin - vis) * (.3 + Math.random() * .4) - tam / 2;
+      const ang = (i / N) * Math.PI * 2 + Math.random() * .4, dist = 90 + Math.random() * 120;
+      Object.assign(st.style, { left: x0 + "px", top: y0 + "px", width: tam + "px", height: tam + "px" });
+      document.body.appendChild(st);
+      const dx = Math.round(Math.cos(ang) * dist), dy = Math.round(Math.sin(ang) * dist), rot = Math.round((Math.random() * 2 - 1) * 200);
+      if (!st.animate) { st.remove(); continue; }
+      const an = st.animate([
+        { transform: "translate(0px,0px) scale(.2) rotate(0deg)", opacity: 0 },
+        { transform: `translate(${Math.round(dx * .35)}px,${Math.round(dy * .35)}px) scale(1.15) rotate(${Math.round(rot * .3)}deg)`, opacity: 1, offset: .2 },
+        { transform: `translate(${Math.round(dx * .85)}px,${Math.round(dy * .85 + 12)}px) scale(1) rotate(${Math.round(rot * .8)}deg)`, opacity: 1, offset: .7 },
+        { transform: `translate(${dx}px,${dy + 40}px) scale(.6) rotate(${rot}deg)`, opacity: 0 }
+      ], { duration: 1300 + Math.random() * 500, delay: Math.random() * 120, easing: "ease-out", fill: "forwards" });
+      an.onfinish = () => st.remove();
+      setTimeout(() => st.remove(), 2500);
+    }
+  }
+
+  // Cani animado dentro de su caja (3 capas: caja, gatito, frente de la caja)
+  const caniAnim = () => `<div class="cani-anim" role="img" aria-label="Cani, el gatito de Cani Shop, jugando en su caja">
+      <img class="ca-caja" src="cani-caja.webp" alt=""><span class="ca-clip"><img class="ca-gato" src="cani-gato.webp" alt=""></span><img class="ca-frente" src="cani-frente.webp" alt=""></div>`;
+
+  // Ícono de línea para cada categoría según su nombre (botones de Categorías del inicio)
+  const ICON_CAT = {
+    estrella: '<path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/>',
+    libreta: '<rect x="5" y="3" width="13" height="18" rx="2"/><path d="M9 3v18M12 8h3M12 12h3"/>',
+    lapiz: '<path d="M15.5 4.5l4 4L9 19l-5 1 1-5z"/><path d="M13.5 6.5l4 4"/>',
+    labial: '<path d="M9 21h6V11H9z"/><path d="M10 11V6l4-3v8"/>',
+    regalo: '<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18"/><path d="M12 9c-2-4-6-4-6-1.5S12 9 12 9c2-4 6-4 6-1.5S12 9 12 9"/>',
+    llavero: '<circle cx="12" cy="6" r="3"/><path d="M12 9v3"/><path d="M12 21s-5-3.2-5-6.5a2.8 2.8 0 0 1 5-1.7 2.8 2.8 0 0 1 5 1.7C17 17.8 12 21 12 21z"/>',
+    peluche: '<circle cx="7" cy="6.5" r="2.5"/><circle cx="17" cy="6.5" r="2.5"/><circle cx="12" cy="13" r="7"/><circle cx="9.5" cy="12" r=".6" fill="currentColor"/><circle cx="14.5" cy="12" r=".6" fill="currentColor"/><path d="M10.5 15.5c1 .8 2 .8 3 0"/>',
+    sticker: '<path d="M5 4h10l4 4v12H5z"/><path d="M15 4v4h4"/><circle cx="10" cy="12" r=".6" fill="currentColor"/><circle cx="14" cy="12" r=".6" fill="currentColor"/><path d="M10 15c1.2 1 2.8 1 4 0"/>',
+    bolso: '<path d="M5 9h14l-1 11H6z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>',
+    taza: '<path d="M5 8h11v7a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M16 10h2a2 2 0 0 1 0 4h-2"/>',
+    corazon: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'
+  };
+  const iconoCat = nombre => {
+    const n = String(nombre).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const k = /juego|kawaii|juguete/.test(n) ? "estrella" : /papel|libret|cuaderno|agenda/.test(n) ? "libreta" : /lapic|bolig|pluma|boli|resalt|marcador/.test(n) ? "lapiz"
+      : /beauty|belleza|maquill|labial|skin/.test(n) ? "labial" : /happy|box|caja|regalo|scoop/.test(n) ? "regalo" : /accesor|llaver|aret|collar/.test(n) ? "llavero"
+      : /peluch/.test(n) ? "peluche" : /sticker|pegat/.test(n) ? "sticker" : /bols|mochil|cartuch|estuche|billeter/.test(n) ? "bolso" : /taza|termo|vaso|botell/.test(n) ? "taza" : "corazon";
+    return `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_CAT[k]}</svg>`;
+  };
+  // ---------- Videos de TikTok (círculos como historias) ----------
+  const vidId = url => (String(url || "").match(/\/video\/(\d{8,})/) || [])[1] || "";
+  document.addEventListener("timeupdate", e => { const v = e.target; if (v.classList && v.classList.contains("vid-prev") && v.currentTime > 4) v.currentTime = 0; }, true);
+  const vidOk = v => !!(v && (v.video || vidId(v.url)));
+  // Visor de videos a pantalla completa (barra de progreso, pausa, sonido, anterior/siguiente y tarjeta del producto)
+  function abrirVideo(lista, i0, ctx = {}) {
+    let i = i0;
+    const ov = document.createElement("div"); ov.className = "vid-modal";
+    const cerrar = () => { const vd = ov.querySelector("video"); if (vd) { vd.pause(); vd.removeAttribute("src"); vd.load(); } ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", tecla); };
+    const ir = d => { if (!ctx.nav) return; const n = i + d; if (n < 0 || n >= lista.length) return; i = n; pintar(); };
+    const tecla = e => { if (e.key === "Escape") cerrar(); else if (e.key === "ArrowDown") ir(1); else if (e.key === "ArrowUp") ir(-1); };
+    const ICO = { play: `<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>`, pausa: `<svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>`,
+      son: `<svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+      mudo: `<svg viewBox="0 0 24 24"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+      arr: `<svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      aba: `<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>` };
+    function pintar() {
+      const v = lista[i], id = vidId(v.url), pr = ctx.prod ? ctx.prod(v) : null;
+      const foto = pr && ((pr.imagenes || [])[0] || ((pr.variantes || []).find(x => x.imagen) || {}).imagen);
+      const txt = ctx.texto ? (typeof ctx.texto === "function" ? ctx.texto(pr) : ctx.texto) : "Ver producto";
+      ov.innerHTML = `<div class="vid-caja" role="dialog" aria-modal="true" aria-label="${esc(v.titulo || "Video")}">
+        ${v.video ? `<video src="${esc(v.video)}" ${v.imagen ? `poster="${esc(v.imagen)}"` : ""} loop playsinline preload="auto"></video>` : `<iframe src="https://www.tiktok.com/embed/v2/${id}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen title="${esc(v.titulo || "Video de Cani Shop")}"></iframe>`}
+        ${v.video ? `<div class="vid-prog"><i></i></div><button type="button" class="vid-pp" aria-label="Pausar o reproducir"></button><button type="button" class="vid-mute" aria-label="Sonido"></button>` : ""}
+        <button type="button" class="vid-x" aria-label="Cerrar">✕</button>
+        ${ctx.nav && lista.length > 1 ? `<div class="vid-nav"><button type="button" data-n="-1" aria-label="Video anterior" ${i === 0 ? "disabled" : ""}>${ICO.arr}</button><button type="button" data-n="1" aria-label="Video siguiente" ${i === lista.length - 1 ? "disabled" : ""}>${ICO.aba}</button></div>` : ""}
+        ${pr ? `<div class="vid-prod"><div class="vid-prod-in">${foto ? `<img src="${esc(foto)}" alt="">` : ""}<div><b>${esc(sinEmoji(pr.nombre))}</b><span>${bs(pr.precio)}</span></div></div><button type="button" class="vid-comprar">${esc(txt)}</button></div>` : ""}
+        ${!v.video && v.url ? `<a class="vid-link" href="${esc(v.url)}" target="_blank" rel="noopener">Ver en TikTok</a>` : ""}</div>`;
+      const vd = ov.querySelector("video"); if (!vd) return;
+      const pp = ov.querySelector(".vid-pp"), mu = ov.querySelector(".vid-mute"), barra = ov.querySelector(".vid-prog i");
+      const est = () => { pp.innerHTML = vd.paused ? ICO.play : ICO.pausa; pp.classList.toggle("quieto", !vd.paused); mu.innerHTML = vd.muted ? ICO.mudo : ICO.son; };
+      vd.addEventListener("timeupdate", () => { barra.style.width = (vd.duration ? vd.currentTime / vd.duration * 100 : 0) + "%"; });
+      vd.addEventListener("play", est); vd.addEventListener("pause", est); vd.addEventListener("volumechange", est);
+      const alternar = () => { if (vd.paused) vd.play().catch(() => {}); else vd.pause(); };
+      pp.onclick = alternar; vd.onclick = alternar;
+      mu.onclick = () => { vd.muted = !vd.muted; };
+      est();
+      const p = vd.play(); if (p && p.catch) p.catch(() => { vd.muted = true; vd.play().catch(() => {}); });
+    }
+    ov.addEventListener("click", e => {
+      if (e.target === ov || e.target.closest(".vid-x")) return cerrar();
+      const n = e.target.closest("[data-n]"); if (n) return ir(+n.dataset.n);
+      if (e.target.closest(".vid-comprar")) { const v = lista[i], pr = ctx.prod ? ctx.prod(v) : null; if (!pr) return; if (ctx.boton) ctx.boton(pr, cerrar); else { cerrar(); location.hash = `#/producto/${pr.id}`; } }
+    });
+    let y0 = null;
+    ov.addEventListener("touchstart", e => { y0 = e.touches[0].clientY; }, { passive: true });
+    ov.addEventListener("touchend", e => { if (y0 === null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null; if (Math.abs(dy) > 70 && !e.target.closest(".vid-prod")) ir(dy < 0 ? 1 : -1); });
+    document.addEventListener("keydown", tecla);
+    document.body.appendChild(ov); document.body.style.overflow = "hidden";
+    pintar();
+  }
+  const circulosVideo = lista => lista.map((v, i) => `<button type="button" class="marca-item vid-item" data-vid="${i}" aria-label="Ver video: ${esc(v.titulo || "Cani Shop")}"><div class="circ">${v.video ? `<video class="vid-prev" src="${esc(v.video)}" ${v.imagen ? `poster="${esc(v.imagen)}"` : ""} muted loop autoplay playsinline preload="metadata" disablepictureinpicture></video>` : v.imagen ? `<img src="${esc(v.imagen)}" alt="" loading="lazy">` : `<span class="vid-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></span>`}</div><span class="marca-nom">${esc(v.titulo || "Video")}</span></button>`).join("");
+  function activarVideos(lista, root = app, conClick = true) {
+    root.querySelectorAll("[data-vid]").forEach(b => {
+      const v = lista[+b.dataset.vid]; if (!v) return;
+      if (conClick) b.addEventListener("click", () => abrirVideo(lista, +b.dataset.vid, { prod: x => PRODS.find(p => p.id === x.producto), texto: "Ver producto" }));
+      if (!v.imagen && !v.video && v.url) {   // sin portada subida: intenta la de TikTok; si no se puede, queda el círculo rosa con ▶
+        fetch("https://www.tiktok.com/oembed?url=" + encodeURIComponent(v.url)).then(r => r.ok ? r.json() : null).then(j => {
+          if (j && j.thumbnail_url && b.isConnected) { const im = new Image(); im.alt = ""; im.src = j.thumbnail_url; im.onload = () => b.querySelector(".circ").prepend(im); }
+        }).catch(() => {});
+      }
+    });
+  }
+
+  function inicio() {
+    const bans = (T.banners || []).filter(b => b && b.imagen);
+    const pers = PERS(), categs = CATEG().length ? CATEG() : CATS;
+    const DEST = (Array.isArray(T.destacadas) && T.destacadas.filter(d => d && d.cat).length ? T.destacadas.filter(d => d && d.cat)
+      : [{ titulo: "Novedades", cat: "__nuevos" }]).filter(d => d.cat !== "sanrio").slice(0, 3);
+    // Beneficios: "Título | texto" (desde Mi tienda). Si no tienen ese formato, se usan los de siempre.
+    // Formato: "Título | texto | etiqueta" (la etiqueta es opcional)
+    const VAL_DEF = ["Cositas kawaii | Papelería, peluches y regalos que alegran el día | +200 productos", "Envíos a toda Bolivia | De Santa Cruz a tu departamento | 9 departamentos", "Recojo en Santa Cruz | Coordinamos tu entrega por WhatsApp, sin complicaciones | Pago con QR"];
+    const VAL_VIEJOS = ["Productos kawaii | Papelería, regalos y cositas adorables", "Envíos a toda Bolivia | Desde Santa Cruz hasta tu departamento", "Punto de entrega | Consulta por nuestro punto de entrega en Santa Cruz"];
+    const valGuardados = (Array.isArray(T.valores) ? T.valores.filter(Boolean) : []).map((v, i) => v.trim() === VAL_VIEJOS[i] ? VAL_DEF[i] : v);
+    const VAL = (valGuardados.some(v => v.includes("|")) ? valGuardados : VAL_DEF).slice(0, 3).map(v => { const [t, d = "", e = ""] = v.split("|").map(x => x.trim()); return { t, d, e }; });
+    const VIDS = (Array.isArray(T.videos) ? T.videos : []).filter(vidOk);
+    const HIST = T.historia || {};
+    const histImgs = (HIST.imagenes || []).filter(Boolean).length ? HIST.imagenes.filter(Boolean) : ["historia.webp"];
+    const OPS = (T.opiniones || []).filter(o => o && o.texto);
+    const ICON_VAL = [
+      `<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg>`,
+      `<svg viewBox="0 0 24 24"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></svg>`
+    ];
+    const ESTRELLAS = `<span class="op-estrellas">${Array(5).fill(`<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7z"/></svg>`).join("")}</span>`;
+    const listaDe = d => {
+      const l = d.cat === "__nuevos" ? PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo)) : PRODS.filter(p => (p.categorias || []).includes(d.cat));
+      return l.filter(hayStock).concat(l.filter(p => !hayStock(p))).slice(0, d.cat === "__nuevos" ? 4 : 8);
+    };
+    const destacada = d => {
+      const l = listaDe(d); if (!l.length) return "";
+      const href = d.cat === "__nuevos" ? "#/novedades" : `#/catalogo/${d.cat}`;
+      return `<section class="seccion dest ${d.cat === "__nuevos" ? "dest-nov" : ""} ${l.length <= 2 ? "dest-dos" : ""}"><div class="titulo"><h2>${esc(d.titulo || (CATS.find(c => c.id === d.cat) || {}).nombre || "Destacados")}</h2><a class="ver-todo" href="${href}">Ver todo</a></div>${grilla(l)}</section>`;
+    };
+    app.innerHTML = `
+      ${bans.length ? `<section class="hero ${bans.every(b => b.imagenMovil) ? "movil-ok" : ""}"><div class="car-pista" id="car-pista">${bans.map(b => {
+          const pic = `<picture>${b.imagenMovil ? `<source media="(max-width:820px)" srcset="${esc(b.imagenMovil)}">` : ""}<img src="${esc(b.imagen)}" alt=""></picture>`;
+          return b.enlace
+            ? `<a class="slide" href="${esc(b.enlace)}"${/^https?:/.test(b.enlace) ? ' target="_blank" rel="noopener"' : ""}>${pic}</a>`
+            : `<div class="slide">${pic}</div>`; }).join("")}</div>
+        ${bans.length > 1 ? `<div class="car-puntos" id="car-puntos">${bans.map((_, i) => `<button data-s="${i}" aria-label="Banner ${i + 1}" class="${i ? "" : "on"}"></button>`).join("")}</div>` : ""}
+      </section>` : ""}
+
+      ${pers.length ? `<section class="seccion pers-fila"><h2 class="fila-tit">Personajes</h2><div class="marcas-fila">${pers.map(c => `<a class="marca-item ${c.imagen ? "con-foto" : ""}" href="#/catalogo/${c.id}" title="${esc(c.nombre)}" aria-label="${esc(c.nombre)}"><div class="circ">${circ(c)}</div><span class="marca-nom">${esc(c.nombre)}</span></a>`).join("")}</div></section>` : ""}
+
+      ${VIDS.length ? `<section class="seccion pers-fila vid-fila"><h2 class="fila-tit">Videos</h2><div class="marcas-fila">${circulosVideo(VIDS)}</div></section>` : ""}
+
+      <h2 class="fila-tit">Categorías</h2>
+      <section class="seccion cat-pills">${categs.map((c, i) => `<a class="cat-pill cp${i % 3}" href="#/catalogo/${c.id}"><span class="cp-ico">${iconoCat(c.nombre)}</span>${esc(c.nombre)}</a>`).join("")}</section>
+
+      ${destacada(DEST[0])}
+
+      <section class="seccion ben"><div class="ben-in">${VAL.map((v, i) => `<div class="ben-c ben-c${i % 3}"><span class="ben-ico">${ICON_VAL[i] || ICON_VAL[0]}</span><div class="ben-tx"><h3>${esc(v.t)}</h3>${v.d ? `<p>${esc(v.d)}</p>` : ""}</div>${v.e ? `<span class="ben-tag">${esc(v.e)}</span>` : ""}</div>`).join("")}</div></section>
+
+      ${SC ? `<section class="seccion"><a class="sc-promo" href="#/scoops">
+        <div><span class="sc-tag">${esc(SC.titulo || "Arma tu Scoop")}</span>
+          <h2>Lucky Scoops</h2><p>${esc(SC.intro || "Elige tus colores y personajes favoritos y armamos tu scoop.")}</p>
+          <span class="btn">Armar mi scoop</span></div>
+        <div class="lucky-anim" aria-hidden="true">
+          <img class="la-taza" src="taza-cani.webp" alt="">
+          <img class="la-perla" src="perla.webp" alt="">
+          <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <img class="la-premio la-p1" src="llavero.webp" alt="">
+          <img class="la-premio la-p2" src="libreta.webp" alt="">
+        </div>
+      </a></section>` : ""}
+
+      ${DEST.slice(1).map(destacada).join("")}
+
+      <section class="seccion historia">
+        <div class="hist-imgs ${histImgs.length === 1 ? "una" : ""}">${histImgs.slice(0, 3).map(u => `<div><img src="${esc(u)}" alt=""></div>`).join("")}</div>
+        <div class="hist-txt">
+          <h2>${esc(HIST.titulo || `Hola, somos ${T.nombre}`)}</h2>
+          <p>${esc(HIST.texto || resumenNosotros())}</p>
+          <a class="btn btn-sec" href="#/nosotros">Conoce ${esc(T.nombre)}</a>
+        </div>
+      </section>
+
+      ${OPS.length ? `<section class="seccion opiniones"><div class="titulo"><h2>Lo que dicen nuestros clientes</h2></div>
+        <div class="op-fila">${OPS.map(o => `<figure class="op">${ESTRELLAS}<blockquote>${esc(o.texto)}</blockquote><figcaption>${esc(o.nombre || "")}</figcaption></figure>`).join("")}</div></section>` : ""}
+
+      ${seccionTikTok()}`;
+    activarVideos(VIDS);
+    if (bans.length > 1) carrusel(bans.length);
+    if (ttUser) cargarTikTok();
+    // Lucky Scoops: explotan estrellitas al llegar (solo celular)
+    { const promo = document.querySelector(".sc-promo");
+      if (promo && matchMedia("(max-width:820px)").matches) {
+        let hecho = false;
+        const mirar = () => {
+          if (hecho || !promo.isConnected) return window.removeEventListener("scroll", mirar);
+          const r = promo.getBoundingClientRect();
+          if (r.top < innerHeight * .7 && r.bottom > innerHeight * .2) { hecho = true; window.removeEventListener("scroll", mirar); estrellitas(promo); }
+        };
+        window.addEventListener("scroll", mirar, { passive: true }); setTimeout(mirar, 400);
+      } }
+  }
+
+  let carReloj;
+  function carrusel(n) {
+    const pista = $("#car-pista"), puntos = [...document.querySelectorAll("#car-puntos button")];
+    let i = 0;
+    const ir = k => { i = (k + n) % n; pista.scrollTo({ left: i * pista.clientWidth, behavior: "smooth" }); };
+    const auto = () => { clearInterval(carReloj); carReloj = setInterval(() => ir(i + 1), 5000); };
+    pista.addEventListener("scroll", () => {
+      const k = Math.round(pista.scrollLeft / pista.clientWidth);
+      if (k !== i) { i = k; }
+      puntos.forEach((p, j) => p.classList.toggle("on", j === k));
+    }, { passive: true });
+    pista.addEventListener("pointerdown", auto);
+    puntos.forEach(p => p.onclick = () => { ir(+p.dataset.s); auto(); });
+    auto();
+  }
+
+  let ORDEN = "destacados", SOLO_STOCK = false;
+  // Catálogo con filtros combinables: personajes (uno o varios) + categorías (una o varias)
+  // Dentro de un grupo suma opciones (Sanrio o Snoopy); entre grupos se combinan (Sanrio y Peluches).
+  function catalogo(cat, q, modo) {
+    const PS = PERS(), CS = CATEG().length ? CATEG() : CATS.filter(c => !PS.some(p => p.id === c.id));
+    const selP = new Set(), selC = new Set();
+    if (cat) (PS.some(p => p.id === cat) ? selP : selC).add(cat);
+    let base = PRODS;
+    if (modo === "nuevos") base = PRODS.filter(p => p.nuevo).concat(PRODS.filter(p => !p.nuevo));
+    if (q) { const t = sinAcento(q).trim(); base = base.filter(p => sinAcento(p.nombre + " " + (p.descripcion || "") + " " + (p.variantes || []).map(v => v.nombre).join(" ")).includes(t)); }
+    const pasa = (p, sel) => !sel.size || (p.categorias || []).some(c => sel.has(c));
+    const filtrar = () => {
+      let l = base.filter(p => pasa(p, selP) && pasa(p, selC));
+      if (SOLO_STOCK) l = l.filter(hayStock);
+      if (ORDEN === "menor") l.sort((a, b) => a.precio - b.precio);
+      else if (ORDEN === "mayor") l.sort((a, b) => b.precio - a.precio);
+      else if (ORDEN === "az") l.sort((a, b) => sinEmoji(a.nombre).localeCompare(sinEmoji(b.nombre)));
+      else l = l.filter(hayStock).concat(l.filter(p => !hayStock(p)));
+      return l;
+    };
+    // cuántos productos quedarían al tocar cada opción (para no llevar a resultados vacíos)
+    const cuantos = (id, grupo) => { const sp = new Set(selP), sc = new Set(selC); const g = grupo === "p" ? sp : sc; g.has(id) ? g.delete(id) : g.add(id);
+      return base.filter(p => pasa(p, sp) && pasa(p, sc) && (!SOLO_STOCK || hayStock(p))).length; };
+    const nombre = id => (CATS.find(c => c.id === id) || {}).nombre || id;
+    const titulo = () => {
+      if (q) return `Resultados para “${esc(q)}”`;
+      const ps = [...selP].map(nombre), cs = [...selC].map(nombre);
+      if (!ps.length && !cs.length) return modo === "nuevos" ? "Novedades" : "Todos los productos";
+      return esc([cs.join(" y "), ps.length ? (cs.length ? "de " : "") + ps.join(" y ") : ""].filter(Boolean).join(" "));
+    };
+    const chip = (c, g) => { const on = (g === "p" ? selP : selC).has(c.id), n = on ? null : cuantos(c.id, g);
+      return `<button type="button" class="chip ${on ? "activo" : ""}" data-f="${g}" data-id="${esc(c.id)}" ${n === 0 ? "disabled" : ""} aria-pressed="${on}">${esc(c.nombre)}${on ? ' <span class="chip-x" aria-hidden="true">×</span>' : ""}</button>`; };
+    app.innerHTML = `<section class="seccion">
+      <h1 class="cat-titulo" id="cat-titulo"></h1>
+      <div id="cat-filtros"></div>
+      <div class="orden-barra"><span id="cuenta"></span>
+        <label class="solo-stock"><input type="checkbox" id="solo-stock" ${SOLO_STOCK ? "checked" : ""}> Solo disponibles</label>
+        <select id="orden"><option value="destacados">Destacados</option><option value="menor">Menor precio</option><option value="mayor">Mayor precio</option><option value="az">De la A a la Z</option></select></div>
+      <div id="grilla-cat"></div></section>`;
+    const pintar = () => {
+      const l = filtrar(), hay = selP.size || selC.size;
+      $("#cat-titulo").innerHTML = titulo();
+      $("#cat-filtros").innerHTML = `
+        ${PS.length ? `<div class="filtro-grupo"><span class="filtro-tit">Personaje</span><div class="filtros">${PS.map(c => chip(c, "p")).join("")}</div></div>` : ""}
+        <div class="filtro-grupo"><span class="filtro-tit">Tipo de producto</span><div class="filtros">${CS.map(c => chip(c, "c")).join("")}</div></div>
+        ${hay ? `<button type="button" class="filtro-limpiar" id="filtro-limpiar">Quitar filtros</button>` : ""}`;
+      $("#cuenta").textContent = `${l.length} ${l.length === 1 ? "producto" : "productos"}`;
+      $("#grilla-cat").innerHTML = l.length ? grilla(l) : `<p class="vacio">No hay productos con esa combinación. Prueba quitando un filtro.</p>`;
+      document.querySelectorAll("#cat-filtros .chip.activo").forEach(ch => { const f = ch.parentElement; if (f.scrollWidth > f.clientWidth) f.scrollLeft = ch.offsetLeft - f.offsetLeft - 16; });
+    };
+    pintar();
+    $("#cat-filtros").addEventListener("click", e => {
+      if (e.target.closest("#filtro-limpiar")) { selP.clear(); selC.clear(); return pintar(); }
+      const b = e.target.closest(".chip[data-f]"); if (!b) return;
+      const g = b.dataset.f === "p" ? selP : selC, id = b.dataset.id;
+      g.has(id) ? g.delete(id) : g.add(id); pintar();
+    });
+    $("#orden").value = ORDEN;
+    $("#orden").onchange = e => { ORDEN = e.target.value; pintar(); };
+    $("#solo-stock").onchange = e => { SOLO_STOCK = e.target.checked; pintar(); };
+  }
+
+  // Página de producto estilo Starface (opción 2: blanco con detalles rosa)
+  function producto(id) {
+    const p = PRODS.find(x => x.id === id);
+    if (!p) return catalogo();
+    let cant = 1, vari = null, abierto = false;
+    // Con varios modelos disponibles NO se elige ninguno solo: la clienta tiene que escoger. Si hay uno solo, va elegido.
+    if (tieneVar(p)) { const libres = p.variantes.filter(v => disp(v.stock)); if (libres.length === 1) vari = libres[0].nombre; }
+    const base = (p.imagenes && p.imagenes.length ? p.imagenes : [foto(p)]).slice();
+    (p.variantes || []).forEach(v => { if (v.imagen && !base.includes(v.imagen)) base.push(v.imagen); });
+    const fotos = () => base;   // el orden de las fotos es siempre el que subiste: la primera se ve primero
+    const lineas = sinEmoji(p.descripcion || "").split("\n").map(l => l.trim()).filter(Boolean);
+    const frase = lineas[0] || "", resto = lineas.slice(1);
+    const per = personajeDe(p);
+    app.innerHTML = `<section class="pdx">
+      <div class="pdx-fotos" id="pdx-fotos"></div>
+      <aside class="pdx-pan" id="pdx-pan"></aside>
+    </section>`;
+    const pintarFotos = () => {
+      const f = fotos();
+      document.querySelector(".pdx").classList.toggle("una-foto", f.length === 1);
+      $("#pdx-fotos").innerHTML = `<div class="pdx-pista" id="pdx-pista">${f.map((u, k) => `<div class="pdx-ph"><img src="${esc(u)}" alt="${k ? "" : esc(sinEmoji(p.nombre))}" ${k > 1 ? 'loading="lazy"' : ""}></div>`).join("")}</div>
+        ${f.length > 1 ? `<div class="pdx-puntos">${f.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
+      const pista = $("#pdx-pista");
+      pista.onscroll = () => { const k = Math.round(pista.scrollLeft / pista.clientWidth); document.querySelectorAll(".pdx-puntos i").forEach((d, n) => d.classList.toggle("on", n === k)); };
+    };
+    const PV = (Array.isArray(p.videos) ? p.videos : []).filter(vidOk);
+    let falta = false;
+    const CTXP = { prod: () => p, texto: () => hayStock(p) ? (tieneVar(p) && !vari ? "Elegir modelo" : "Agregar al carrito") : "Agotado",
+      boton: (pr, cerrar) => { cerrar(); if (!hayStock(p)) return;
+        if (tieneVar(p) && !vari) { falta = true; pintarPan(); const m = $("#pdx-mods"); if (m) m.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+        agregar(p.id, vari, cant); } };
+    const pocas = (p, v) => { const n = maxDe(p, v); return n > 0 && n <= 3 && (v || !tieneVar(p)) ? n : 0; };
+    const pintarPan = () => {
+      const dispo = hayStock(p), sinElegir = tieneVar(p) && !vari;
+      const max = maxDe(p, vari); if (cant > max) cant = Math.max(1, max);
+      $("#pdx-pan").innerHTML = `
+        <a class="pdx-volver" href="${(window.__hashPrev && window.__hashPrev().startsWith("#/amigo-secreto")) ? esc(window.__hashPrev()) : "#/catalogo"}">← Volver</a>
+        ${per ? `<a class="pdx-per" href="#/catalogo/${per.id}">${esc(per.nombre)}</a>` : ""}
+        <h1 class="pdx-tit">${esc(sinEmoji(p.nombre))}</h1>
+        ${frase ? `<p class="pdx-frase">${esc(frase)}</p>` : ""}
+        ${resto.length ? `<button type="button" class="pdx-mas" id="pdx-mas" aria-expanded="${abierto}">${abierto ? "Ocultar detalles" : "Ver detalles"}</button>
+          <div class="pdx-det" ${abierto ? "" : "hidden"}>${resto.map(l => `<p>${esc(l)}</p>`).join("")}</div>` : ""}
+        <div class="pdx-precio">${bs(p.precio)}</div>
+        ${tieneVar(p) ? `<div class="pdx-etq">Modelo: <b>${esc(vari || "elige uno")}</b></div>
+          <div class="pdx-mods ${falta ? "falta" : ""}" id="pdx-mods">${p.variantes.map(v => `<button type="button" class="pdx-mod ${v.nombre === vari ? "on" : ""}" data-var="${esc(v.nombre)}" ${disp(v.stock) ? "" : "disabled"}>${v.imagen ? `<img src="${esc(v.imagen)}" alt="">` : ""}${esc(v.nombre)}</button>`).join("")}</div>` : ""}
+        ${dispo ? `<div class="pdx-fila">
+            <div class="pdx-cant"><button type="button" data-c="-1" aria-label="Menos">−</button><span>${cant}</span><button type="button" data-c="1" aria-label="Más">+</button></div>
+            <button type="button" class="pdx-btn ${sinElegir ? "pide" : ""}" id="agregar">${sinElegir ? "Elige un modelo" : "Agregar al carrito"}</button></div>
+        `
+          : `<button type="button" class="pdx-btn" disabled>Agotado</button>`}
+        <small class="pdx-nota">Envíos a toda Bolivia. El costo del envío y el pago con QR los coordinamos contigo por WhatsApp al finalizar tu pedido.</small>
+        ${PV.length ? `<div class="pdx-vids marcas-fila">${circulosVideo(PV)}</div>` : ""}`;
+    };
+    pintarFotos(); pintarPan(); window.scrollTo(0, 0);
+    if (PV.length) activarVideos(PV, $("#pdx-pan"), false);
+    // Barra fija abajo (celular) con precio y "agregar": aparece cuando el botón grande no se ve
+    {
+      app.insertAdjacentHTML("beforeend", `<div class="pdx-barra" id="pdx-barra" aria-hidden="true"><div><small id="pdx-b-var"></small><b>${bs(p.precio)}</b></div><button type="button" class="pdx-btn" id="pdx-b-add">${tieneVar(p) && !vari ? "Elige un modelo" : "Agregar al carrito"}</button></div>`);
+      const barra = $("#pdx-barra");
+      const vigilar = () => { const a = $("#agregar"), r = a ? a.getBoundingClientRect() : null; const fuera = !r || r.bottom < 70 || r.top > innerHeight; barra.classList.toggle("ver", !!a && fuera && barra.isConnected); $("#pdx-b-var").textContent = vari ? "Modelo: " + vari : (tieneVar(p) ? "Elige un modelo" : ""); };
+      const ab = new AbortController();
+      addEventListener("scroll", () => { if (!barra.isConnected) return ab.abort(); vigilar(); }, { passive: true, signal: ab.signal });
+      setTimeout(vigilar, 300);
+      barra.onclick = e => { if (e.target.closest("#pdx-b-add")) { const a = $("#agregar"); if (a) a.click(); } };
+      if (!hayStock(p)) barra.remove();
+    }
+    // Franja de texto que se desliza bajo las fotos (frase propia del panel, o automática)
+    {
+      const cat = (p.categorias || []).map(c => CATS.find(x => x.id === c)).find(c => c && tipoDe(c) === "categoria");
+      const pn = per ? per.nombre : "", cn = cat ? cat.nombre : "";
+      const propia = String(p.frase || "").split(/[✦·|]/).map(x => x.trim()).filter(Boolean);
+      const partes = (propia.length ? propia
+        : p.nuevo ? ["Recién llegado", pn || cn, "Envíos a toda Bolivia"]
+        : pn ? [pn, cn, "Envíos a toda Bolivia"]
+        : cn ? [cn, "Cositas kawaii", "Envíos a toda Bolivia"] : ["Cositas kawaii", "Envíos a toda Bolivia"]).filter(Boolean).map(x => sinEmoji(x));
+      const serie = Array(Math.max(3, Math.ceil(12 / partes.length))).fill(partes).flat().map(x => `<span>${esc(x)}</span><i aria-hidden="true">✦</i>`).join("");
+      document.querySelector(".pdx").insertAdjacentHTML("beforeend", `<div class="pdx-cinta" aria-label="${esc(partes.join(", "))}"><div class="pdx-cinta-pista" aria-hidden="true"><div>${serie}</div><div>${serie}</div></div></div>`);
+    }
+    // Te puede gustar: mismos personaje/categorías primero, solo con stock
+    {
+      const mias = new Set(p.categorias || []), perId = per && per.id;
+      const sem = x => [...String(x.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0) + id.length) % 997, 7);
+      const rel = PRODS.filter(x => x.id !== p.id && hayStock(x))
+        .map(x => { const cs = x.categorias || []; return { x, pts: (perId && cs.includes(perId) ? 3 : 0) + cs.filter(c => mias.has(c)).length, r: sem(x) }; })
+        .filter(o => o.pts > 0).sort((a, b) => b.pts - a.pts || a.r - b.r).slice(0, 4).map(o => o.x);
+      if (rel.length) app.insertAdjacentHTML("beforeend", `<section class="seccion pdx-rel"><h2>Te puede gustar</h2><div class="grilla">${rel.map(tarjeta).join("")}</div></section>`);
+    }
+    app.onclick = e => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.vid !== undefined) { abrirVideo(PV, +b.dataset.vid, CTXP); return; }
+      if (b.id === "pdx-mas") { abierto = !abierto; pintarPan(); }
+      else if (b.dataset.var) {
+        vari = b.dataset.var; falta = false; pintarPan();
+        // al elegir un modelo, la galería se desplaza a la foto de ese modelo (sin cambiar el orden)
+        const v = (p.variantes || []).find(x => x.nombre === vari), k = v && v.imagen ? base.indexOf(v.imagen) : -1, ph = k >= 0 ? document.querySelectorAll("#pdx-pista .pdx-ph")[k] : null;
+        if (ph) ph.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+      }
+      else if (b.dataset.c) { cant = Math.min(maxDe(p, vari), Math.max(1, cant + +b.dataset.c)); pintarPan(); }
+      else if (b.id === "agregar") {
+        if (tieneVar(p) && !vari) { falta = true; pintarPan(); const m = $("#pdx-mods"); if (m) m.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+        agregar(p.id, vari, cant);
+      }
+    };
+  }
+
+  // ---------- Arma tu Scoop ----------
+  const SC = T.scoops && T.scoops.activo ? T.scoops : null;
+  // Mostrar "Arma tu Scoop" en el menú (si el index.html viejo no tiene el enlace, lo agrega)
+  if (SC) {
+    let m = $("#menu-scoops");
+    if (!m) { m = document.createElement("a"); m.id = "menu-scoops"; m.href = "#/scoops"; m.textContent = "Arma tu Scoop"; const cat = document.querySelector('.menu a[href="#/catalogo"]'); cat ? cat.after(m) : $("#menu").appendChild(m); }
+    m.hidden = false;
+  }
+  // ---------- Personajes / categorías ----------
+  const tipoDe = c => c.tipo || (c.marca ? "personaje" : "categoria");
+  const PERS = () => CATS.filter(c => tipoDe(c) === "personaje");
+  const CATEG = () => CATS.filter(c => tipoDe(c) === "categoria");
+  const personajeDe = p => {
+    const ps = (p.categorias || []).map(id => CATS.find(c => c.id === id)).filter(c => c && tipoDe(c) === "personaje");
+    return ps.find(c => c.id !== "sanrio") || ps[0];
+  };
+
+  // Búsqueda sin importar tildes ni mayúsculas (Album = Álbum)
+  const sinAcento = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  // ---------- Tipografía ----------
+  const FUENTES = {
+    clasica:  { t: "'Fredoka'", x: "'Comfortaa'", url: "family=Fredoka:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700" },
+    burbuja:  { t: "'Baloo 2'", x: "'Quicksand'", url: "family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700" },
+    japonesa: { t: "'Mochiy Pop One'", x: "'M PLUS Rounded 1c'", url: "family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@400;500;700;800" },
+    dulce:    { t: "'DynaPuff'", x: "'Nunito'", url: "family=DynaPuff:wght@400;500;600;700&family=Nunito:wght@400;600;700;800" },
+    chicle:   { t: "'Chewy'", x: "'Quicksand'", url: "family=Chewy&family=Quicksand:wght@400;500;600;700" },
+    retro:    { t: "'Grandstander'", x: "'Nunito'", url: "family=Grandstander:wght@500;600;700;800&family=Nunito:wght@400;600;700;800" },
+    moderna:  { t: "'Poppins'", x: "'Poppins'", url: "family=Poppins:wght@400;500;600;700" }
+  };
+  const FU = FUENTES[T.fuente] || FUENTES.clasica;
+  if (T.fuente && FUENTES[T.fuente] && T.fuente !== "clasica") {
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.href = `https://fonts.googleapis.com/css2?${FU.url}&display=swap`; document.head.appendChild(l);
+  }
+  document.documentElement.style.setProperty("--f-tit", `${FU.t}, Fredoka, Nunito, sans-serif`);
+  document.documentElement.style.setProperty("--f-txt", `${FU.x}, Nunito, system-ui, sans-serif`);
+  if (T.fuente === "moderna" || T.fuente === "japonesa") document.documentElement.classList.add("fuente-compacta");
+
+  // ---------- Cursor de temporada ----------
+  const CURSORES = {
+    murcielago: `<svg xmlns='http://www.w3.org/2000/svg' width='34' height='26' viewBox='0 0 34 26'><path d='M17 7c1.3-3 2.4-4 3-6 .6 2 0 3.2.6 4.4 2.5-1.6 7-2 12.4-.4-3 1.5-4 4-3.6 7-2-1.2-4.4-1.2-6 .6-1.2-1.4-3-1.4-4 0-.8 2-1.4 4-2.4 6-1-2-1.6-4-2.4-6-1-1.4-2.8-1.4-4 0-1.6-1.8-4-1.8-6-.6.4-3-.6-5.5-3.6-7C6 3 10.5 3.4 13 5c.6-1.2 0-2.4.6-4.4.6 2 1.7 3 3 6z' fill='%23783746' stroke='%23fff' stroke-width='1.2'/><circle cx='15.4' cy='9' r='.9' fill='%23ff8fbf'/><circle cx='18.6' cy='9' r='.9' fill='%23ff8fbf'/></svg>`,
+    fantasma: `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'><path d='M14 2C7.4 2 3 7 3 13.5V29l3.6-2.6L10 29l4-2.6L18 29l3.4-2.6L25 29V13.5C25 7 20.6 2 14 2z' fill='%23fff' stroke='%23fd95c8' stroke-width='2'/><circle cx='10.5' cy='13' r='1.8' fill='%23783746'/><circle cx='17.5' cy='13' r='1.8' fill='%23783746'/><ellipse cx='8' cy='17' rx='2' ry='1.2' fill='%23ffb3cf'/><ellipse cx='20' cy='17' rx='2' ry='1.2' fill='%23ffb3cf'/></svg>`,
+    corazon:  `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='26' viewBox='0 0 28 26'><path d='M14 24S2 16.5 2 8.5A6 6 0 0 1 14 6a6 6 0 0 1 12 2.5C26 16.5 14 24 14 24z' fill='%23f78db0' stroke='%23fff' stroke-width='2'/></svg>`,
+    patita:   `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><g fill='%23fd95c8' stroke='%23fff' stroke-width='1.4'><ellipse cx='14' cy='19' rx='7' ry='6'/><circle cx='6' cy='11' r='3'/><circle cx='11' cy='6' r='3'/><circle cx='17' cy='6' r='3'/><circle cx='22' cy='11' r='3'/></g></svg>`,
+    estrella: `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><path d='M14 2l3.6 7.4 8.1 1.2-5.9 5.7 1.4 8.1L14 20.6l-7.2 3.8 1.4-8.1-5.9-5.7 8.1-1.2z' fill='%23ffd84d' stroke='%23fd95c8' stroke-width='1.6' stroke-linejoin='round'/></svg>`
+  };
+  if (CURSORES[T.cursor] && matchMedia("(pointer:fine)").matches) {
+    const u = `url("data:image/svg+xml,${CURSORES[T.cursor].replace(/"/g, "'").replace(/#/g, "%23").replace(/\n/g, "")}") 4 4`;
+    const st = document.createElement("style");
+    st.textContent = `html,body,*{cursor:${u}, auto} a,button,label,select,.tarjeta,.sc-op-in,.chip,.sc-chip{cursor:${u}, pointer}`;
+    document.head.appendChild(st);
+  }
+
+  // ---------- Menú "Tienda" con personajes y categorías ----------
+  (() => {
+    const nav = $("#menu"), cat = nav && nav.querySelector('a[href="#/catalogo"]');
+    if (!cat || nav.querySelector(".menu-drop")) return;
+    const pers = PERS(), categ = CATEG();
+    // Ícono dibujado para cada personaje / categoría (según su nombre)
+    const IC = {
+      gato: `<path d="M5 10V4l4 3.2h6L19 4v6c0 3.9-3.1 7-7 7s-7-3.1-7-7z"/><path d="M9.5 11h.01M14.5 11h.01M11 14h2"/>`,
+      perro: `<path d="M8 6h8c1 0 2 1 2 2v5a6 6 0 01-12 0V8c0-1 1-2 2-2z"/><path d="M8 6C5 6 4 9 4 12c0 1.5.5 2.5 1.5 2.5M16 6c3 0 4 3 4 6 0 1.5-.5 2.5-1.5 2.5"/><path d="M9.5 11h.01M14.5 11h.01M11 14.5h2"/>`,
+      fantasma: `<path d="M5 20v-9a7 7 0 0114 0v9l-2.3-2-2.3 2-2.4-2-2.4 2-2.3-2z"/><path d="M9.5 11h.01M14.5 11h.01"/>`,
+      musica: `<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>`,
+      estrella: `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"/>`,
+      juego: `<rect x="3" y="8" width="18" height="10" rx="5"/><path d="M8 11v4M6 13h4M15.5 12h.01M18 14h.01"/>`,
+      cuaderno: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12 8h4"/>`,
+      lapiz: `<path d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/>`,
+      belleza: `<rect x="9" y="12" width="6" height="8" rx="1"/><path d="M10 12V8l4-4v8"/>`,
+      regalo: `<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/>`,
+      lazo: `<path d="M12 12L5 7v10l7-5zm0 0l7-5v10l-7-5z"/><circle cx="12" cy="12" r="1.4"/>`,
+      oso: `<circle cx="12" cy="13" r="6"/><circle cx="6.5" cy="7.5" r="2.2"/><circle cx="17.5" cy="7.5" r="2.2"/><path d="M10 13h.01M14 13h.01M11 15.5h2"/>`,
+      corazon: `<path d="M12 20S4 15 4 9.5A4 4 0 0112 8a4 4 0 018 1.5C20 15 12 20 12 20z"/>`
+    };
+    const iconoMenu = nombre => {
+      const n = String(nombre || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const k = /kitty|gatit|gato|cat/.test(n) ? "gato" : /snoopy|perr|dog/.test(n) ? "perro" : /obakenu|fantasma|ghost/.test(n) ? "fantasma"
+        : /bts|music|kpop|k-pop/.test(n) ? "musica" : /sanrio|estrella|novedad/.test(n) ? "estrella" : /juego|kawaii|game/.test(n) ? "juego"
+        : /papel|cuaderno|libreta/.test(n) ? "cuaderno" : /lapic|boligraf|pluma/.test(n) ? "lapiz" : /beauty|belleza|maquill|labial/.test(n) ? "belleza"
+        : /happy|box|regalo|sorpresa/.test(n) ? "regalo" : /accesor|lazo|mon|joya/.test(n) ? "lazo" : /peluch|oso|muñec/.test(n) ? "oso" : "corazon";
+      return `<svg viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
+    };
+    const d = document.createElement("div"); d.className = "menu-drop";
+    d.innerHTML = `<button type="button" class="menu-tienda" aria-expanded="false">Tienda <span>▾</span></button>
+      <div class="mega${SC ? "" : " sin-promo"}">
+        ${pers.length ? `<div class="mega-col"><h4>Por personaje</h4>${pers.map(c => `<a href="#/catalogo/${c.id}"><i>${iconoMenu(c.nombre)}</i>${esc(c.nombre)}</a>`).join("")}</div>` : ""}
+        <div class="mega-col"><h4>Por categoría</h4>${(categ.length ? categ : CATS).map(c => `<a href="#/catalogo/${c.id}"><i>${iconoMenu(c.nombre)}</i>${esc(c.nombre)}</a>`).join("")}</div>
+        <div class="mega-pie"><a href="#/novedades">Novedades →</a><a href="#/todo">Ver todo →</a></div>
+        ${SC ? `<a class="mega-promo" href="#/scoops">${(SC.opciones || []).find(o => o.imagen) ? `<img src="${esc(SC.opciones.find(o => o.imagen).imagen)}" alt="">` : ""}<span>Arma tu Scoop</span><small>Armar ahora</small></a>` : ""}
+      </div>`;
+    cat.replaceWith(d);
+    const b = d.querySelector(".menu-tienda");
+    b.onclick = e => { e.stopPropagation(); const a = d.classList.toggle("abierto"); b.setAttribute("aria-expanded", a); };
+    d.querySelector(".mega").addEventListener("click", e => { if (e.target.closest("a")) d.classList.remove("abierto"); });
+    document.addEventListener("click", e => { if (!d.contains(e.target)) d.classList.remove("abierto"); });
+  })();
+
+  // ---------- Cintas de texto en movimiento ----------
+  const CINTA = (Array.isArray(T.cinta) && T.cinta.filter(Boolean).length ? T.cinta : String(T.franja || "").split("·")).map(x => x.trim()).filter(Boolean);
+  const cinta = (clase = "") => CINTA.length ? `<div class="cinta ${clase}" aria-label="${esc(CINTA.join(" · "))}"><div class="cinta-pista">${
+    Array(2).fill(`<span class="cinta-grupo">${Array(3).fill(CINTA.map(x => `<span>${esc(x)}</span><i>✦</i>`).join("")).join("")}</span>`).join("")}</div></div>` : "";
+
+  // ---------- TikTok ----------
+  const ttUser = (T.tiktok || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+  const ttVideos = (T.tiktokVideos || []).map(u => (String(u).match(/video\/(\d+)/) || String(u).match(/^(\d{10,})$/) || [])[1]).filter(Boolean).slice(0, 6);
+  const seccionTikTok = () => !ttUser ? "" : `<section class="seccion tiktok">
+      <div class="tk-cab"><h2>¡Míranos en TikTok!</h2><p>Unboxings, scoops y novedades todas las semanas</p></div>
+      ${ttVideos.length ? `<div class="tk-grid">${ttVideos.map((id, i) => `<a class="tk-card" data-id="${id}" href="https://www.tiktok.com/@${esc(ttUser)}/video/${id}" target="_blank" rel="noopener" aria-label="Ver video ${i + 1} en TikTok"><span class="tk-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></a>`).join("")}</div>`
+        : `<a class="tk-perfil-card" href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener"><img src="cani-charla.webp" alt=""><div><b>@${esc(ttUser)}</b><span>Mira cómo armamos los scoops y todas las novedades</span></div><span class="tk-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></a>`}
+      <div style="text-align:center;margin-top:20px"><a class="btn btn-tk" href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener">Seguir a @${esc(ttUser)} en TikTok</a></div>
+    </section>`;
+  { const bt = $("#btn-tiktok"); if (bt && ttUser) { bt.href = `https://www.tiktok.com/@${ttUser}`; bt.hidden = false; }
+    const bi = $("#btn-insta"); if (bi && T.instagram) { bi.href = T.instagram; bi.hidden = false; }
+    const ps = document.querySelector(".pie-scoops"); if (ps && SC) ps.hidden = false; }
+  // Miniaturas de los videos (si TikTok no responde, queda la tarjeta rosa con el botón de play)
+  const cargarTikTok = () => document.querySelectorAll(".tk-card[data-id]").forEach(a => {
+    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(a.href)}`).then(r => r.ok ? r.json() : null).then(d => { if (d && d.thumbnail_url) { a.style.backgroundImage = `url("${d.thumbnail_url}")`; a.classList.add("con-foto"); } }).catch(() => {});
+  });
+
+  // ---------- Quiz "¿Qué personaje eres?" ----------
+  const QUIZ = {
+    preguntas: [
+      { p: "¿Cuál es tu plan ideal de fin de semana?", r: [["Pijamada con mis amigas 💕", "my-melody"], ["Algo misterioso y un poco rebelde 🖤", "kuromi"], ["Dormir hasta tarde y comer postrecitos 🍮", "pompompurin"], ["Salir a pasear y jugar al aire libre ⚽", "pochacco"], ["Un cafecito tranquilo mirando las nubes ☁️", "cinnamoroll"], ["Organizar una fiesta de té perfecta 🎀", "hello-kitty"]] },
+      { p: "Elige un snack:", r: [["Pastel de fresa 🍓", "my-melody"], ["Chocolate amargo 🍫", "kuromi"], ["Flan con caramelo 🍮", "pompompurin"], ["Helado de banana 🍌", "pochacco"], ["Rollo de canela 🥐", "cinnamoroll"], ["Galletas de mantequilla 🍪", "hello-kitty"]] },
+      { p: "¿Qué no puede faltar en tu mochila?", r: [["Un labial rosadito 💄", "my-melody"], ["Stickers de calaveritas 💀", "kuromi"], ["Una almohadita para siestas 😴", "pompompurin"], ["Mis audífonos para bailar 🎧", "pochacco"], ["Una libreta para soñar ✨", "cinnamoroll"], ["Mi agenda súper organizada 📒", "hello-kitty"]] }
+    ],
+    res: {
+      "my-melody": ["My Melody", "🐰", "Dulce, amable y siempre con una sonrisa. Tus amigas saben que pueden contar contigo para todo. 💗"],
+      "kuromi": ["Kuromi", "🖤", "Un poquito traviesa, súper auténtica y con un corazón enorme escondido bajo tu estilo único. 💜"],
+      "pompompurin": ["Pompompurin", "🍮", "Relajada, tierna y amante de las cosas simples (y de los snacks). ¡La mejor compañía! 💛"],
+      "pochacco": ["Pochacco", "⚽", "Llena de energía, curiosa y siempre lista para una aventura nueva. 🖤🤍"],
+      "cinnamoroll": ["Cinnamoroll", "☁️", "Soñadora, tranquila y un poquito tímida, pero todos aman tu buena vibra. 💙"],
+      "hello-kitty": ["Hello Kitty", "🎀", "Clásica, cariñosa y la amiga que siempre recuerda los cumpleaños. ¡Un ícono! ❤️"]
+    }
+  };
+  function abrirQuiz(forzar) {
+    if (!T.quiz || T.quiz.activo === false) { if (!forzar) return; }
+    let paso = 0; const votos = {};
+    const cap = document.createElement("div"); cap.className = "quiz-velo";
+    const cerrar = () => { cap.classList.remove("ver"); setTimeout(() => cap.remove(), 250); try { localStorage.setItem("quiz-visto", "1"); } catch (e) {} };
+    const pintar = () => {
+      const caja = cap.querySelector(".quiz-caja");
+      if (paso < 0) {
+        caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
+          <div class="quiz-emo">${T.logo ? `<img src="${esc(T.logo)}" alt="" style="height:70px;margin:0 auto">` : ""}</div><h2>${esc((T.quiz && T.quiz.titulo) || "¿Qué personaje kawaii eres?")}</h2>
+          <p>Responde 3 preguntitas y descubre tu personaje… ¡y sus productos! ✨</p>
+          <button class="btn quiz-go">¡Vamos! 👀</button><button class="quiz-no">Ahora no</button>`;
+      } else if (paso < QUIZ.preguntas.length) {
+        const q = QUIZ.preguntas[paso];
+        caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
+          <div class="quiz-prog">${QUIZ.preguntas.map((_, i) => `<i class="${i <= paso ? "on" : ""}"></i>`).join("")}</div>
+          <h2>${esc(q.p)}</h2><div class="quiz-ops">${q.r.map(([t, k]) => `<button data-k="${k}">${esc(t)}</button>`).join("")}</div>`;
+      } else {
+        const gana = Object.entries(votos).sort((a, b) => b[1] - a[1])[0][0];
+        const [nom, emo, txt] = QUIZ.res[gana], c = CATS.find(x => x.id === gana) || CATS.find(x => x.id === "sanrio");
+        caja.innerHTML = `<button class="quiz-x" aria-label="Cerrar">✕</button>
+          <div class="quiz-res">${c && c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-letra">${esc(inicial(nom))}</span>`}</div>
+          <p class="quiz-eres">Tu personaje es…</p><h2>¡${esc(nom)}! ${emo}</h2><p>${esc(txt)}</p>
+          ${c ? `<a class="btn" href="#/catalogo/${c.id}" data-cerrar>Ver productos de ${esc(nom)}</a>` : `<a class="btn" href="#/catalogo" data-cerrar>Ver la tienda</a>`}
+          <button class="quiz-no" data-otra>Hacerlo otra vez</button>`;
+      }
+    };
+    cap.innerHTML = `<div class="quiz-caja" role="dialog" aria-modal="true"></div>`;
+    document.body.appendChild(cap); paso = -1; pintar(); requestAnimationFrame(() => cap.classList.add("ver"));
+    cap.addEventListener("click", e => {
+      const b = e.target.closest("button,a");
+      if (e.target === cap || (b && (b.classList.contains("quiz-x") || (b.classList.contains("quiz-no") && !b.dataset.otra)))) return cerrar();
+      if (!b) return;
+      if (b.classList.contains("quiz-go")) { paso = 0; pintar(); }
+      else if (b.dataset.k) { votos[b.dataset.k] = (votos[b.dataset.k] || 0) + 1 + (paso === 0 ? 0.1 : 0); paso++; pintar(); }
+      else if (b.dataset.otra) { paso = 0; for (const k in votos) delete votos[k]; pintar(); }
+      else if (b.dataset.cerrar !== undefined) cerrar();
+    });
+  }
+  window.abrirQuiz = abrirQuiz;
+  try { if (T.quiz && T.quiz.activo && !localStorage.getItem("quiz-visto")) setTimeout(() => { if (!document.querySelector(".quiz-velo") && !location.hash.includes("scoops")) abrirQuiz(); }, 2500); } catch (e) {}
+
+  const COLOR_HEX = { rosa: "#f7a1c4", lila: "#c9a7f0", celeste: "#9fd4f5", verde: "#9fe0b4", "verde menta": "#a8ecd0", amarillo: "#ffe27a",
+    blanco: "#ffffff", negro: "#2b2b2b", naranja: "#ffb27a", rojo: "#f26b6b", morado: "#a77bdb", azul: "#7fa8f0",
+    pastel: "linear-gradient(135deg,#f7a1c4,#c9a7f0,#9fd4f5)", multicolor: "linear-gradient(135deg,#f26b6b,#ffe27a,#9fe0b4,#9fd4f5,#c9a7f0)" };
+  const hexDe = c => COLOR_HEX[(c || "").toLowerCase().trim()] || "#f9dbe4";
+  // Fuentes "escritas a mano" para la carta impresa
+  const FUENTES_CARTA = { "Caveat": 1.25, "Patrick Hand": 1, "Gochi Hand": 1, "Indie Flower": 1, "Mali": .88, "Dancing Script": 1.22 };
+  function cargarFuenteCarta(f) {
+    if (document.querySelector(`link[data-carta="${f}"]`)) return;
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.dataset.carta = f;
+    l.href = `https://fonts.googleapis.com/css2?family=${f.replace(/ /g, "+")}${/Caveat|Mali|Dancing/.test(f) ? ":wght@400;600" : ""}&display=swap`;
+    document.head.appendChild(l);
+  }
+  const cartaHTML = (txt, f) => `<div class="carta-prev" style="--fc:'${f}';--fz:${FUENTES_CARTA[f] || 1}"><img src="carta-marco.webp" alt=""><div class="carta-txt">${esc(txt) || '<span class="carta-ph">Aquí aparecerá tu mensaje…</span>'}</div></div>`;
+
+  // Comunicado de entregas (editable en Mi tienda → Entregas)
+  const AVISO_ENT_DEF = "La entrega es de 2 a 3 días una vez confirmado el pago de tu pedido.\nLos miércoles y sábados realizamos envíos a otros departamentos y provincias.";
+  // En el carrito (productos de la tienda) la entrega se coordina por WhatsApp; los 2-3 días son solo para Scoops
+  const AVISO_CARRITO_DEF = "La entrega de tu pedido la coordinamos contigo por WhatsApp.\nLos miércoles y sábados realizamos envíos a otros departamentos y provincias.";
+  const avisoEntrega = (txt) => { const t = String(txt || T.avisoEntrega || AVISO_ENT_DEF).trim(); return t ? `<div class="aviso-ent" role="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg><div><b>Importante</b>${t.split("\n").filter(x => x.trim()).map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""; };
+
+  function scoops() {
+    if (!SC) { app.innerHTML = `<section class="seccion"><h2>Scoops</h2><p class="texto">Muy pronto 💕</p></section>`; return; }
+    const ops = (SC.opciones || []).filter(o => o.nombre && +o.precio > 0);
+    const CAJAS = (Array.isArray(SC.cajas) && SC.cajas.filter(c => c && c.nombre).length ? SC.cajas.filter(c => c && c.nombre)
+      : [{ nombre: "Caja blanca", precio: 0, detalle: "Sin costo adicional", imagen: "" }, { nombre: "Caja especial", precio: 5, detalle: "", imagen: "" }]);
+    const st = { op: null, cant: 1, colores: [], personajes: [], video: false, archivo: null, caja: 0, carta: false };
+    const minC = +SC.minColores || 2, minP = +SC.minPersonajes || 2, pv = +SC.precioVideo || 0;
+    const pc = SC.precioCarta === undefined || SC.precioCarta === "" ? 4 : +SC.precioCarta || 0, cartaOn = SC.carta !== false;
+    const fuenteCarta = FUENTES_CARTA[SC.fuenteCarta] ? SC.fuenteCarta : "Caveat";
+    if (cartaOn) cargarFuenteCarta(fuenteCarta);
+    const ENT = (T.entregas || []).filter(Boolean);
+    app.innerHTML = `<div class="sc-wrap">
+      <section class="sc-hero">
+        <h1>${esc(SC.titulo || "Arma tu Scoop")}</h1>
+        <p>${esc(SC.intro || "Elige tu scoop, tus colores y personajes favoritos, ¡y nosotras lo armamos para ti!")}</p>
+      </section>
+      <form id="sc-form" class="sc-form" novalidate>
+        <section class="sc-paso scp-info-paso"><div class="sc-num">0</div><div class="sc-cont">
+          <h2>¿Qué es un Lucky Scoop?</h2>
+          <div class="scp-info">
+            <div class="lucky-anim" aria-hidden="true">
+              <img class="la-taza" src="taza-cani.webp" alt="">
+              <img class="la-perla" src="perla.webp" alt="">
+              <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <img class="la-premio la-p1" src="llavero.webp" alt="">
+              <img class="la-premio la-p2" src="libreta.webp" alt="">
+            </div>
+            <ul class="scp-filas">
+              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M9 9.500a3.500 3.500 0 0 1 3-1.500"/></svg></span><div><b>Sacamos piedritas de una taza</b><small>Al azar.</small></div></li>
+              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.500"/><path d="M3 6.500h18V9H3zM12 6.500V20"/></svg></span><div><b>Cada piedrita es un producto</b><small>Lo que te toca es lo que llega a tu caja.</small></div></li>
+              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2.500"/><path d="M16 10.500l5-3v9l-5-3z"/></svg></span><div><b>Todo se hace por video</b><small>Así ves cada piedrita que sale.</small></div></li>
+            </ul>
+          </div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">1</div><div class="sc-cont">
+          <h2>Elige tu scoop</h2>
+          <div class="sc-ops">${ops.map((o, i) => `<label class="sc-op">
+            <input type="radio" name="op" value="${i}">
+            <span class="sc-op-in">${o.imagen ? `<img src="${esc(o.imagen)}" alt="">` : `<span class="sc-op-emoji circ-letra">${esc(inicial(o.nombre))}</span>`}
+              <b>${esc(o.nombre)}</b><em>${bs(+o.precio)}</em>${o.detalle ? `<small>${esc(o.detalle)}</small>` : ""}</span></label>`).join("")}</div>
+          <div id="sc-contenido"></div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">2</div><div class="sc-cont">
+          <h2>Colores de preferencia <small>(elige mínimo ${minC})</small></h2>
+          <div class="sc-chips" data-grupo="colores">${(SC.colores || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}"><i style="background:${hexDe(c)}"></i>${esc(c)}</button>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">3</div><div class="sc-cont">
+          <h2>Personajes de preferencia <small>(elige mínimo ${minP})</small></h2>
+          <div class="sc-chips" data-grupo="personajes">${(SC.personajes || []).map(c => `<button type="button" class="sc-chip" data-v="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">4</div><div class="sc-cont">
+          <h2>Escoge tu caja</h2>
+          <div class="sc-cajas">${CAJAS.map((c, i) => `<label class="sc-caja">
+            <input type="radio" name="caja" value="${i}" ${i === 0 ? "checked" : ""}>
+            <span class="sc-caja-in">${c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="sc-caja-ph"><svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/></svg></span>`}
+              <b>${esc(c.nombre)}</b><em>${+c.precio > 0 ? `+${bs(+c.precio)}` : "Sin costo adicional"}</em>${c.detalle && +c.precio > 0 ? `<small>${esc(c.detalle)}</small>` : ""}</span></label>`).join("")}</div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">5</div><div class="sc-cont">
+          <h2>Video de tu Scoop</h2>
+          ${pv ? `<label class="sc-video"><input type="checkbox" id="sc-video"><span><b>¡Sí, quiero el video! +${bs(pv)}</b><small>Grabamos cómo armamos tu scoop y te etiquetamos en TikTok</small></span></label>` : ""}
+          <div class="form"><input name="tiktok" placeholder="Tu usuario de TikTok (para etiquetarte) — ej: @tuusuario"></div>
+        </div></section>
+
+        ${cartaOn ? `<section class="sc-paso"><div class="sc-num">6</div><div class="sc-cont">
+          <h2>Carta personalizada</h2>
+          <label class="sc-video"><input type="checkbox" id="sc-carta"><span><b>¡Sí, quiero una carta! ${pc ? `+${bs(pc)}` : "Sin costo"}</b><small>Escribe tu mensaje y lo <b>imprimimos</b> en esta cartita para ponerlo dentro de tu Scoop</small></span></label>
+          <div class="carta-box" id="carta-box" hidden>
+            <div id="carta-vista">${cartaHTML("", fuenteCarta)}</div>
+            <div class="form"><textarea name="carta" id="carta-txt" rows="4" maxlength="280" placeholder="Ej: Para Sofi: ¡Feliz cumple! Espero que te encante. Con cariño, Laura"></textarea></div>
+            <p class="carta-nota"><span id="carta-cuenta">0</span>/280 · Así se verá tu carta <b>impresa</b>. Revisa bien lo que escribes: la imprimimos tal cual.</p>
+          </div>
+        </div></section>` : ""}
+
+        <section class="sc-paso"><div class="sc-num">${cartaOn ? 7 : 6}</div><div class="sc-cont">
+          <h2>Tus datos</h2>
+          <div class="form sc-datos">
+            <input name="nombre" placeholder="Tu nombre (quien hace el pedido)" required>
+            <label class="sc-para"><input type="checkbox" id="sc-para-mi" checked> El scoop es para mí</label>
+            <input name="recibe" placeholder="Nombre de quien recibe la caja" autocomplete="off" maxlength="80" hidden>
+            <input name="telefono" type="tel" inputmode="tel" placeholder="Tu WhatsApp (ej: 71234567)" required>
+            ${ENT.length ? `<select name="entrega" required><option value="" disabled selected>¿Cómo quieres recibirlo?</option>${ENT.map(x => `<option>${esc(x)}</option>`).join("")}</select>` : ""}
+            ${envioHTML()}
+            <input name="ciudad" placeholder="Ciudad" required>
+            <input name="direccion" placeholder="Dirección de entrega" data-req="1" required>
+            <div class="ubi">
+              <button type="button" class="ubi-btn" id="sc-ubi-btn">📍 Usar mi ubicación actual</button>
+              <input name="ubicacion" type="url" inputmode="url" placeholder="o pega el link de Google Maps (opcional)" autocomplete="off">
+              <small class="ubi-msg" id="sc-ubi-msg">Así el repartidor llega directo a tu puerta.</small>
+            </div>
+          </div>
+        </div></section>
+
+        <section class="sc-paso"><div class="sc-num">${cartaOn ? 8 : 7}</div><div class="sc-cont">
+          <h2>Pago por QR</h2>
+          <div class="sc-pago">
+            <div>
+              <div class="sc-total"><span>Total a pagar</span><b id="sc-total">—</b></div>
+              <p class="nota">Cuando envíes tu pedido se abre WhatsApp: pídenos ahí tu <b>QR de pago</b> y te lo mandamos al toque. Tu Scoop se arma una vez confirmado el pago.</p>
+            </div>
+          </div>
+        </div></section>
+
+        ${avisoEntrega()}
+        <p class="sc-aviso">${esc(SC.nota || "Haremos todo lo posible para que tu Scoop incluya los colores y personajes que elegiste, siempre sujeto a disponibilidad.")}</p>
+        <div class="sc-enviar"><div><small>Total</small><b id="sc-total2">—</b></div><button class="btn btn-wa" type="submit" id="sc-btn">Enviar mi pedido</button></div>
+      </form></div>`;
+
+    const F = $("#sc-form");
+    const total = () => st.op === null ? 0 : (+ops[st.op].precio) + (st.video ? pv : 0) + (+(CAJAS[st.caja] || {}).precio || 0) + (st.carta ? pc : 0);
+    const pintarTotal = () => { const t = st.op === null ? "—" : bs(total()); $("#sc-total").textContent = $("#sc-total2").textContent = t; };
+    F.addEventListener("input", e => {
+      if (e.target.id !== "carta-txt") return;
+      const t = e.target.value;
+      $("#carta-cuenta").textContent = t.length;
+      $("#carta-vista .carta-txt").innerHTML = esc(t) || '<span class="carta-ph">Aquí aparecerá tu mensaje…</span>';
+      ajustarCarta();
+    });
+    const ajustarCarta = () => { const el = $("#carta-vista .carta-txt"); if (!el) return; el.style.setProperty("--k", 1); let k = 1; while (el.scrollHeight > el.clientHeight + 1 && k > .5) { k -= .05; el.style.setProperty("--k", k); } };
+    F.addEventListener("change", e => {
+      if (e.target.name === "op") {
+        st.op = +e.target.value;
+        const o = ops[st.op];
+        $("#sc-contenido").innerHTML = o.contenido ? `<div class="sc-incluye"><b>Incluye:</b><ul>${o.contenido.split("\n").filter(Boolean).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+      }
+      if (e.target.name === "caja") st.caja = +e.target.value;
+      if (e.target.id === "sc-video") st.video = e.target.checked;
+      if (e.target.id === "sc-carta") { st.carta = e.target.checked; $("#carta-box").hidden = !st.carta; if (st.carta) setTimeout(() => $("#carta-txt").focus(), 50); }
+      if (e.target.name === "entrega") ajustarEntrega(F);
+      pintarTotal();
+    });
+    F.addEventListener("click", e => {
+      const b = e.target.closest(".sc-chip"); if (!b) return;
+      const arr = st[b.parentElement.dataset.grupo], v = b.dataset.v, i = arr.indexOf(v);
+      i >= 0 ? arr.splice(i, 1) : arr.push(v); b.classList.toggle("on", i < 0);
+    });
+    const ir = sel => F.querySelector(sel).scrollIntoView({ behavior: "smooth", block: "center" });
+    F.addEventListener("click", e => {
+      if (e.target.id !== "sc-ubi-btn") return;
+      const msg = F.querySelector("#sc-ubi-msg"), inp = F.querySelector("[name=ubicacion]");
+      if (!navigator.geolocation) { msg.textContent = "Tu celular no permite obtener la ubicación. Pega el link de Google Maps."; return; }
+      msg.textContent = "Buscando tu ubicación… (acepta el permiso)";
+      navigator.geolocation.getCurrentPosition(
+        pos => { inp.value = `https://www.google.com/maps?q=${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`; msg.textContent = "✔ Ubicación agregada. Revisa que la dirección de arriba esté bien."; },
+        () => { msg.textContent = "No pude obtener tu ubicación. Abre Google Maps, comparte tu ubicación y pega el link aquí."; },
+        { enableHighAccuracy: true, timeout: 12000 });
+    });
+    F.addEventListener("change", e => {
+      if (e.target.id !== "sc-para-mi") return;
+      const r = F.querySelector("[name=recibe]"); r.hidden = e.target.checked; r.required = !e.target.checked;
+      if (e.target.checked) r.value = ""; else r.focus();
+    });
+    F.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (st.op === null) { toast("Elige tu scoop"); return ir(".sc-ops"); }
+      if (st.colores.length < minC) { toast(`Elige mínimo ${minC} colores`); return ir("[data-grupo=colores]"); }
+      if (st.personajes.length < minP) { toast(`Elige mínimo ${minP} personajes`); return ir("[data-grupo=personajes]"); }
+      if (st.carta && !($("#carta-txt").value || "").trim()) { toast("Escribe el mensaje de tu carta"); return ir("#carta-txt"); }
+      if (!F.reportValidity()) return;
+      const f = new FormData(F), btn = $("#sc-btn"); btn.disabled = true; btn.textContent = "Enviando…";
+      const recibe = F.querySelector("#sc-para-mi").checked ? "" : (f.get("recibe") || "").trim();
+      const ubi = (f.get("ubicacion") || "").trim();
+      const ventana = window.open("", "_blank");
+      const base = SB.url ? SB.url.replace(/\/$/, "") : "", H = { apikey: SB.key, Authorization: `Bearer ${SB.key}` };
+      let comp = null, numero = null; const envio = datosEnvio(f);
+      try {
+        if (base) {
+          const r = await fetch(`${base}/rest/v1/rpc/crear_pedido`, { method: "POST", headers: { ...H, "Content-Type": "application/json" },
+            body: JSON.stringify({ p: { cliente: f.get("nombre"), telefono: f.get("telefono"), ciudad: envio.ciudad, direccion: envio.direccion + (ubi ? ` · Mapa: ${ubi}` : ""),
+              entrega: f.get("entrega") || "", comprobante: comp,
+              scoop: { opcion: ops[st.op].nombre, cant: 1, caja: (CAJAS[st.caja] || {}).nombre || "", video: st.video, colores: st.colores, personajes: st.personajes, tiktok: f.get("tiktok") || "", recibe,
+                carta: st.carta, carta_texto: st.carta ? (f.get("carta") || "").trim() : "" } } }) });
+          if (r.ok) numero = await r.json();
+        }
+      } catch (err) { console.warn(err); }
+      const vale = await lineaVale(f.get("telefono"));
+      const o = ops[st.op];
+      const caja = CAJAS[st.caja] || {}, tk = (f.get("tiktok") || "").trim();
+      const msg = ["🌸 *NUEVO PEDIDO · LUCKY SCOOP* 🌸", numero ? `Pedido #${numero}` : null, "",
+        "👤 *Mis datos*", `Nombre: ${f.get("nombre")}`, recibe ? `🎁 El scoop es para: ${recibe}` : null, `WhatsApp: ${f.get("telefono")}`, tk ? `TikTok: ${tk.startsWith("@") ? tk : "@" + tk}` : null, "",
+        "🛍️ *Mi Scoop*", `• ${o.nombre} — ${bs(+o.precio)}`,
+        `• ${caja.nombre || "Caja blanca"} — ${+caja.precio > 0 ? bs(+caja.precio) : "sin costo"}`,
+        st.video ? `• Video del armado — ${bs(pv)}` : null,
+        st.carta ? `• Carta personalizada impresa — ${pc ? bs(pc) : "sin costo"}` : null, "",
+        st.carta ? "💌 *Mi carta*" : null, st.carta ? `"${(f.get("carta") || "").trim()}"` : null, st.carta ? "" : null,
+        "🎨 *Mis preferencias*", `Colores: ${st.colores.join(", ")}`, `Personajes: ${st.personajes.join(", ")}`, "",
+        "🚚 *Entrega*", ...envio.lineas, ubi ? `📍 Ubicación: ${ubi}` : null, "",
+        `💰 *TOTAL: ${bs(total())}*`, vale ? vale : null, "",
+        "¿Me envían el QR para realizar el pago? ¡Gracias! 💕"].filter(x => x !== null).join("\n");
+      const url = waURL(msg);
+      if (ventana && !ventana.closed) ventana.location.href = url; else location.href = url;
+      btn.disabled = false; btn.textContent = "Enviar mi pedido";
+      if (numero) { app.innerHTML = `<section class="seccion sc-gracias"><div class="banner">
+          ${o.imagen ? `<img src="${esc(o.imagen)}" alt="" style="width:180px;margin:0 auto 10px">` : ""}
+          <h2>¡Recibimos tu Scoop!</h2><p>Tu pedido es el <b>#${numero}</b>. Pídenos tu QR de pago por WhatsApp. Te escribimos pronto para coordinar la entrega.</p>
+          <a class="btn" href="#/">Volver a la tienda</a></div></section>`; window.scrollTo(0, 0); }
+    });
+    pintarTotal();
+
+    // ---- Paso a paso estilo app (inspirado en Duolingo): Cani habla, botones con relieve, ánimo al avanzar ----
+    const pasos = [...F.querySelectorAll(".sc-paso")], N = pasos.length, extras = [...F.querySelectorAll(".aviso-ent, .sc-aviso")];
+    let paso = 0, ocupado = false;
+    const ESTRELLA = "estrella-rosa.svg";
+    const ICO_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    const frase = p => p.querySelector(".scp-info") ? "¡Hola! Soy Cani. Así funciona un Lucky Scoop:"
+      : p.querySelector("[name=op]") ? "¿Qué scoop quieres hoy?"
+      : p.querySelector("[data-grupo=colores]") ? `¿Qué colores te gustan más? Elige al menos ${minC}.`
+      : p.querySelector("[data-grupo=personajes]") ? `¡Ahora tus personajes favoritos! Elige al menos ${minP}.`
+      : p.querySelector("[name=caja]") ? "¿En qué cajita te lo enviamos?"
+      : p.querySelector("[name=tiktok]") ? "¿Grabamos cómo armamos tu Scoop? Te etiquetamos en TikTok."
+      : p.querySelector("#sc-carta") ? "Escribe un mensajito y lo imprimimos sin costo."
+      : p.querySelector("[name=nombre]") ? "¡Casi listo! ¿A quién se lo enviamos?"
+      : "¡Tu Scoop está listo! Envíanos tu pedido y te pasamos el QR por WhatsApp.";
+    const ANIMOS = [["¡Qué lindo!", "Cani aprueba tu elección"], ["¡Buena elección!", "Vas súper bien"], ["¡Me encanta!", "Tu Scoop va quedando precioso"], ["¡Perfecto!", "Sigamos"], ["¡Genial!", "Ya casi terminamos"], ["¡Listo!", "Solo un pasito más"]];
+    // Avisos finales en una sola tarjeta ordenada (entrega + disponibilidad)
+    {
+      const ent = F.querySelector(".aviso-ent"), dis = F.querySelector(".sc-aviso");
+      const pn = pasos[N - 1].querySelector(".sc-pago .nota"), pagoNota = pn ? pn.innerHTML : ""; pn && pn.remove();
+      const lineas = ent ? [...ent.querySelectorAll("p")].map(x => x.textContent) : [], nota = dis ? dis.textContent.trim() : "";
+      if (pagoNota || lineas.length || nota) pasos[N - 1].querySelector(".sc-cont").insertAdjacentHTML("beforeend", `<div class="scd-notas">
+        <b class="scd-notas-tit">Antes de enviar</b>
+        ${pagoNota ? `<div class="scd-nota"><span class="scd-nota-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg></span><div><b>Pago</b><p>${pagoNota}</p></div></div>` : ""}
+        ${lineas.length ? `<div class="scd-nota"><span class="scd-nota-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.7"/><circle cx="17" cy="17.5" r="1.7"/></svg></span><div><b>Entrega</b>${lineas.map(x => `<p>${esc(x)}</p>`).join("")}</div></div>` : ""}
+        ${nota ? `<div class="scd-nota"><span class="scd-nota-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><div><b>Tu selección</b><p>${esc(nota)}</p></div></div>` : ""}
+      </div>`);
+      ent && ent.remove(); dis && dis.remove(); extras.length = 0;
+    }
+    // Video y carta: dos tarjetas para elegir (Sí / No) en vez de una casilla
+    const elegido = {};
+    const NO_TXT = { video: "Prefiero la sorpresa sin video", carta: "Prefiero que vaya sin carta" };
+    const NO_ANIMO = { video: ["¡Está súper!", "Igual lo armamos con mucho amor"], carta: ["¡Está súper!", "Tu Scoop va igual de lindo"] };
+    [["video", "#sc-video"], ["carta", "#sc-carta"]].forEach(([k, sel]) => {
+      const cb = F.querySelector(sel); if (!cb) return;
+      const lab = cb.closest("label"), si = (lab.querySelector("b") || {}).textContent || "Sí", det = lab.querySelector("small"), precio = (si.match(/\+Bs[\s\d.,]+/) || [""])[0].trim();
+      lab.hidden = true;
+      lab.insertAdjacentHTML("afterend", `<div class="scd-sino" data-k="${k}">
+        <button type="button" class="scd-op" data-v="1"><span class="scd-op-tx"><b>${esc(si.replace(precio, "").trim())}</b>${det ? `<small>${det.innerHTML}</small>` : ""}</span>${precio ? `<em>${esc(precio)}</em>` : ""}<i class="scd-op-chk"></i></button>
+        <button type="button" class="scd-op" data-v="0"><span class="scd-op-tx"><b>${NO_TXT[k]}</b></span><i class="scd-op-chk"></i></button></div>`);
+      if (k === "video") { const tk = F.querySelector("[name=tiktok]"); if (tk) tk.closest(".form").hidden = true; }
+    });
+    F.addEventListener("click", e => {
+      const b = e.target.closest(".scd-op"); if (!b) return;
+      const g = b.parentElement, k = g.dataset.k, si = b.dataset.v === "1";
+      elegido[k] = si;
+      g.querySelectorAll(".scd-op").forEach(x => x.classList.toggle("sel", x === b));
+      b.classList.remove("pum"); void b.offsetWidth; b.classList.add("pum");
+      const cb = F.querySelector(k === "video" ? "#sc-video" : "#sc-carta");
+      if (cb.checked !== si) { cb.checked = si; cb.dispatchEvent(new Event("change", { bubbles: true })); }
+      if (k === "video") { const tk = F.querySelector("[name=tiktok]"); if (tk) tk.closest(".form").hidden = !si; }
+      const globo = g.closest(".sc-paso").querySelector(".scd-globo");
+      if (globo) globo.textContent = si ? (k === "video" ? "¡Genial! Grabaremos cómo armamos tu Scoop." : "¡Qué lindo! Escribe tu mensaje aquí abajo.") : "¡Está súper! Igual lo armamos con mucho amor.";
+    });
+    pasos.forEach((p, i) => {
+      p.querySelector("h2").insertAdjacentHTML("afterend", `<div class="scd-charla"><div class="scd-cani" aria-hidden="true"></div><p class="scd-globo">${esc(frase(p))}</p></div>`);
+      const g = p.querySelector("[data-grupo]"); if (g) g.insertAdjacentHTML("beforebegin", `<p class="scd-cuenta" data-c="${g.dataset.grupo}"></p>`);
+      if (i === N - 1) p.classList.add("scd-final");
+    });
+    F.parentElement.insertAdjacentHTML("afterbegin", `<div class="scd-top">
+      <a class="scd-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+      <div class="scd-barra"><i id="scd-fill"></i><img class="scd-chispa" id="scd-chispa" src="${ESTRELLA}" alt=""></div>
+      <div class="scd-cont"><img src="${ESTRELLA}" alt=""><span id="scd-n">1</span>/${N}</div></div>`);
+    const barra = F.querySelector(".sc-enviar");
+    barra.innerHTML = `<div class="scd-pie">
+      <div class="scd-fb"><span class="scd-fb-ico">${ICO_OK}</span><div><b id="scd-fb-t"></b><span id="scd-fb-s"></span></div></div>
+      <div class="scd-fila">
+        <button type="button" class="scd-atras" id="sc-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="scd-total"><small>Total</small><b id="sc-total2">—</b></div>
+        <button type="button" class="scd-btn" id="sc-seguir"><span>Continuar</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button type="submit" class="scd-btn scd-enviar" id="sc-btn">Enviar mi pedido</button>
+      </div></div>`;
+    pintarTotal();
+    const valido = (k, callado) => {
+      const p = pasos[k], no = t => { if (!callado) toast(t); return false; };
+      if (p.querySelector("[name=op]") && st.op === null) return no("Elige tu scoop");
+      if (p.querySelector("[data-grupo=colores]") && st.colores.length < minC) return no(`Elige mínimo ${minC} colores`);
+      if (p.querySelector("[data-grupo=personajes]") && st.personajes.length < minP) return no(`Elige mínimo ${minP} personajes`);
+      const sino = p.querySelector(".scd-sino"); if (sino && elegido[sino.dataset.k] === undefined) return no("Elige una opción");
+      if (p.querySelector("#sc-carta") && st.carta && !($("#carta-txt").value || "").trim()) { if (!callado) $("#carta-txt").focus(); return no("Escribe el mensaje de tu carta"); }
+      for (const el of p.querySelectorAll("input,select,textarea")) if (!el.hidden && !el.closest("[hidden]") && !el.checkValidity()) { if (!callado) el.reportValidity(); return false; }
+      return true;
+    };
+    const estado = () => {
+      const ok = valido(paso, true);
+      $("#sc-seguir").classList.toggle("apagado", !ok); $("#sc-btn").classList.toggle("apagado", !ok);
+      F.querySelectorAll(".scd-cuenta").forEach(c => { const n = st[c.dataset.c].length, m = c.dataset.c === "colores" ? minC : minP; c.innerHTML = `Elegiste <b>${n}</b> de mínimo ${m}`; });
+    };
+    const fill = $("#scd-fill"), chispa = $("#scd-chispa");
+    const ancho = k => k >= N - 1 ? 100 : (k + .25) / N * 100;
+    const lluvia = () => {
+      const cx = innerWidth / 2, cy = Math.min(220, innerHeight / 3);
+      for (let k = 0; k < 18; k++) {
+        const e = document.createElement("img"), a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 140;
+        e.src = ESTRELLA; e.className = "scd-estrella"; e.alt = "";
+        e.style.cssText = `left:${cx - 13}px;top:${cy}px;--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d}px;--r:${Math.random() * 360}deg`;
+        document.body.appendChild(e); setTimeout(() => e.remove(), 1200);
+      }
+    };
+    const mostrar = (k, dir = 1, anim = true) => {
+      const viejo = pasos[paso]; paso = Math.max(0, Math.min(N - 1, k)); const nuevo = pasos[paso];
+      const poner = () => {
+        pasos.forEach((p, i) => { p.hidden = i !== paso; p.classList.remove("scd-in-der", "scd-in-izq", "scd-out-izq", "scd-out-der"); });
+        extras.forEach(x => x.hidden = paso !== N - 1);
+        if (anim) { void nuevo.offsetWidth; nuevo.classList.add(dir > 0 ? "scd-in-der" : "scd-in-izq"); }
+        $("#scd-n").textContent = paso + 1;
+        fill.style.width = ancho(paso) + "%";
+        $("#sc-atras").style.visibility = paso ? "visible" : "hidden";
+        { const t = F.querySelector(".scd-total"); if (t) t.style.visibility = paso ? "visible" : "hidden"; const sg = $("#sc-seguir span"); if (sg) sg.textContent = paso ? "Continuar" : "Empezar"; }
+        $("#sc-seguir").hidden = paso === N - 1; $("#sc-btn").hidden = paso !== N - 1;
+        window.scrollTo(0, 0);
+        estado();
+        if (anim && paso === N - 1 && dir > 0) lluvia();
+      };
+      if (anim && viejo !== nuevo) { viejo.classList.add(dir > 0 ? "scd-out-izq" : "scd-out-der"); setTimeout(poner, 200); } else poner();
+    };
+    const avanzar = () => {
+      if (ocupado || paso >= N - 1) return;
+      if (!valido(paso)) return;
+      ocupado = true;
+      const sn = pasos[paso].querySelector(".scd-sino");
+      const [t, s] = sn && elegido[sn.dataset.k] === false ? NO_ANIMO[sn.dataset.k] : ANIMOS[paso % ANIMOS.length];
+      $("#scd-fb-t").textContent = t; $("#scd-fb-s").textContent = s;
+      barra.classList.add("scd-ok");
+      const w = (paso + 1) / N * 100; fill.style.width = w + "%";
+      chispa.style.left = w + "%"; chispa.classList.remove("pop"); void chispa.offsetWidth; chispa.classList.add("pop");
+      try { navigator.vibrate && navigator.vibrate(15); } catch (e) {}
+      setTimeout(() => { barra.classList.remove("scd-ok"); ocupado = false; mostrar(paso + 1, 1); }, 850);
+    };
+    $("#sc-seguir").onclick = avanzar;
+    $("#sc-atras").onclick = () => { if (!ocupado) mostrar(paso - 1, -1); };
+    F.addEventListener("click", e => { const b = e.target.closest(".sc-chip"); if (b) { b.classList.remove("pum"); void b.offsetWidth; if (b.classList.contains("on")) b.classList.add("pum"); } setTimeout(estado, 0); });
+    F.addEventListener("input", estado);
+    // ya no avanza solo: la persona confirma con el botón de flecha
+    F.addEventListener("change", estado);
+    mostrar(0, 1, false);
+  }
+
+  // Página Nosotros: el texto de Mi tienda se arma solo en secciones (una línea corta sin punto = título)
+  const NOSOTROS_DEF = `Un poquito sobre Cani Shop ♡
+¡Hola! Somos Cani Shop, una tienda boliviana nacida en Santa Cruz de la Sierra, donde creemos que las pequeñas cosas pueden alegrar un día entero.
+Nos encantan los detalles bonitos, los colores pastel y esas cositas que no sabías que necesitabas, pero que te hacen sonreír al encontrarlas.
+En nuestra tienda encontrarás papelería, accesorios, productos kawaii y personajes que tanto nos gustan, como Sanrio y Snoopy.
+Conoce a Cani
+Cani es nuestro pequeño gatito negro, curioso, juguetón y amante de las cajas. Le encanta descubrir cosas nuevas y encontrar sorpresas en los lugares más inesperados.
+Él representa el espíritu de nuestra tienda: curiosidad, ternura y la emoción de descubrir algo especial.
+Una cajita llena de sorpresas
+Además de nuestros productos individuales, tenemos experiencias como los Lucky Scoops y las Happy Boxes, pensadas para quienes aman las sorpresas y los pequeños detalles.
+De Santa Cruz para toda Bolivia
+Estamos en Santa Cruz de la Sierra y realizamos envíos a todo el país, para que un pedacito del universo de Cani llegue hasta ti.
+Gracias por ser parte de nuestro pequeño mundo. ♡`;
+  const textoNosotros = () => { const t = String(T.nosotros || "").trim(); return t.split("\n").filter(x => x.trim()).length >= 3 ? t : NOSOTROS_DEF; };
+  const esTitulo = l => { const x = l.replace(/[\s♡]+$/, ""); return x.length > 0 && x.length <= 45 && !/[.!?,:;]$/.test(x); };
+  function seccionesNosotros() {
+    const out = []; let cur = null;
+    textoNosotros().split("\n").map(x => x.trim()).filter(Boolean).forEach(l => {
+      if (esTitulo(l)) { cur = { titulo: l, ps: [] }; out.push(cur); }
+      else { if (!cur) { cur = { titulo: "", ps: [] }; out.push(cur); } cur.ps.push(l); }
+    });
+    let cierre = "";
+    const ult = out[out.length - 1];
+    if (ult && ult.ps.length > 1 && /^gracias/i.test(ult.ps[ult.ps.length - 1])) cierre = ult.ps.pop();
+    return { secs: out, cierre };
+  }
+  const resumenNosotros = () => { const { secs } = seccionesNosotros(); return (secs[0] && secs[0].ps[0]) || ""; };
+  // Portada con Cani: título gigante por renglones + objetos flotando que siguen el mouse (inicio y Nosotros)
+  const CANI_OBJ = [
+    { src: "cani-sentado.webp", x: 50, y: 55, s: 62, z: .35, cls: "hc-cani" },
+    { src: "estuche.webp", x: 20, y: 24, s: 30, z: 1.1, r: -16, d: 5.6 },
+    { src: "llavero.webp", x: 82, y: 22, s: 22, z: 1.3, r: 12, d: 6.2, dl: -1 },
+    { src: "estrella-rosa.svg", x: 50, y: 8, s: 10, z: 2, r: -10, d: 4.4 },
+    { src: "estrella-rosa.svg", x: 88, y: 50, s: 8, z: 2.8, r: 14, d: 5, dl: -2.4 },
+    { src: "estrella-rosa.svg", x: 9, y: 55, s: 9, z: 2.4, r: 8, d: 4.6, dl: -1.2 },
+    { src: "estrella-rosa.svg", x: 18, y: 86, s: 7, z: 3, r: -6, d: 4.2, dl: -3 },
+    { src: "estrella-rosa.svg", x: 84, y: 84, s: 8, z: 2.2, r: 18, d: 4.9, dl: -.8 }
+  ];
+  const heroCani = (tag, botones) => `<section class="hc">
+    <div class="hc-txt">
+      <${tag} class="hc-tit"><span class="l"><span>Somos una</span></span><span class="l"><span>tiendita <em>kawaii</em></span></span><span class="l"><span>nacida en</span></span><span class="l"><span>Santa Cruz <span class="hc-cora">♡</span></span></span></${tag}>
+      <p class="hc-sub">Papelería, peluches y cositas que no sabías que necesitabas, de la mano de Cani, nuestro gatito curioso que ama las cajas.</p>
+      <div class="hc-acc">${botones}</div>
+    </div>
+    <div class="hc-esc" aria-hidden="true">${CANI_OBJ.map(o => `<div class="hc-o ${o.cls || ""}" style="width:${o.s}%" data-x="${o.x}" data-y="${o.y}" data-z="${o.z}"><img src="${o.src}" alt="" style="--r:${o.r || 0}deg;--d:${o.d || 5}s;--dl:${o.dl || 0}s"></div>`).join("")}</div>
+  </section>`;
+  function animarCani(alVer) {
+    const root = app.querySelector(".hc"); if (!root) return;
+    const esc = root.querySelector(".hc-esc"), tit = root.querySelector(".hc-tit"), els = [...esc.querySelectorAll(".hc-o")];
+    const fino = matchMedia("(pointer:fine)").matches, quieto = matchMedia("(prefers-reduced-motion:reduce)").matches;
+    let mx = 0, my = 0, cx = 0, cy = 0, toco = false, t0 = performance.now();
+    const ab = new AbortController();
+    // la posición del mouse se mide en toda la pantalla, así todo reacciona aunque no estés encima de Cani
+    const mover = (x, y) => { mx = (x / innerWidth - .5) * 2; my = (y / innerHeight - .5) * 2; toco = true; };
+    addEventListener("pointermove", e => mover(e.clientX, e.clientY), { signal: ab.signal });
+    addEventListener("touchmove", e => { const t = e.touches[0]; if (t) mover(t.clientX, t.clientY); }, { passive: true, signal: ab.signal });
+    const paso = t => {
+      if (!root.isConnected) { ab.abort(); return; }
+      if (!fino && !toco) { const s = (t - t0) / 1000; mx = Math.sin(s * .9) * .8; my = Math.cos(s * .7) * .6; }
+      cx += (mx - cx) * .12; cy += (my - cy) * .12;
+      const w = esc.clientWidth, r = esc.getBoundingClientRect();
+      const sc = Math.max(-1, Math.min(1, (r.top + r.height / 2 - innerHeight / 2) / innerHeight)); // al bajar, cada objeto se desplaza distinto
+      els.forEach(e => { const z = quieto ? 0 : +e.dataset.z;
+        e.style.transform = `translate3d(${+e.dataset.x / 100 * w - e.offsetWidth / 2 + cx * z * 46}px,${+e.dataset.y / 100 * w - e.offsetHeight / 2 + cy * z * 46 + sc * z * 60}px,0) rotate(${cx * z * 7}deg)`; });
+      requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+    if (alVer && "IntersectionObserver" in window) { const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { root.classList.add("ver"); io.disconnect(); } }, { threshold: .25 }); io.observe(root); }
+    else requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("ver")));
+  }
+  function nosotros() {
+    const { secs, cierre } = seccionesNosotros();
+    const [intro, ...resto] = secs;
+    const foto = ((T.historia || {}).imagenes || []).filter(Boolean)[0] || "historia.webp";
+    const ICON = [
+      `<svg viewBox="0 0 48 48"><path d="M10 40V18l6-8 4 7h8l4-7 6 8v22z"/><circle cx="19" cy="26" r="1.6"/><circle cx="29" cy="26" r="1.6"/><path d="M22 31c1.3 1 2.7 1 4 0"/></svg>`,
+      `<svg viewBox="0 0 48 48"><path d="M7 20h34v22H7z"/><path d="M5 13h38v7H5z"/><path d="M24 13v29"/><path d="M24 13c-3-7-12-8-12-2s12 2 12 2c3-7 12-8 12-2s-12 2-12 2"/></svg>`,
+      `<svg viewBox="0 0 48 48"><path d="M4 12h24v20H4z"/><path d="M28 18h9l7 7v7H28z"/><circle cx="12" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>`
+    ];
+    app.innerHTML = `${heroCani("h1", `<a class="btn" href="#/todo">Ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">Arma tu Lucky Scoop</a>` : ""}`)}
+      <section class="seccion nos">
+      <div class="nos-intro nos-intro-txt">
+        <div class="nos-txt">
+          <h2>${esc(intro ? intro.titulo || "Nosotros" : "Nosotros")}</h2>
+          ${(intro ? intro.ps : []).map(p => `<p>${esc(p)}</p>`).join("")}
+        </div>
+      </div>
+      ${resto.length ? `<div class="nos-cards">${resto.map((s, i) => `<article class="nos-card">
+          <span class="nos-ico">${ICON[i % ICON.length]}</span>
+          <h2>${esc(s.titulo)}</h2>${s.ps.map(p => `<p>${esc(p)}</p>`).join("")}</article>`).join("")}</div>` : ""}
+      ${cierre ? `<p class="nos-cierre">${esc(cierre)}</p>` : ""}
+      <div class="nos-acciones"><a class="btn" href="#/todo">Ver la tienda</a>${SC ? `<a class="btn btn-sec" href="#/scoops">Arma tu Lucky Scoop</a>` : ""}</div>
+    </section>`;
+    animarCani(false);
+  }
+  function contacto() {
+    const SVG_WA = `<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.9 1 1-3.8-.2-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.6 3.6 0 0 0-1.1 2.7 6.3 6.3 0 0 0 1.3 3.3 14.4 14.4 0 0 0 5.5 4.9c2 .9 2.9 1 3.9.8a3.3 3.3 0 0 0 2.2-1.5 2.7 2.7 0 0 0 .2-1.5c-.1-.2-.3-.3-.7-.5z"/></svg>`;
+    const ic = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+    const temas = [
+      ["Hacer un pedido", "Hola Cani Shop, quiero hacer un pedido.", '<path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2"/>'],
+      ["Preguntar por un producto", "Hola Cani Shop, tengo una pregunta sobre un producto.", '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'],
+      ["Mi pedido", "Hola Cani Shop, quiero saber cómo va mi pedido.", '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/>'],
+      ["Envíos y pagos", "Hola Cani Shop, quiero saber sobre envíos y formas de pago.", '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18M7 15h3"/>'],
+      ["Punto de retiro", "Hola Cani Shop, quisiera coordinar un retiro.", '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>'],
+      ["Otra consulta", "Hola Cani Shop, quisiera hacerles una consulta.", '<path d="M4 5h16v11H9l-5 4V5z"/><path d="M8.5 10h.01M12 10h.01M15.5 10h.01"/>']
+    ];
+    const sel = selOn();
+    const bloques = [
+      ["Pedidos", '<path d="M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 016 0v2"/>', [
+        ["¿Cómo hago mi pedido?", T.pago || "Armas tu carrito y lo envías por WhatsApp. Te confirmamos stock y el costo de envío, y te pasamos el QR para pagar."],
+        ["¿Qué es un Scoop?", 'Es una forma de comprar armando tu propio Scoop a tu gusto. <a href="#/scoops">Entra a Arma tu Scoop</a> y elige.']
+      ]],
+      ["Pagos", '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10.5h18M7 15h3"/>', [
+        ["¿Cómo pago?", "Pagas con QR. Te lo pasamos por WhatsApp cuando confirmamos tu pedido."],
+        ["¿Cuándo pago?", "Después de que confirmamos el stock y el costo de envío por WhatsApp. Primero te escribimos, luego pagas."]
+      ]],
+      ["Envíos y retiro", '<path d="M3 7l9-4 9 4v10l-9 4-9-4V7zM3 7l9 4 9-4M12 11v10"/>', [
+        ["¿Envían a todo el país?", "Sí, enviamos a toda Bolivia. El costo del envío te lo confirmamos por WhatsApp."],
+        ["¿Tienen punto de retiro?", "Sí. Lo coordinamos contigo por WhatsApp para ponernos de acuerdo en el lugar y la hora."]
+      ]],
+      ...(sel ? [["Sellitos", '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7L12 3z"/>', [
+        ["¿Qué son los sellitos?", `Cada compra de ${bsc(SEL.minimo)} o más te da un sellito. Con ${SEL.meta} sellitos ganas un vale de ${bsc(SEL.vale)}. <a href="#/sellitos">Ver mi tarjeta</a>`],
+        ["¿Cuándo se suma mi sellito?", `Cuando confirmamos tu pago, si tu compra es de ${bsc(SEL.minimo)} o más sin contar el envío.`],
+        ["¿Cómo uso mi vale?", "Se descuenta de tu próximo pedido hecho con el mismo número de WhatsApp. Nos avisa solito al enviarlo."]
+      ]]] : [])
+    ];
+    const igUser = (T.instagram || "").replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+    app.innerHTML = `<section class="ct-pag">
+      <div class="ct-hero"><svg class="ct-sp a" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><svg class="ct-sp b" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><svg class="ct-sp c" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 5.6 4.9 9.6 10.5 10.5-5.6.9-9.6 4.9-10.5 10.5C11.1 16.9 7.1 12.9 1.5 12 7.1 11.1 11.1 7.1 12 1.5z"/></svg><img src="cani-charla.webp" alt=""><div><h1>Ayuda</h1><p class="ct-globo">¿En qué te ayudo?</p></div></div>
+      <div class="ct-hoja">
+        <div class="ct-temas">${temas.map(([t, m, d], i) => `<a class="ct-tema c${i % 3}" href="${waURL(m)}" target="_blank" rel="noopener"><span class="ct-ico">${ic(d)}</span><b>${esc(t)}</b></a>`).join("")}</div>
+        <p class="ct-aviso">Cada botón abre WhatsApp con el mensaje ya escrito. Solo das enviar.</p>
+        <h2 class="ct-tit">Preguntas frecuentes</h2>
+        <label class="ct-busca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="ct-q" type="search" placeholder="Busca tu duda, por ejemplo: pago" autocomplete="off"></label>
+        <div id="ct-faq">${bloques.map(([nom, d, qs]) => `<div class="ct-bloque"><h3><span class="ct-ico">${ic(d)}</span>${esc(nom)}</h3><div class="ct-faq">${qs.map(([q, r]) => `<details><summary>${esc(q)}</summary><p>${r}</p></details>`).join("")}</div></div>`).join("")}</div>
+        <p class="ct-nada" id="ct-nada" hidden>No encontré esa pregunta. Escríbenos y te ayudamos.</p>
+        <div class="ct-cierre"><a class="btn btn-wa ct-wa" href="${waURL("Hola Cani Shop, quisiera hacerles una consulta.")}" target="_blank" rel="noopener">${SVG_WA}Escribir por WhatsApp</a>
+          <div class="ct-redes">
+            ${ttUser ? `<a href="https://www.tiktok.com/@${esc(ttUser)}" target="_blank" rel="noopener"><span class="ct-ico">${ic('<path d="M14 3v11.5a3.5 3.5 0 1 1-3-3.46"/><path d="M14 3c.4 2.6 2.2 4.4 5 4.6"/>')}</span><b>TikTok</b><small>@${esc(ttUser)}</small></a>` : ""}
+            ${T.instagram ? `<a href="${esc(T.instagram)}" target="_blank" rel="noopener"><span class="ct-ico">${ic('<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6" fill="currentColor"/>')}</span><b>Instagram</b><small>${igUser ? "@" + esc(igUser) : "Síguenos"}</small></a>` : ""}
+          </div></div>
+      </div>
+    </section>`;
+    const q = $("#ct-q");
+    const norm = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    q.oninput = () => {
+      const t = norm(q.value).trim(); let hay = 0;
+      document.querySelectorAll("#ct-faq details").forEach(d => { const ok = !t || norm(d.textContent).includes(t); d.hidden = !ok; if (ok) hay++; if (t && ok) d.open = true; if (!t) d.open = false; });
+      document.querySelectorAll(".ct-bloque").forEach(b => { b.hidden = ![...b.querySelectorAll("details")].some(d => !d.hidden); });
+      $("#ct-nada").hidden = hay > 0;
+    };
+  }
+
+
+  // ---------- Tarjeta de sellitos ----------
+  // Cada compra pagada (desde el mínimo) suma un sellito; con la meta, la clienta gana un vale.
+  // La tienda solo recibe números (sellitos y vales), nunca datos de la clienta.
+  const SEL = Object.assign({ activo: true, minimo: 50, meta: 5, vale: 25 }, T.sellitos || {});
+  const bsc = n => Number(n) % 1 ? bs(n) : `${T.moneda} ${Number(n)}`;
+  const selOn = () => SEL.activo !== false && !!(SB.url && SB.key);
+  const telLimpio = t => { let d = String(t || "").replace(/\D/g, ""); if (/^[67]\d{7}$/.test(d)) d = "591" + d; return d; };
+  const selCache = {};
+  const pinSel = tn => { try { return localStorage.getItem("sellitos-pin-" + tn) || ""; } catch (e) { return ""; } };
+  // Devuelve los datos, o { requiere: "crear" | "pin" } / { error } cuando falta el PIN, o null si no se pudo.
+  async function consultarSellitos(tel, pin) {
+    const tn = telLimpio(tel); if (tn.length < 8 || !selOn()) return null;
+    pin = pin || pinSel(tn);
+    if (selCache[tn] && !pin) return selCache[tn];
+    try {
+      const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/rpc/mis_sellitos`, { method: "POST",
+        headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" }, body: JSON.stringify({ tel: tn, pin: pin || null }) });
+      if (!r.ok) return null;
+      const d = await r.json(); if (!d || d.activo === false) return null;
+      if (d.requiere || d.error) { if (d.requiere === "pin" || (d.error && /incorrecto/.test(d.error))) { try { localStorage.removeItem("sellitos-pin-" + tn); } catch (e) {} } return d; }
+      if (pin) { try { localStorage.setItem("sellitos-pin-" + tn, pin); } catch (e) {} }
+      return (selCache[tn] = d);
+    } catch (e) { return null; }
+  }
+  // Línea para el mensaje de WhatsApp si la clienta tiene un vale
+  const lineaVale = async tel => { const d = await Promise.race([consultarSellitos(tel), new Promise(r => setTimeout(() => r(null), 2500))]);
+    return d && !d.requiere && !d.error && d.vales > 0 ? `🎁 Tengo ${d.vales > 1 ? d.vales + " vales" : "un vale"} de sellitos de ${bsc(d.vale)}${d.vales > 1 ? " c/u" : ""}` : null; };
+  const SVG_REGALO = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1.5S9 9 12 9zm0 0c2-4 6-4 6-1.5S15 9 12 9z"/></svg>`;
+  const telGuardado = () => { try { return (JSON.parse(localStorage.getItem("datos-pedido") || "{}").telefono) || localStorage.getItem("sellitos-tel") || ""; } catch (e) { return ""; } };
+  // Página "mis sellitos": arriba un anillo con el avance, abajo la hoja con sellitos, vale y formulario.
+  // Antes de buscar el número se ve en cero, de muestra.
+  function pintarSellitos(d, muestra) {
+    const n = d.meta, llena = d.vales > 0, ll = llena ? n : d.sellos, falta = n - d.sellos;
+    const msg = muestra ? "Escribe tu WhatsApp y te muestro tus sellitos"
+      : llena ? `Te ganaste ${d.vales > 1 ? d.vales + " vales" : "un vale"} de ${bsc(d.vale)}`
+      : d.sellos === 0 ? `Tu primera compra de ${bsc(d.minimo)} o más te da el primer sellito`
+      : falta === 1 ? `Te falta 1 sellito para tu vale de ${bsc(d.vale)}`
+      : `Te faltan ${falta} sellitos para tu vale de ${bsc(d.vale)}`;
+    const C = 565.5;
+    $("#sel-hero").classList.toggle("llena", llena);
+    $("#sel-ring").innerHTML = `<svg viewBox="0 0 200 200" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="90"/><circle class="fg" cx="100" cy="100" r="90" style="stroke-dashoffset:${C * (1 - ll / n)}"/></svg>
+      <div class="sel-mid"><img src="${llena ? "cani-charla.webp" : "cani-sentado.webp"}" alt=""><b>${muestra ? "0" : ll} de ${n}</b><small>Sellitos</small></div>`;
+    $("#sel-confeti").innerHTML = llena ? Array.from({ length: 22 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i * .13) % 2.6}s;background:${["#fff", "#cca1e8", "#fce3ee"][i % 3]}"></i>`).join("") : "";
+    const puntos = Array.from({ length: n }, (_, i) => i < ll
+      ? `<span class="sel-d ok" style="--i:${i}"><img src="estrella-rosa.svg" alt=""></span>`
+      : i === n - 1 ? `<span class="sel-d v">${SVG_REGALO}</span>` : `<span class="sel-d">${i + 1}</span>`).join("");
+    $("#sel-arriba").innerHTML = `<p class="sel-msg">${esc(msg)}</p>
+      <div class="sel-dots">${puntos}</div>
+      <div class="sel-tk ${llena ? "listo" : ""}"><div class="l">${esc(bsc(d.vale))}</div><div class="r"><b>${llena ? "Tu vale está listo" : "Tu vale"}</b>${llena ? "Se descuenta de tu próximo pedido hecho con este mismo WhatsApp. Al enviarlo, nos avisa solito." : "Se descuenta de tu próximo pedido cuando llenes la tarjeta."}</div></div>
+      ${llena ? `<a class="btn sel-btn lila" href="#/catalogo">Elegir mis cositas</a>` : ""}
+      ${d.extra > 0 ? `<p class="sel-nota">Y ya llevas ${d.extra} ${d.extra === 1 ? "sellito" : "sellitos"} para tu próxima tarjeta</p>` : ""}`;
+  }
+  function sellitos() {
+    if (!selOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">La tarjeta de sellitos no está disponible por ahora.</p>`; return; }
+    const tel0 = telGuardado();
+    app.innerHTML = `<section class="sel-pag">
+      <div class="sel-hero" id="sel-hero"><div class="sel-confeti" id="sel-confeti" aria-hidden="true"></div>
+        <h1>Mis sellitos</h1><p>Cada compra de ${bsc(SEL.minimo)} o más te da un sellito.</p>
+        <div class="sel-ring" id="sel-ring"></div></div>
+      <div class="sel-hoja">
+        <div id="sel-arriba"></div>
+        <form class="sel-form" id="sel-form">
+          <label for="sel-tel">Tu WhatsApp</label>
+          <div class="sel-row">
+            <input id="sel-tel" class="sel-campo" type="tel" inputmode="tel" placeholder="Ej: 71234567" value="${esc(tel0)}" required>
+            <button class="btn sel-ver" type="submit">Ver</button>
+          </div>
+          <div class="sel-pinrow" id="sel-pin-row" hidden><label for="sel-pin" id="sel-pin-l">Tu PIN de 4 números</label>
+            <input id="sel-pin" class="sel-campo" type="text" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="1234"></div>
+          <p class="sel-nota" id="sel-nota">Solo tu WhatsApp. La primera vez crearás un PIN de 4 números para que nadie más vea tus sellitos.</p>
+        </form>
+        <p class="sel-lab">Cómo funciona</p>
+        <ol class="sel-pasos">
+          <li><span>1</span><div><b>Compras</b>Desde ${bsc(SEL.minimo)}, sin contar el envío, con tu número de WhatsApp.</div></li>
+          <li><span>2</span><div><b>Sumas un sellito</b>Se suma solito cuando confirmamos tu pago.</div></li>
+          <li><span>3</span><div><b>Ganas tu vale</b>${bsc(SEL.vale)} de descuento con ${SEL.meta} sellitos.</div></li>
+        </ol>
+      </div>
+    </section>`;
+    pintarSellitos({ meta: SEL.meta, sellos: 0, vales: 0, vale: SEL.vale, minimo: SEL.minimo, extra: 0 }, true);
+    const F = $("#sel-form");
+    F.onsubmit = async e => {
+      e.preventDefault();
+      const tel = $("#sel-tel").value, tn = telLimpio(tel);
+      if (tn.length < 8) { toast("Revisa tu número de WhatsApp"); return $("#sel-tel").focus(); }
+      const b = F.querySelector("button"); b.disabled = true; b.textContent = "…";
+      const pr = $("#sel-pin-row"), pin = $("#sel-pin").value.trim();
+      if (!pr.hidden && !/^[0-9]{4}$/.test(pin)) { b.disabled = false; b.textContent = "Ver"; toast("El PIN son 4 números"); return $("#sel-pin").focus(); }
+      const d = await consultarSellitos(tel, pin);
+      b.disabled = false; b.textContent = "Ver";
+      if (!d) return toast("No pudimos ver tu tarjeta, intenta otra vez");
+      if (d.requiere) { pr.hidden = false; $("#sel-pin-l").textContent = d.requiere === "crear" ? "Crea tu PIN de 4 números" : "Tu PIN de 4 números"; $("#sel-nota").innerHTML = d.requiere === "crear" ? "Elige 4 números que recuerdes. Lo pedimos la próxima vez que mires tus sellitos." : `Si olvidaste tu PIN, <a href="https://wa.me/${T.whatsapp}" target="_blank" rel="noopener">escríbenos</a> y te ayudamos.`; $("#sel-pin").focus(); return; }
+      if (d.error) { toast(d.error); if (!pr.hidden) $("#sel-pin").select(); return; }
+      try { localStorage.setItem("sellitos-tel", tel); } catch (e) {}
+      pintarSellitos(d, false);
+      F.outerHTML = `<button class="sel-otro" id="sel-otro" type="button">Ver otro número</button>`;
+      $("#sel-otro").onclick = sellitos;
+    };
+    if (tel0 && telLimpio(tel0).length >= 8) F.requestSubmit();
+  }
+
+
+  // En el carrito y en Arma tu Scoop: al escribir el WhatsApp, Cani le cuenta sus sellitos
+  { let tSel;
+    document.addEventListener("input", e => {
+      const inp = e.target; if (inp.name !== "telefono" || !inp.closest("#form-pedido, #sc-form") || !selOn()) return;
+      clearTimeout(tSel);
+      tSel = setTimeout(async () => {
+        let h = inp.parentElement.querySelector(".sel-aviso");
+        const d = await consultarSellitos(inp.value);
+        if (!d || d.requiere || d.error || (!d.sellos && !d.vales)) { if (h) h.remove(); return; }
+        if (!h) { h = document.createElement("a"); h.className = "sel-aviso"; h.href = "#/sellitos"; inp.after(h); }
+        h.innerHTML = `<img src="estrella-rosa.svg" alt=""><span>${d.vales > 0 ? `¡tienes un vale de ${bsc(d.vale)}! te lo descontamos en este pedido` : `llevas ${d.sellos} de ${d.meta} sellitos`}</span>`;
+      }, 500);
+    });
+  }
+
+
+  // ---------- Blog ----------
+  // Las notas se escriben en el panel (Mi tienda → Blog). Formato del texto:
+  // párrafos separados por una línea vacía, "## " para un subtítulo y "> " para lo que dice Cani.
+  const BLOG_DEF = [{
+    slug: "quien-es-obakenu",
+    titulo: "¿Quién es Obakenu? El fantasmita japonés que conquista a todos",
+    resumen: "Conoce su historia y a sus personajes más populares en menos de un minuto.",
+    fecha: "2026-11-03", personaje: "obakenu", portada: "portada-obakenu.webp",
+    texto: `Seguro ya lo viste en una libreta, un sticker o un llavero: un fantasmita redondito y de carita tierna. Se llama Obakenu y es uno de los personajes kawaii más queridos de Japón.
+
+Fue creado en 2020 por CRUX, una marca japonesa de papelería, con una idea muy simple: los fantasmas no tienen por qué dar miedo; pueden ser amigos de todos.
+
+[fotos]
+
+## Más de 50 personajes
+El universo Obakenu está organizado en familias, y cada personaje tiene su propia personalidad. Estos son algunos de los favoritos:
+- Fantasmas: Obakenu, el clásico, adora asustar aunque en el fondo es bastante miedoso. Ochibinu es su versión bebé.
+- Gatitos: Nyankonu es puro entusiasmo. Kuronekonu prefiere parecer misterioso.
+- Animalitos: Usaginu, una conejita responsable que siempre organiza el picnic, y Pandinu, un panda con alma de líder.
+- Del agua: Samenu, un tiburón que muerde… pero solo como muestra de cariño.
+- Comiditas: Purinu, un flan suave y delicado, y Onigirinu, una bolita de arroz con un relleno distinto cada día.
+- Fantasía: Tenshinu, un angelito amable, y Akumānu, un diablito travieso.
+
+[fotos]
+
+## ¿Con cuál te identificas?
+¿Eres miedosa como Obakenu, misteriosa como Kuronekonu o siempre tienes antojo como Odebinu? Elige a tu favorito y llévalo contigo en tu escritorio, tu mochila o como regalo.
+
+> Escríbenos por WhatsApp y cuéntanos cuál es tu Obakenu favorito. Nos encantará saberlo.`
+  }];
+  const BLOG = () => (Array.isArray(T.blog) && T.blog.filter(b => b && b.titulo).length ? T.blog.filter(b => b && b.titulo) : BLOG_DEF)
+    .map(b => ({ ...b, slug: b.slug || String(b.titulo).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") }))
+    .filter(b => b.visible !== false);
+  const fechaBlog = f => { const d = new Date(String(f || "") + "T12:00:00"); return isNaN(d) ? "" : d.toLocaleDateString("es-BO", { day: "numeric", month: "long", year: "numeric" }); };
+  const minLectura = t => Math.max(1, Math.round(String(t || "").split(/\s+/).length / 180));
+  // Busca el nombre del personaje en tus productos y sus modelos (con o sin tildes) y usa esa foto
+  const sinTilde = t => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ū/g, "u").replace(/ō/g, "o");
+  const fotoPersonaje = nombre => {
+    const n = sinTilde(nombre); if (n.length < 3) return null;
+    for (const p of PRODS) {
+      if (!hayStock(p)) continue;
+      const v = (p.variantes || []).find(v => sinTilde(v.nombre).includes(n) && v.imagen);
+      if (v) return { id: p.id, img: v.imagen };
+      if (sinTilde(p.nombre).includes(n) && p.imagenes && p.imagenes[0]) return { id: p.id, img: p.imagenes[0] };
+    }
+    return null;
+  };
+  const fotosDe = b => { const c = b.personaje && CATS.find(x => x.id === b.personaje); return c ? PRODS.filter(p => (p.categorias || []).includes(c.id) && hayStock(p) && p.imagenes && p.imagenes[0]) : []; };
+  const portadaBlog = b => { const f = b.portada || ((fotosDe(b)[0] || {}).imagenes || [])[0]; return f ? `<img class="${b.portada ? "" : "bl-img-prod"}" src="${esc(f)}" alt="">`
+    : `<div class="bl-port-def"><img src="cani-charla.webp" alt=""><img class="bl-est e1" src="estrella-rosa.svg" alt=""><img class="bl-est e2" src="estrella-rosa.svg" alt=""></div>`; };
+  const textoBlog = (t, fotos = []) => { let nf = 0; return String(t || "").replace(/\r/g, "").split("\n").map(l => l.trim()).reduce((out, l) => {
+      const u = out[out.length - 1];
+      if (!l) out.push(null);
+      else if (l.startsWith("## ")) out.push({ h: l.slice(3) }, null);
+      else if (l.startsWith("> ")) out.push({ c: l.slice(2) }, null);
+      else if (/^\[fotos?\]$/i.test(l)) out.push({ f: true }, null);
+      else if (/^[-•] /.test(l)) { if (u && u.li) u.li.push(l.slice(2)); else out.push({ li: [l.slice(2)] }); }
+      else if (u && u.p !== undefined) u.p += " " + l; else out.push({ p: l });
+      return out;
+    }, []).filter(Boolean).map(x => x.h !== undefined ? `<h2>${esc(x.h)}</h2>`
+      : x.c !== undefined ? `<div class="bl-cani"><img src="cani-sentado.webp" alt=""><p>${esc(x.c)}</p></div>`
+      : x.li ? (() => {
+          const items = x.li.map(i => { const k = i.indexOf(": "); if (k < 1 || k > 40) return { t: i }; const cab = i.slice(0, k), m = cab.match(/^(.*?)\s*\(([^)]+)\)$/); return { n: m ? m[1] : cab, fam: m ? m[2] : "", t: i.slice(k + 2) }; });
+          if (!items.some(i => i.fam)) return `<ul class="bl-ul">${items.map(i => `<li>${i.n ? `<b>${esc(i.n)}</b> ` : ""}${esc(i.t)}</li>`).join("")}</ul>`;
+          return `<div class="bl-pers">${items.map(i => { const f = fotoPersonaje(i.n || ""); return `<${f ? `a href="#/producto/${esc(f.id)}"` : "div"} class="bl-per">
+              <div class="bl-per-img">${f ? `<img src="${esc(f.img)}" alt="" loading="lazy">` : `<img class="bl-per-def" src="estrella-rosa.svg" alt="">`}</div>
+              <div class="bl-per-txt">${i.fam ? `<small>${esc(i.fam)}</small>` : ""}<b>${esc(i.n || "")}</b><p>${esc(i.t.replace(/^./, c => c.toUpperCase()))}</p></div></${f ? "a" : "div"}>`; }).join("")}</div>`;
+        })()
+      : x.f ? (() => { const l = fotos.slice(nf * 3, nf * 3 + 3); nf++; return l.length ? `<div class="bl-fotos">${l.map(p => `<a href="#/producto/${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"><span>${esc(sinEmoji(p.nombre))}</span></a>`).join("")}</div>` : ""; })()
+      : `<p>${esc(x.p)}</p>`).join(""); };
+  function blog(slug) {
+    const L = BLOG();
+    if (slug) {
+      const b = L.find(x => x.slug === slug);
+      if (!b) { app.innerHTML = `<section class="seccion"><p class="vacio">No encontramos esa nota.</p><p style="text-align:center"><a class="btn" href="#/blog">Ver el blog</a></p></section>`; return; }
+      const cat = b.personaje ? CATS.find(c => c.id === b.personaje) : null;
+      const prods = fotosDe(b).slice(0, 4);
+      const otras = L.filter(x => x !== b).slice(0, 2);
+      document.title = `${sinEmoji(b.titulo)} · ${T.nombre}`;
+      app.innerHTML = `<article class="seccion bl-nota">
+        <a class="bl-volver" href="#/blog"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg> El blog de Cani</a>
+        <h1>${esc(b.titulo)}</h1>
+        <p class="bl-meta">${fechaBlog(b.fecha)}${b.fecha ? " · " : ""}${minLectura(b.texto)} min de lectura</p>
+        <div class="bl-portada">${portadaBlog(b)}</div>
+        <div class="bl-texto">${textoBlog(b.texto, fotosDe(b).slice(b.portada ? 0 : 1))}</div>
+      </article>
+      ${prods.length ? `<section class="seccion bl-prods"><div class="titulo"><h2>Cositas de ${esc(cat.nombre)}</h2><a class="ver-todo" href="#/catalogo/${esc(cat.id)}">Ver todo</a></div>${grilla(prods)}</section>` : ""}
+      ${otras.length ? `<section class="seccion bl-mas"><h2>Más notas</h2><div class="bl-lista">${otras.map(tarjetaBlog).join("")}</div></section>` : ""}`;
+      // Botones para saltar a cada parte, si la nota es larga
+      const hs = [...app.querySelectorAll(".bl-texto h2")].filter(h => /^La familia /i.test(h.textContent));
+      if (hs.length >= 4) {
+        const ind = document.createElement("div"); ind.className = "bl-indice";
+        ind.innerHTML = hs.map((h, i) => `<button type="button" data-h="${i}">${esc(h.textContent.replace(/^La familia (del |de )?/i, "").replace(/^./, c => c.toUpperCase()))}</button>`).join("");
+        ind.onclick = e => { const b = e.target.closest("[data-h]"); if (b) hs[+b.dataset.h].scrollIntoView({ behavior: "smooth" }); };
+        hs[0].before(ind);
+      }
+      return;
+    }
+    app.innerHTML = `<section class="seccion bl-pag">
+      <div class="bl-cab"><img src="cani-charla.webp" alt=""><div><h1>El blog de Cani</h1><p>Historias de tus personajes favoritos, ideas para regalar y novedades de la tienda.</p></div></div>
+      <div class="bl-lista">${L.map(tarjetaBlog).join("")}</div>
+    </section>`;
+  }
+  const tarjetaBlog = b => `<a class="bl-card" href="#/blog/${esc(b.slug)}">
+      <div class="bl-card-img">${portadaBlog(b)}</div>
+      <div class="bl-card-txt"><small>${fechaBlog(b.fecha)}</small><h3>${esc(b.titulo)}</h3><p>${esc(b.resumen || "")}</p><span class="bl-leer">Leer nota <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+    </a>`;
+
+  // ---------- Amigo secreto por presupuesto ----------
+  // Muestra regalos y combos que entran en el presupuesto del amigo secreto, con lo que hay en stock.
+  const AS = Object.assign({ activo: true, desde: "11-20", hasta: "12-31", montos: [30, 50, 80, 100] }, T.amigoSecreto || {});
+  window.__asOn = () => asOn();
+  const asOn = () => { if (/[?&]prueba/.test(location.search)) return true; if (AS.activo === false) return false; const h = new Date(), md = String(h.getMonth() + 1).padStart(2, "0") + "-" + String(h.getDate()).padStart(2, "0"); return md >= AS.desde && md <= AS.hasta; };
+  const bsAS = n => Number(n) % 1 ? bs(n) : `${T.moneda} ${Number(n)}`;
+  const noAS = p => !/pegamento/i.test(p.nombre || "");
+  const simpleAS = p => p && noAS(p) && hayStock(p) && +p.precio > 0 && (p.imagenes || []).length;
+  const libresAS = p => tieneVar(p) ? p.variantes.filter(v => disp(v.stock)) : [];
+  // Filtros de la página: personajes y categorías (se puede elegir más de uno de cada tipo)
+  const filtroAS = { per: [], cat: [] };
+  const leerFiltroAS = () => { try { const r = k => (sessionStorage.getItem(k) || "").split(",").filter(Boolean); filtroAS.per = r("as-per"); filtroAS.cat = r("as-cat"); } catch (e) {} };
+  const guardarFiltroAS = () => { try { sessionStorage.setItem("as-per", filtroAS.per.join(",")); sessionStorage.setItem("as-cat", filtroAS.cat.join(",")); } catch (e) {} };
+  const textoAS = p => sinAcento([p.nombre, ...libresAS(p).map(v => v.nombre)].join(" | "));
+  const coincideVarAS = (v, t) => sinAcento(v.nombre).includes(sinAcento(t));
+  const nomCatAS = id => ((CATS.find(c => c.id === id) || {}).nombre) || "";
+  const coincideAS = p => {
+    const ids = p.categorias || [];
+    if (filtroAS.per.length && !filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id))))) return false;
+    if (filtroAS.cat.length && !filtroAS.cat.some(id => ids.includes(id))) return false;
+    return true;
+  };
+  const catDe = p => (p.categorias || [])[0] || "";
+  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = "portada", asModo = "", asCajaOn = false, asSalaOn = false, asSalaCtx = null, asSel = {}, asExtra = 0;
+  const semillaAS = n => () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
+  function combosAS(monto) {
+    const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
+    const min = monto * 0.7, sale = [];
+    for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+      const a = L[i], b = L[j], t = +a.precio + +b.precio;
+      if (t >= min && t <= monto) sale.push({ items: [a, b], total: t, mezcla: catDe(a) !== catDe(b) });
+      for (let k = j + 1; k < L.length && monto >= 50; k++) { const c = L[k], t3 = t + +c.precio; if (t3 >= min && t3 <= monto) sale.push({ items: [a, b, c], total: t3, mezcla: true }); }
+    }
+    if (monto >= 80) { const L4 = L.filter(p => +p.precio <= monto * 0.45), M4 = L4.length > 45 ? L4.filter((_, i) => i % Math.ceil(L4.length / 45) === 0) : L4;
+      for (let a = 0; a < M4.length; a++) for (let b = a + 1; b < M4.length; b++) for (let c = b + 1; c < M4.length; c++) for (let d = c + 1; d < M4.length; d++) { const t4 = +M4[a].precio + +M4[b].precio + +M4[c].precio + +M4[d].precio; if (t4 >= min && t4 <= monto) sale.push({ items: [M4[a], M4[b], M4[c], M4[d]], total: t4, mezcla: true }); } }
+    // Primero los que más se acercan al monto y mezclan tipos de producto; sin repetir productos entre combos
+    const dia = new Date().getDate();
+    sale.sort((x, y) => (y.mezcla - x.mezcla) || (y.total - x.total) || ((x.items[0].id + dia) > (y.items[0].id + dia) ? 1 : -1));
+    if (asRonda > 0) { const buenos = sale.slice(0, 300), rnd = semillaAS(asRonda * 7919 + Math.round(monto)); for (let i = buenos.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [buenos[i], buenos[j]] = [buenos[j], buenos[i]]; } sale.splice(0, buenos.length, ...buenos); }
+    const usos = {}, elegidos = [];
+    const cupo = { 2: 12, 3: 12, 4: 8 }, hay = { 2: 0, 3: 0, 4: 0 };
+    for (const c of sale) { const n = c.items.length; if (hay[n] >= cupo[n] || c.items.some(p => (usos[p.id] || 0) >= 3)) continue; hay[n]++; elegidos.push(c); c.items.forEach(p => usos[p.id] = (usos[p.id] || 0) + 1); if (elegidos.length === 30) break; }
+    if (asRonda === 0) { const rnd = semillaAS(Math.round(monto) + new Date().getDate() * 31); for (let i = elegidos.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [elegidos[i], elegidos[j]] = [elegidos[j], elegidos[i]]; } }
+    return elegidos;
+  }
+  const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito", "El combo ternura", "El combo brillito", "El combo cositas lindas", "El combo kawaii", "El combo confeti", "El combo abrazo", "El combo chispa"];
+  function amigoSecreto(montoTxt) {
+    leerFiltroAS();
+    filtroAS.per = filtroAS.per.filter(id => PERS().some(c => c.id === id)); filtroAS.cat = filtroAS.cat.filter(id => CATEG().some(c => c.id === id));
+    if (!asOn()) { app.innerHTML = `<p class="vacio" style="padding:80px 16px">El amigo secreto vuelve pronto.</p>`; return; }
+    const montos = (AS.montos || [30, 50, 80, 100]).map(Number).filter(n => n > 0);
+    let monto = +montoTxt || 0; if (!monto) { try { monto = +sessionStorage.getItem("as-monto") || 0; } catch (e) {} }
+    if (!monto) monto = montos[1] || montos[0];
+    if (monto < 15) monto = 15;
+    try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
+    try { const go = sessionStorage.getItem("as-sala-go"); if (go) { sessionStorage.removeItem("as-sala-go"); const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); if (sl) { asSalaOn = true; asSalaCtx = sl; asModo = "uno"; asPaso = "gusto"; asCajaOn = false; asSel = {}; window.__asSalio = false;
+      const nombres = String(sl.gustos || "").split(",").map(x => sinAcento(x.trim())).filter(Boolean); filtroAS.per = PERS().filter(c => nombres.includes(sinAcento(c.nombre))).map(c => c.id); filtroAS.cat = CATEG().filter(c => nombres.includes(sinAcento(c.nombre))).map(c => c.id); guardarFiltroAS();
+      sessionStorage.setItem("as-carta", JSON.stringify({ as_para: sl.para || "", as_msg: "", as_firma: "" })); } } } catch (e) {}
+    if (window.__asSalio) { asPaso = "portada"; asModo = ""; asCajaOn = false; asSalaOn = false; asSalaCtx = null; asSel = {}; asExtra = 0; window.__asSalio = false; }
+    if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; asSel = {}; asCajaOn = false; asExtra = 0; }
+    if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
+    if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
+    const combos = combosAS(monto);
+    const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
+    const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
+    app.innerHTML = `<section class="seccion as-pag">
+      <div class="as-hero as-hero-claro">
+        <div class="as-nieve" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 47) % 100}%;top:${(i * 29) % 100}%;width:${6 + (i % 3) * 4}px;height:${6 + (i % 3) * 4}px"></i>`).join("")}</div>
+        <div class="as-hero-txt">
+          <h1><span class="as-h-caps">El regalo perfecto</span><em class="as-h-script">para tu amigo secreto</em></h1>
+          <p><b>Desde Bs 15.</b> Con <b>carta</b> y <b>envoltorio</b> incluidos.</p>
+          <a class="btn as-hero-btn" href="#as-elige">Empezar</a>
+        </div>
+        <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
+      </div>
+
+      <div class="as-form-pasos">
+      <section class="as-card"><div class="as-card-n">1</div><div class="as-card-c">
+      <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuál es tu presupuesto?</h2>
+      <div class="as-montos" role="group" aria-label="Presupuesto">
+        ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
+        <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
+      </div>
+
+      </div></section>
+      <section class="as-card"><div class="as-card-n">2</div><div class="as-card-c">
+      <div class="as-filtros" id="as-filtros">
+        <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
+        <div class="as-tira as-mosaico" role="group" aria-label="Filtrar por personaje o categoría">
+          ${(() => { const AR = { 1: [520, 247, 1], 2: [474, 277, 0], 3: [351, 276, 1], 4: [309, 298, 0], 5: [520, 295, 1], 6: [293, 298, 1], 7: [272, 302, 0], 8: [274, 245, 1], 9: [413, 257, 0], 10: [237, 249, 0], 11: [473, 245, 1] }, ANCHOS = [2, 5, 9, 11], CUADR = [4, 3, 7, 6, 8, 10];
+            let calOn = false; const CAL = [[1, 45, 81, 501, 285, 1], [2, 555, 81, 344, 281, 0], [3, 909, 81, 277, 281, 1], [4, 1197, 81, 289, 281, 0], [5, 51, 383, 277, 295, 0], [6, 336, 383, 481, 296, 1], [7, 827, 383, 315, 296, 1], [8, 1149, 383, 336, 295, 0], [9, 45, 698, 224, 257, 1], [10, 276, 698, 237, 257, 0], [11, 514, 698, 352, 257, 0], [12, 871, 698, 217, 257, 0], [13, 1094, 698, 397, 257, 1]];
+            const MCAL = [[1, 34, 69, 262, 383, 1], [3, 309, 79, 409, 369, 0], [2, 731, 70, 260, 378, 1], [5, 30, 463, 269, 265, 0], [6, 309, 463, 409, 265, 1], [4, 727, 462, 268, 266, 0], [7, 34, 739, 295, 274, 0], [8, 349, 739, 310, 272, 1], [9, 678, 739, 314, 273, 0], [10, 31, 1024, 546, 196, 1], [12, 31, 1232, 256, 250, 1], [14, 297, 1233, 409, 250, 0], [13, 717, 1232, 274, 251, 1]];
+            const mvars = j => { const [n, x, y, w, h, d] = MCAL[j]; cdkm = d; return `;--mbg:url(tile-m-${n}.webp);--mx:${((x - 30) / 965 * 100).toFixed(3)}%;--my:${((y - 69) / 1414 * 100).toFixed(3)}%;--mw:${(w / 965 * 100).toFixed(3)}%;--mh:${(h / 1414 * 100).toFixed(3)}%`; };
+            let ki = 0, cdk = 0, cdkm = 0; const calc = () => { cdk = 0; if (!calOn) return ""; const [n, x, y, w, h, d] = CAL[ki]; cdk = d; const mv = mvars(ki); ki++; return `;--cbg:url(tile-c-${n}.webp);--cx:${((x - 45) / 1446 * 100).toFixed(3)}%;--cy:${((y - 81) / 874 * 100).toFixed(3)}%;--cw:${(w / 1446 * 100).toFixed(3)}%;--ch:${(h / 874 * 100).toFixed(3)}%;--cd:${d}${mv}`; };
+            let ka = 0, kc = 0, kt = 0, ks = 0, kw = 0; const MV = { t: [[2, 260, 404, 1], [7, 267, 327, 0], [8, 262, 325, 0]], s: [[4, 273, 278, 0], [5, 275, 277, 0], [10, 268, 270, 1], [11, 269, 271, 1]], w: [[3, 424, 350, 0], [6, 411, 275, 1], [9, 425, 289, 1], [12, 419, 262, 0]] };
+            const tile = (id, on, attr, nombre) => { const n = id === "todos" ? 1 : (nombre.length > 5 ? ANCHOS[ka++ % 4] : CUADR[kc++ % 6]), [w, h, d] = AR[n];
+              const cl = id === "todos" ? "t" : nombre.length >= 10 ? "w" : nombre.length >= 7 ? "s" : "t", L = MV[cl], m = id === "todos" ? [1, 260, 413, 1] : L[(cl === "t" ? kt++ : cl === "s" ? ks++ : kw++) % L.length];
+              const cc = calc();
+              return `<button type="button" class="as-chip as-tile as-m${cl} ${calOn ? "as-cal-t" : ""} ${cdk ? "as-cdk" : ""} ${cdkm ? "as-cdm" : ""} ${d ? "as-d" : ""} ${m[3] ? "as-dm" : ""} ${on ? "on" : ""}" ${id === "todos" ? 'id="as-limpiar"' : ""} aria-pressed="${on}" ${attr} style="background-image:url(tile-gusto-${n}.webp);aspect-ratio:${w}/${h};--bgm:url(tile-v-${m[0]}.webp);--arm:${m[1]}/${m[2]}${cc}"><span>${esc(nombre)}</span></button>`; };
+            const sin = !(filtroAS.per.length || filtroAS.cat.length);
+            const lista = PERS().map(c => ({ id: c.id, on: filtroAS.per.includes(c.id), attr: `data-asper="${esc(c.id)}"`, nombre: c.nombre })).concat(CATEG().map(c => ({ id: c.id, on: filtroAS.cat.includes(c.id), attr: `data-ascat="${esc(c.id)}"`, nombre: c.nombre })));
+            const iH = lista.findIndex(x => /happy\s*box/i.test(x.nombre)), iA = lista.findIndex(x => /^accesorios$/i.test(x.nombre));
+            if (iH > -1) { if (iA > -1) { const acc = lista.splice(iA, 1)[0]; lista[iH > iA ? iH - 1 : iH] = acc; } else lista.splice(iH, 1); }
+            calOn = lista.length === 12; return tile("todos", sin, "", "Todos") + lista.map(x => tile(x.id, x.on, x.attr, x.nombre)).join("") + (calOn ? `<span class="as-blank" aria-hidden="true" style="--mbg:url(tile-m-11.webp);--mx:${((589 - 30) / 965 * 100).toFixed(3)}%;--my:${((1027 - 69) / 1414 * 100).toFixed(3)}%;--mw:${(405 / 965 * 100).toFixed(3)}%;--mh:${(194 / 1414 * 100).toFixed(3)}%"></span>` : ""); })()}
+        </div>
+      </div>
+
+      </div></section>
+      <section class="as-card"><div class="as-card-n">3</div><div class="as-card-c">
+      <div class="as-bloque">
+        <h2 class="as-tit"><span class="as-num">3</span>Elige tu combo de hasta ${bsAS(monto)}</h2>
+        ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
+            <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
+            <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda * 3) % NOMBRES_COMBO.length] || "Combo"}</h3>
+              <ul>${c.items.map(p => `<li><span>${esc(sinEmoji(p.nombre))}</span><b>${bsAS(p.precio)}</b></li>${tieneVar(p) ? `<li class="as-var"><select data-asv="${esc(p.id)}" aria-label="Elige color o personaje de ${esc(sinEmoji(p.nombre))}">${(a => { const k = a.findIndex(v => filtroAS.per.some(id => coincideVarAS(v, nomCatAS(id)))); return a.map((v, n) => `<option value="${esc(v.nombre)}"${n === k ? " selected" : ""}>${esc(v.nombre)}</option>`).join(""); })(libresAS(p))}</select></li>` : ""}`).join("")}<li class="as-incl"><span>Carta impresa + envoltorio</span><b>Gratis</b></li></ul>
+              <div class="as-combo-pie"><div><small>Total</small><strong>${bsAS(c.total)}</strong></div><button type="button" class="btn as-llevar" data-combo="${k}">Lo quiero</button></div>
+              ${monto - c.total >= polPrecio() ? `<button type="button" class="as-pol-link" data-pol-add>Te alcanza para sumar 4 polaroids</button>` : ""}${monto - c.total >= 1 ? `<p class="as-sobra">Te sobran ${bsAS(monto - c.total)}</p>` : ""}
+            </div></article>`).join("")}</div>`
+        : `<p class="vacio">Todavía no tenemos combos para este monto. Mira los regalos sueltos de abajo.</p>`}
+        ${combos.length > 1 ? `<div class="as-mas"><h3>También te puede gustar</h3><div class="as-mas-fila">${combos.map((c, k) => k === asIdx || (k - asIdx + combos.length) % combos.length > 8 ? "" : `<button type="button" class="as-mini" data-asir="${k}"><span class="as-mini-f">${c.items.map(p => `<img src="${esc(foto(p))}" alt="" loading="lazy">`).join("")}</span><b>${bsAS(c.total)}</b><small>${esc(c.items.map(p => sinEmoji(p.nombre)).join(" + "))}</small></button>`).filter(Boolean).slice(0, 8).join("")}</div></div>` : ""}
+        ${combos.length ? `<div class="as-dado-wrap"><button type="button" class="as-dado" id="as-dado"><span class="as-dado-ic" aria-hidden="true">🎲</span> Ver otro combo</button><small class="as-dado-n">Combo ${asIdx + 1} de ${combos.length}</small></div>` : ""}
+        <div class="as-caja-wrap"><button type="button" class="as-caja-ir" id="as-caja-ir">🎁 Armar mi caja</button></div>
+      </div>
+
+      </div></section>
+      <section class="as-card"><div class="as-card-n">4</div><div class="as-card-c">
+      <div class="as-llega as-escribe">
+        <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta <small class="as-opc">Opcional</small></h2><p class="as-gratis"><b>Sin costo</b></p></div>
+        <div class="as-carta-grid">
+          <div class="as-carta-form">
+            <label>¿Para quién es?<input id="as-c-para" maxlength="40" placeholder="Su nombre"></label>
+            <label>Tu mensaje<textarea id="as-c-msg" rows="4" maxlength="280" placeholder="Ej: ¡Feliz Navidad! Espero que te guste mucho"></textarea></label>
+            <label>Firma<input id="as-c-de" maxlength="40" placeholder="Si lo dejas vacío: Tu amigo secreto"></label>
+          </div>
+          <div class="as-prev-wrap">
+            <p class="as-prev-tit">Así se verá tu carta</p>
+            <div class="as-prev" id="as-prev-pg"><img src="amigo-carta-fondo.webp" alt="" width="1536" height="1024" loading="lazy"><div class="as-prev-msg"></div><div class="as-prev-para"></div><div class="as-prev-de"></div></div>
+          </div>
+        </div>
+      </div>
+
+      </div></section>
+      </div>
+
+      <div class="pol-promo">
+        <img class="pol-promo-foto" src="polaroids-banner.webp" alt="Una mano sostiene cuatro polaroids frente al árbol de Navidad" width="1400" height="933" loading="lazy">
+        <div class="pol-promo-txt"><span class="pol-colab">En colaboración con <b>Sophia Print</b></span><h2>Súmale recuerdos <small class="as-opc">Opcional</small></h2><p>4 polaroids con tus fotos por <b>${bs(polPrecio())}</b>. Van en una bolsita con el regalo.</p>
+          <button type="button" class="btn pol-promo-btn" data-pol-add>Elegir mis fotos</button></div>
+      </div>
+
+      <div class="as-grupo as-grupo2">
+        <div class="as-g-izq">
+          <img src="cani-charla.webp" alt="">
+          <div>
+            <h2>Armamos el amigo secreto de todo tu grupo</h2>
+            <p class="as-g-regalo"><b>Desde 4 regalos:</b> te regalamos 4 polaroids para tu compra</p>
+          </div>
+        </div>
+        <form class="as-g-form" id="as-g-form">
+          <label>¿Cuántos regalos?<input type="number" id="as-g-n" min="4" step="1" inputmode="numeric" placeholder="4" value="4"></label>
+          <label>Presupuesto por persona<input type="number" id="as-g-m" min="15" step="1" inputmode="numeric" placeholder="${esc(String(monto))}" value="${esc(String(monto))}"></label>
+          <label>¿Para cuándo lo necesitas?<input type="text" id="as-g-f" placeholder="Ej: 20 de diciembre" maxlength="40"></label>
+          <button class="btn btn-wa" type="submit">Pedir presupuesto para mi grupo</button>
+          <small>Se abre WhatsApp</small>
+        </form>
+      </div>
+    </section>`;
+    { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); const b = $("#asw-seguir"); if (b) b.click(); }; }
+    try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
+    { const d = $("#as-dado"); if (d) d.onclick = () => { asIdx++; if (asIdx >= combos.length) { asIdx = 0; asRonda++; } d.classList.add("rueda"); setTimeout(() => amigoSecreto(monto), 380); }; }
+    app.querySelectorAll("[data-asir]").forEach(b => b.onclick = () => { asIdx = +b.dataset.asir; amigoSecreto(monto); const t = $(".as-combos"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); });
+    { const v = $("#as-vermas"); if (v) v.onclick = () => { asMas = !asMas; const y = window.scrollY; amigoSecreto(monto); window.scrollTo(0, y); }; }
+    { const pg = $("#as-prev-pg"), ids = { as_para: "#as-c-para", as_msg: "#as-c-msg", as_firma: "#as-c-de" };
+      if (pg) {
+        const leer = () => { const o = {}; for (const k in ids) o[k] = ($(ids[k]).value || ""); return o; };
+        let g = null; try { g = JSON.parse(sessionStorage.getItem("as-carta") || "null"); } catch (e) {}
+        if (g) for (const k in ids) $(ids[k]).value = g[k] || "";
+        const pintar = () => { const o = leer(); try { sessionStorage.setItem("as-carta", JSON.stringify(o)); } catch (e) {} if (window.__pintarCarta) window.__pintarCarta(pg, o); };
+        Object.values(ids).forEach(i => $(i).addEventListener("input", pintar));
+        setTimeout(pintar, 60); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(pintar, 50));
+      } }
+    const alt = (L, id) => { asMas = false; asRonda = 0; asIdx = 0; const k = L.indexOf(id); k >= 0 ? L.splice(k, 1) : L.push(id); guardarFiltroAS(); amigoSecreto(monto); };
+    app.querySelectorAll("[data-asper]").forEach(b => b.onclick = () => alt(filtroAS.per, b.dataset.asper));
+    app.querySelectorAll("[data-ascat]").forEach(b => b.onclick = () => alt(filtroAS.cat, b.dataset.ascat));
+    { const q = $("#as-limpiar"); if (q) q.onclick = () => { asRonda = 0; asIdx = 0; filtroAS.per = []; filtroAS.cat = []; guardarFiltroAS(); amigoSecreto(monto); }; }
+    app.querySelectorAll("select[data-asv]").forEach(sel => { const sync = () => { const p = PRODS.find(x => String(x.id) === sel.dataset.asv), v = p && (p.variantes || []).find(x => x.nombre === sel.value), im = sel.closest(".as-combo").querySelector(`a[data-asf="${CSS.escape(sel.dataset.asv)}"] img`); if (im && p) im.src = (v && v.imagen) || foto(p); }; sel.addEventListener("change", sync); sync(); });
+    app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
+    { const g = $("#as-g-form"); if (g) g.onsubmit = e => { e.preventDefault(); const n = Math.max(4, Math.round(+$("#as-g-n").value) || 4), m = Math.max(15, Math.round(+$("#as-g-m").value) || monto), fe = ($("#as-g-f").value || "").trim(); window.open(waURL(`¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto: queremos ${n} regalos de hasta ${bsAS(m)} cada uno${fe ? ", para el " + fe : ""}. ¿Nos arman el presupuesto? (Vi que por 4 regalos o más van 4 polaroids de regalo 📸)`), "_blank", "noopener"); }; }
+    const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 15) location.hash = "#/amigo-secreto/" + n; };
+
+    // ---- Paso a paso estilo Scoops: una pantalla por paso, Cani habla, botón Continuar ----
+    { const hero = app.querySelector(".as-hero"), grupo = app.querySelector(".as-grupo2"), cards = [...app.querySelectorAll(".as-card")], pol = app.querySelector(".pol-promo"), sec = app.querySelector(".as-pag");
+      if (hero && pol && grupo && cards.length === 4 && sec) {
+        const bub = t => `<p class="asw-sub">${esc(t)}</p>`;
+        const mk = (nodos, k) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.k = k; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
+        const FR = { pres: "Elige un presupuesto y armamos tu regalo.", gusto: "Puedes elegir varios. Si no sabes, sigue.", combo: combos.length ? "Toca el dado para ver más combos." : "No hay combos de este monto. Prueba con otro presupuesto.", carta: "💌 La carta es un extra y no tiene ningún costo. La imprimimos y va con tu regalo.", pol: "Es opcional. 4 fotos con marco blanco." };
+        if (asSalaOn && asSalaCtx) FR.gusto = (asSalaCtx.gustos ? "Armamos tu regalo con sus gustos." : "No dijo qué le gusta. Elige tú.");
+        ["pres", "gusto", "combo", "carta"].forEach((k, i) => { const c = cards[i], h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FR[k])); });
+        if (asSalaOn && asSalaCtx) { const h = cards[1].querySelector("h2"); h.innerHTML = `A <span class="sl-nom">${esc(asSalaCtx.para || "tu amigo secreto")}</span> le gusta…`;
+          const gl = String(asSalaCtx.gustos || "").split(",").map(x => x.trim()).filter(Boolean);
+          if (gl.length) { const mos = cards[1].querySelector(".as-mosaico"); mos.outerHTML = `<div class="sl-ficha" role="note"><div class="sl-ficha-t">💗 Sus gustos ya están elegidos</div><div class="sl-likes" aria-label="Sus gustos">${gl.map(g => `<span class="sl-like">♡ ${esc(g)}</span>`).join("")}</div><p class="sl-likes-n">No tienes que tocar nada aquí. Solo te mostraremos regalos de estos gustos para que le encante.</p></div><p class="sl-sig">Toca <b>Continuar</b> 👇</p>`; } }
+        pol.insertAdjacentHTML("beforebegin", `<h2 class="as-tit asw-h">¿Quieres sumar polaroids?</h2>` + bub(FR.pol)); const polBub = pol.previousElementSibling, polTit = polBub.previousElementSibling;
+        grupo.insertAdjacentHTML("beforebegin", `<h2 class="as-tit asw-h">Para grupos de amigos</h2>` + bub("Cuéntanos cuántos son y armamos el presupuesto."));
+        const modo = document.createElement("div");
+        modo.innerHTML = `<h2 class="as-tit asw-h">Amigo secreto</h2>${bub("¿Es para una persona o para todo un grupo?")}
+          <div class="asw-modos" role="radiogroup" aria-label="Tipo de amigo secreto">
+            <button type="button" class="asw-modo" data-m="uno" role="radio"><img class="asw-sobre" src="amigo-sobre.webp" alt="" width="732" height="760"><span class="asw-modo-t"><b>Para una persona</b><small>Un regalo armado con carta y envoltorio</small></span></button>
+            <button type="button" class="asw-modo" data-m="grupo" role="radio"><img class="asw-sobre asw-atras-i" src="amigo-sobre.webp" alt="" width="732" height="760"><img class="asw-sobre asw-atras-d" src="amigo-sobre.webp" alt="" width="732" height="760"><img class="asw-sobre" src="amigo-sobre.webp" alt="" width="732" height="760"><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
+          </div>`;
+        sec.querySelector(".as-form-pasos").before(modo);
+        const todosCaja = PRODS.filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto + 60).sort((a, b) => b.precio - a.precio).slice(0, 150);
+        const caja = document.createElement("div");
+        caja.innerHTML = `<h2 class="as-tit asw-h">Arma tu propia caja</h2><p class="asw-sub">Toca los regalos que quieras, hasta <b id="cj-tope">${bsAS(monto + asExtra)}</b>. La carta y el envoltorio van sin costo.</p>
+          <div class="cj-pres"><span>¿Quieres gastar un poco más?</span><span class="cj-step"><button type="button" id="cj-menos" aria-label="Bajar presupuesto">−</button><button type="button" id="cj-mas" aria-label="Subir presupuesto">+ Bs 10</button></span></div>
+          <div class="cj-bus"><input type="search" id="cj-q" placeholder="Buscar: llavero, Kuromi, libreta…" aria-label="Buscar regalos"><select id="cj-ord" aria-label="Ordenar"><option value="mayor">Mayor precio</option><option value="menor">Menor precio</option></select></div>
+          ${asSalaOn && (filtroAS.per.length || filtroAS.cat.length) ? `<p class="cj-nota">Regalos de lo que le gusta a <b>${esc((asSalaCtx || {}).para || "tu amigo secreto")}</b> <button type="button" class="cj-todo" id="cj-todo" hidden>Ver todo el catálogo</button></p>` : ""}
+          <div class="cj-chips" id="cj-chips" ${asSalaOn && (filtroAS.per.length || filtroAS.cat.length) ? "hidden" : ""} role="group" aria-label="Filtrar por personaje o categoría">${PERS().concat(CATEG()).filter(c => !/happy\s*box/i.test(c.nombre)).map(c => `<button type="button" class="cj-chip-f ${filtroAS.per.includes(c.id) || filtroAS.cat.includes(c.id) ? "on" : ""}" data-f="${esc(c.id)}" data-tp="${PERS().some(x => x.id === c.id) ? "per" : "cat"}">${esc(c.nombre)}</button>`).join("")}</div>
+          <div class="cj-band" id="cj-band" aria-live="polite"></div>
+          <div class="cj-grid" id="cj-grid">${todosCaja.map(p => `<div class="cj-p" data-cj="${esc(p.id)}" data-pr="${+p.precio}" data-t="${esc(textoAS(p))}" data-c="${esc((p.categorias || []).join(","))}" role="button" tabindex="0" aria-pressed="false"><img src="${esc(foto(p))}" alt="" loading="lazy"><b>${esc(sinEmoji(p.nombre))}</b><span class="cj-pr">${bsAS(p.precio)}</span>${tieneVar(p) ? `<select class="cj-v" data-cjv="${esc(p.id)}" aria-label="Elige color o personaje">${(p.variantes || []).map(v => `<option value="${esc(v.nombre)}">${esc(v.nombre)}</option>`).join("")}</select>` : ""}<i class="cj-ok">✓</i></div>`).join("") || `<p class="vacio">No hay regalos de este monto por ahora.</p>`}</div><p class="vacio cj-nada" id="cj-nada" hidden>No encontramos regalos con eso. Prueba otra palabra o quita un filtro.</p>`;
+        cards[3].before(caja);
+        const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), caja: mk([caja], "caja"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
+        const ruta = () => asSalaOn ? (asCajaOn ? ["gusto", "combo", "caja", "carta", "pol"] : ["gusto", "combo", "carta", "pol"]) : asModo === "grupo" ? ["portada", "modo", "grupo"] : asCajaOn ? ["portada", "modo", "pres", "gusto", "combo", "caja", "carta", "pol"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
+        const tope = () => monto + asExtra;
+        const selIds = () => Object.keys(asSel).filter(id => caja.querySelector(`.cj-p[data-cj="${CSS.escape(id)}"]`)), sumaSel = () => selIds().reduce((t, id) => t + (+(PRODS.find(p => String(p.id) === id) || {}).precio || 0), 0);
+        const totalAct = () => asCajaOn ? sumaSel() : (combos.length ? combos[asIdx].total : null);
+        const pintaBand = () => { const b = caja.querySelector("#cj-band"), ids = selIds(); if (!ids.length) { b.innerHTML = `<span class="cj-vacia">Tu caja está vacía. Toca los regalos que quieras.</span>`; return; }
+          b.innerHTML = `<div class="cj-fila">${ids.map(id => { const p = PRODS.find(x => String(x.id) === id); return `<span class="cj-chip"><img src="${esc(foto(p))}" alt=""><span><b>${esc(sinEmoji(p.nombre))}</b><small>${asSel[id].v ? esc(asSel[id].v) + " · " : ""}${bsAS(p.precio)}</small></span><button type="button" data-cjq="${esc(id)}" aria-label="Quitar ${esc(sinEmoji(p.nombre))}">×</button></span>`; }).join("")}</div><span class="cj-resta">${ids.length} ${ids.length === 1 ? "regalo" : "regalos"} · te quedan ${bsAS(Math.max(0, monto - sumaSel()))}</span>`;
+          b.querySelectorAll("[data-cjq]").forEach(x => x.onclick = () => { const id = x.dataset.cjq; delete asSel[id]; const t = caja.querySelector(`.cj-p[data-cj="${CSS.escape(id)}"]`); if (t) { t.classList.remove("on"); t.setAttribute("aria-pressed", "false"); } pintaTotal(); btn.classList.toggle("apagado", asPaso === "caja" && !selIds().length); }); };
+        const pintaTotal = () => { const t = totalAct(), n = asCajaOn ? selIds().length : 0; $("#asw-total b").textContent = t === null ? "—" : bsAS(t); $("#asw-total small").textContent = n ? "Total · " + n + (n === 1 ? " regalo" : " regalos") : "Total"; pintaBand(); };
+        const filtrarCaja = () => { const q = sinAcento(caja.querySelector("#cj-q").value.trim()), act = [...caja.querySelectorAll(".cj-chip-f.on")], per = act.filter(x => x.dataset.tp === "per"), cat = act.filter(x => x.dataset.tp === "cat"); let n = 0;
+          caja.querySelectorAll(".cj-p").forEach(el => { const ids = el.dataset.c.split(","), t = el.dataset.t;
+            const okP = !per.length || per.some(x => ids.includes(x.dataset.f) || t.includes(sinAcento(nomCatAS(x.dataset.f)))), okC = !cat.length || cat.some(x => ids.includes(x.dataset.f)), okQ = !q || t.includes(q);
+            const ver = okP && okC && okQ && +el.dataset.pr <= tope(); el.hidden = !ver; if (ver) n++; });
+          caja.querySelector("#cj-nada").hidden = n > 0; const td = caja.querySelector("#cj-todo"); if (td) td.hidden = n >= 4; };
+        const ordenarCaja = () => { const g = caja.querySelector("#cj-grid"), men = caja.querySelector("#cj-ord").value === "menor"; [...g.children].sort((a, b) => men ? a.dataset.pr - b.dataset.pr : b.dataset.pr - a.dataset.pr).forEach(x => g.appendChild(x)); };
+        caja.querySelector("#cj-q").oninput = filtrarCaja; caja.querySelector("#cj-ord").onchange = ordenarCaja;
+        caja.querySelectorAll(".cj-chip-f").forEach(b => b.onclick = () => { b.classList.toggle("on"); filtrarCaja(); });
+        { const td = caja.querySelector("#cj-todo"); if (td) td.onclick = () => { caja.querySelectorAll(".cj-chip-f.on").forEach(x => x.classList.remove("on")); caja.querySelector("#cj-chips").hidden = false; td.parentElement.hidden = true; filtrarCaja(); }; }
+        const pintaTope = () => { caja.querySelector("#cj-tope").textContent = bsAS(tope()); caja.querySelector("#cj-menos").disabled = asExtra <= 0 || tope() - 10 < sumaSel(); caja.querySelector("#cj-mas").disabled = asExtra >= 60; filtrarCaja(); };
+        caja.querySelector("#cj-mas").onclick = () => { if (asExtra < 60) { asExtra += 10; pintaTope(); } };
+        caja.querySelector("#cj-menos").onclick = () => { if (asExtra > 0 && tope() - 10 >= sumaSel()) { asExtra -= 10; pintaTope(); } };
+        pintaTope();
+        caja.querySelectorAll(".cj-p").forEach(el => { const id = el.dataset.cj, v = el.querySelector("select"), sel = !!asSel[id];
+          if (sel) { el.classList.add("on"); el.setAttribute("aria-pressed", "true"); if (v && asSel[id].v) v.value = asSel[id].v; }
+          const alt = () => { if (asSel[id]) { delete asSel[id]; } else { const p = PRODS.find(x => String(x.id) === id); if (sumaSel() + (+p.precio) > tope()) { toast("Pasarías tu presupuesto de " + bsAS(tope()) + ". Puedes subirlo con + Bs 10"); return; } asSel[id] = { v: v ? v.value : null }; } el.classList.toggle("on", !!asSel[id]); el.setAttribute("aria-pressed", !!asSel[id]); pintaTotal(); btn.classList.toggle("apagado", asPaso === "caja" && !selIds().length); };
+          el.onclick = e => { if (e.target.closest("select")) return; alt(); }; el.onkeydown = e => { if (e.target.closest("select")) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alt(); } };
+          if (v) v.onchange = () => { if (asSel[id]) { asSel[id].v = v.value; pintaBand(); } }; });
+        sec.classList.add("asw");
+        sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);
+        sec.insertAdjacentHTML("beforeend", `<div class="asw-pie"><div class="asw-fila">
+          <button type="button" class="asw-atras" id="asw-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <div class="asw-total" id="asw-total"><small>Total</small><b>${combos.length ? bsAS(combos[asIdx].total) : "—"}</b></div>
+          <button type="button" class="asw-btn" id="asw-seguir"><span>Continuar</span></button></div></div>`);
+        const llevar = () => { if (asCajaOn && selIds().length) { selIds().forEach(id => agregar(id, asSel[id].v || null, 1)); setTimeout(() => abrir(true), 250); return; } const c = combos[asIdx]; if (!c) return; const card = app.querySelector(".as-combo"); c.items.forEach(p => { const sel = tieneVar(p) && card ? card.querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); };
+        const btn = $("#asw-seguir"), gform = $("#as-g-form");
+        const marcar = () => app.querySelectorAll(".asw-modo").forEach(x => { const on = x.dataset.m === asModo; x.classList.toggle("sel", on); x.setAttribute("aria-checked", on); });
+        app.querySelectorAll(".asw-modo").forEach(x => x.onclick = () => { if (x.dataset.m === "grupo") { location.hash = "#/sala"; return; } asModo = x.dataset.m; marcar(); ver(); });
+        const ver = () => {
+          const R = ruta(); if (!R.includes(asPaso)) asPaso = "portada";
+          const i = R.indexOf(asPaso), k = asPaso;
+          Object.entries(P).forEach(([n, el]) => el.hidden = n !== k);
+          $("#asw-n").textContent = i + 1; $("#asw-t").textContent = R.length; $("#asw-fill").style.width = ((i + 1) / R.length * 100) + "%";
+          $("#asw-atras").style.visibility = i || asSalaOn ? "visible" : "hidden";
+          $("#asw-total").style.visibility = (k === "combo" || k === "caja" || k === "carta" || k === "pol") && (combos.length || asCajaOn) ? "visible" : "hidden"; pintaTotal();
+          const ultimo = i === R.length - 1;
+          btn.querySelector("span").textContent = k === "portada" ? "Empezar" : k === "grupo" ? "Pedir presupuesto por WhatsApp" : k === "pol" ? "Agregar mi regalo al carrito" : "Continuar";
+          btn.classList.toggle("apagado", (k === "modo" && !asModo) || (k === "combo" && !combos.length && !asCajaOn) || (k === "caja" && !selIds().length));
+          P[k].classList.remove("asw-in"); void P[k].offsetWidth; P[k].classList.add("asw-in");
+        };
+        btn.onclick = () => {
+          if (asPaso === "combo") asCajaOn = false;
+          const R = ruta(), i = R.indexOf(asPaso);
+          if (asPaso === "modo" && !asModo) { toast("Elige una opción"); return; }
+          if (asPaso === "combo" && !combos.length) { toast("No hay combos para este monto"); return; }
+          if (asPaso === "caja" && !selIds().length) { toast("Toca al menos un regalo"); return; }
+          if (asPaso === "grupo") { if (gform.reportValidity()) gform.requestSubmit(); return; }
+          if (asPaso === "pol") { llevar(); return; }
+          if (i < R.length - 1) { asPaso = R[i + 1]; ver(); window.scrollTo(0, 0); }
+        };
+        $("#asw-atras").onclick = () => { const R = ruta(), i = R.indexOf(asPaso); if (i === 0 && asSalaOn && asSalaCtx) { location.hash = "#/sala/" + asSalaCtx.codigo; return; } if (i > 0) { asPaso = R[i - 1]; ver(); window.scrollTo(0, 0); } };
+        { const ir = $("#as-caja-ir"); if (ir) ir.onclick = () => { asCajaOn = true; asSel = {}; caja.querySelectorAll(".cj-p.on").forEach(x => { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); }); pintaTotal(); asPaso = "caja"; ver(); window.scrollTo(0, 0); }; }
+        marcar(); ver();
+      } }
+  }
+
+
+  // ---------- Salas de amigo secreto (código tipo "sala") ----------
+  async function salaRpc(fn, args) {
+    const r = await fetch(`${SB.url.replace(/\/$/, "")}/rest/v1/rpc/${fn}`, { method: "POST", headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "application/json" }, body: JSON.stringify(args) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error((j && j.message) || "No se pudo, intenta otra vez");
+    return j;
+  }
+  const salaTok = c => { try { return localStorage.getItem("sala-" + c) || ""; } catch (e) { return ""; } };
+  const salaGuardar = (c, t) => { try { localStorage.setItem("sala-" + c, t); const L = JSON.parse(localStorage.getItem("salas-mias") || "[]").filter(x => x !== c); L.unshift(c); localStorage.setItem("salas-mias", JSON.stringify(L.slice(0, 6))); } catch (e) {} };
+  const gustosChips = () => PERS().concat(CATEG()).filter(c => !/happy\s*box/i.test(c.nombre)).map(c => `<button type="button" class="sl-gusto" data-g="${esc(c.nombre)}">${esc(c.nombre)}</button>`).join("");
+  const leerGustos = root => [...root.querySelectorAll(".sl-gusto.on")].map(b => b.dataset.g).join(", ");
+  const galleta = i => `<img src="galleta-${(i % 12) + 1}.webp" alt="" width="140" height="160">`;
+  const SLOTS = [[34, 63], [64, 64], [23, 86], [74, 87], [12, 66], [88, 64], [47, 52], [27, 53], [73, 54], [8, 88], [92, 90]];
+  const SLOTSM = [[27, 66], [73, 66], [16, 85], [84, 85], [50, 91], [36, 57], [55, 56], [8, 74], [92, 74], [28, 92], [72, 92]];
+  const escena = (personas, yo) => `<div class="sl-sala"><picture><source media="(max-width:820px)" srcset="sala-fondo-v.webp"><img src="sala-fondo.webp" alt="" width="1400" height="788"></picture>${personas.slice(0, SLOTS.length).map((n, i) => `<div class="sl-gal ${n === yo ? "yo" : ""}" style="--x:${SLOTS[i][0]}%;--y:${SLOTS[i][1]}%;--xm:${SLOTSM[i][0]}%;--ym:${SLOTSM[i][1]}%">${galleta(i)}<span>${esc(n)}</span></div>`).join("")}</div>${personas.length > SLOTS.length ? `<p class="sl-mas">y ${personas.length - SLOTS.length} más: ${personas.slice(SLOTS.length).map(esc).join(", ")}</p>` : ""}`;
+  function sala(arg) {
+    const cod = String(arg || "").toUpperCase().replace(/[^A-Z0-9-]/g, "");
+    const top = `<div class="sl-top"><a class="asw-x" href="#/amigo-secreto" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><span>Sala de amigo secreto</span></div>`;
+    const envolver = (html, ancha) => { app.innerHTML = `<section class="seccion sl-pag ${ancha ? "sl-ancha" : ""}">${top}<div class="sl-cont">${html}</div></section>`; };
+    if (!SB.url || !SB.key) { envolver(`<p class="vacio">Las salas estarán listas muy pronto.</p>`); return; }
+    const ligar = root => root.querySelectorAll(".sl-gusto").forEach(b => b.onclick = () => b.classList.toggle("on"));
+    // ---- inicio ----
+    if (!cod) {
+      let mias = []; try { mias = JSON.parse(localStorage.getItem("salas-mias") || "[]"); } catch (e) {}
+      envolver(`<div class="sl-sala sl-sala-ban"><img src="sala-fondo.webp" alt="" width="1400" height="788"></div><h1 class="sl-h">Amigo secreto en grupo</h1><p class="sl-sub">Crea una sala, comparte el código y cada persona recibe a quién regalarle. Sin cuentas.</p>
+        <div class="sl-cards"><button type="button" class="sl-card sl-crear" id="sl-nueva"><span class="sl-ico">🍪</span><b>Crear una sala</b><small>Tú la organizas y compartes el código</small></button>
+        <form class="sl-card sl-unir" id="sl-cod"><span class="sl-ico">🔑</span><b>Tengo un código</b><input id="sl-c" maxlength="9" placeholder="CANI-7K2" autocapitalize="characters" autocomplete="off"><button class="btn" type="submit">Entrar</button></form></div>
+        ${mias.length ? `<p class="sl-mias">Tus salas: ${mias.map(c => `<a href="#/sala/${esc(c)}">${esc(c)}</a>`).join(" · ")}</p>` : ""}`);
+      $("#sl-nueva").onclick = () => { location.hash = "#/sala/nueva"; };
+      $("#sl-cod").onsubmit = e => { e.preventDefault(); const v = $("#sl-c").value.toUpperCase().replace(/[^A-Z0-9-]/g, ""); if (v.length >= 5) location.hash = "#/sala/" + v; else toast("Escribe el código completo"); };
+      return;
+    }
+    // ---- crear ----
+    if (cod === "NUEVA") {
+      const montos = (AS.montos || [30, 50, 80, 100]).map(Number).filter(n => n > 0); let pres = montos[1] || montos[0] || 50, modo = "sorteo";
+      envolver(`<h1 class="sl-h">Crea tu sala</h1>
+        <form class="sl-form" id="sl-f">
+          <label>Nombre del grupo<input name="nombre" maxlength="40" required placeholder="Ej: Oficina, Primos, Colegio 2015"></label>
+          <label>Tu nombre<input name="yo" maxlength="30" required placeholder="¿Cómo te llamas?"></label>
+          <label>Tu PIN de 4 números <small>Es tu llave: si cambias de celular o se cierra la página, con tu nombre y este PIN vuelves a tu lugar. No lo compartas.</small><input name="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="1234" autocomplete="off"></label>
+          <div class="sl-campo"><span>Presupuesto por regalo</span><div class="sl-montos">${montos.map(m => `<button type="button" class="sl-monto ${m === pres ? "on" : ""}" data-m="${m}">${bsAS(m)}</button>`).join("")}<input type="number" id="sl-otro" min="15" step="1" inputmode="numeric" placeholder="Otro"></div></div>
+          <label>Fecha del intercambio<input name="fecha" maxlength="40" placeholder="Ej: 20 de diciembre"></label>
+          <div class="sl-campo"><span>¿Cómo se sortea?</span><div class="sl-modos"><button type="button" class="sl-modo on" data-md="sorteo"><b>Sorteamos aquí</b><small>La página asigna a cada persona</small></button><button type="button" class="sl-modo" data-md="manual"><b>Ya hicimos el sorteo</b><small>Cada una pone a quién le tocó</small></button></div></div>
+          <label class="sl-manual" hidden>¿A quién te tocó a ti?<input name="asig" maxlength="30" placeholder="Su nombre"></label>
+          <div class="sl-campo"><span>¿Qué te gusta? <small>(opcional, para que tu amiga secreta te regale algo lindo)</small></span><div class="sl-gustos">${gustosChips()}</div></div>
+          <button class="btn sl-go" type="submit">Crear sala</button>
+        </form>`);
+      const F = $("#sl-f"); ligar(F);
+      F.querySelectorAll(".sl-monto").forEach(b => b.onclick = () => { pres = +b.dataset.m; F.querySelectorAll(".sl-monto").forEach(x => x.classList.toggle("on", x === b)); $("#sl-otro").value = ""; });
+      $("#sl-otro").oninput = e => { const v = Math.round(+e.target.value); if (v >= 15) { pres = v; F.querySelectorAll(".sl-monto").forEach(x => x.classList.remove("on")); } };
+      F.querySelectorAll(".sl-modo").forEach(b => b.onclick = () => { modo = b.dataset.md; F.querySelectorAll(".sl-modo").forEach(x => x.classList.toggle("on", x === b)); F.querySelector(".sl-manual").hidden = modo !== "manual"; });
+      F.onsubmit = async e => { e.preventDefault(); const btn = F.querySelector(".sl-go"); btn.disabled = true;
+        try { const d = new FormData(F), r = await salaRpc("sala_crear", { p_nombre: d.get("nombre"), p_yo: d.get("yo"), p_presupuesto: pres, p_fecha: d.get("fecha") || "", p_modo: modo, p_gustos: leerGustos(F), p_asignado: modo === "manual" ? (d.get("asig") || "") : "", p_pin: String(d.get("pin") || "") });
+          salaGuardar(r.codigo, r.token); location.hash = "#/sala/" + r.codigo; } catch (x) { toast(x.message); btn.disabled = false; } };
+      return;
+    }
+    // ---- sala ----
+    const tok = salaTok(cod);
+    const linkSala = `${location.origin}${location.pathname}#/sala/${cod}`;
+    const cargar = async (silencio) => {
+      let d; try { d = await salaRpc("sala_estado", { p_codigo: cod, p_token: tok }); } catch (x) { if (!silencio) envolver(`<h1 class="sl-h">Sala no encontrada</h1><p class="sl-sub">${esc(x.message)}. Revisa el código.</p><a class="btn" href="#/sala">Volver</a>`); return null; }
+      return d;
+    };
+    const pintar = d => {
+      const S = d.sala, yo = d.yo;
+      if (!yo) {  // unirse
+        envolver(`<h1 class="sl-h">${esc(S.nombre)}</h1><p class="sl-sub">Regalos de hasta <b>${bsAS(S.presupuesto)}</b>${S.fecha ? ` · ${esc(S.fecha)}` : ""} · ${d.personas.length} ${d.personas.length === 1 ? "persona" : "personas"} en la sala</p>
+          ${S.estado === "sorteada" && S.modo === "sorteo" ? `<p class="sl-aviso">Esta sala ya hizo el sorteo. Si ya estabas en ella, entra con tu PIN. Si eres nueva, pídele a quien la creó que la reabra.</p>` : `<form class="sl-form" id="sl-j">
+          <label>Tu nombre<input name="yo" maxlength="30" required placeholder="¿Cómo te llamas?"></label>
+          <label>Tu PIN de 4 números <small>Es tu llave: si cambias de celular o se cierra la página, con tu nombre y este PIN vuelves a tu lugar. No lo compartas.</small><input name="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="1234" autocomplete="off"></label>
+          ${S.modo === "manual" ? `<label>¿A quién te tocó?<input name="asig" maxlength="30" required placeholder="Su nombre"></label>` : ""}
+          <div class="sl-campo"><span>¿Qué te gusta? <small>(opcional)</small></span><div class="sl-gustos">${gustosChips()}</div></div>
+          <button class="btn sl-go" type="submit">Entrar a la sala</button></form>`}
+          <div class="sl-rec"><button type="button" class="sl-link2" id="sl-rec-b">Ya estoy en esta sala</button><form class="sl-form sl-rec-f" id="sl-r" hidden><label>Tu nombre<input name="yo" maxlength="30" required placeholder="Como te registraste"></label><label>Tu PIN<input name="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="1234" autocomplete="off"></label><button class="btn sl-go" type="submit">Volver a mi sala</button></form></div>`);
+        { const rb = $("#sl-rec-b"), R = $("#sl-r"); if (S.estado === "sorteada" && S.modo === "sorteo") { rb.hidden = true; R.hidden = false; } else rb.onclick = () => { R.hidden = !R.hidden; };
+          R.onsubmit = async e => { e.preventDefault(); const b = R.querySelector(".sl-go"); b.disabled = true; try { const f = new FormData(R), r = await salaRpc("sala_recuperar", { p_codigo: cod, p_nombre: f.get("yo"), p_pin: String(f.get("pin") || "") }); if (r.error) throw new Error(r.error); salaGuardar(cod, r.token); sala(cod); } catch (x) { toast(x.message); b.disabled = false; } }; }
+        const J = $("#sl-j"); if (J) { ligar(J); J.onsubmit = async e => { e.preventDefault(); const b = J.querySelector(".sl-go"); b.disabled = true; b.textContent = "Entrando…"; try { const f = new FormData(J), r = await salaRpc("sala_unirse", { p_codigo: cod, p_nombre: f.get("yo"), p_gustos: leerGustos(J), p_asignado: f.get("asig") || "", p_pin: String(f.get("pin") || "") }); salaGuardar(cod, r.token); sala(cod); } catch (x) { toast(x.message); b.disabled = false; } }; }
+        return;
+      }
+      const compartir = `¡Únete a mi sala de amigo secreto de Cani Shop! 🎁 Código: ${cod}\n${linkSala}`;
+      let centro = "";
+      const regalo = yo.asignado ? `<div class="sl-tocó"><small>Te tocó</small><b>${esc(yo.asignado)}</b>${yo.asignado_gustos ? `<p>Le gusta: ${esc(yo.asignado_gustos)}</p>` : ""}<button class="btn sl-go" id="sl-regalo">Armar su regalo</button>${S.modo === "sorteo" && yo.cambios < 1 && d.personas.length > 2 ? `<button type="button" class="sl-link" id="sl-cambio">No me gusta, cambiar mi amigo secreto</button>` : ""}</div>` : "";
+      if (S.modo === "manual") centro = regalo || `<p class="sl-aviso">Te falta poner a quién te tocó.</p>`;
+      else if (S.estado === "sorteada") centro = regalo;
+      else centro = yo.es_org ? `<div class="sl-sorteo"><p>Cuando estén todas, toca sortear. Se necesitan al menos 2 personas.</p><button class="btn sl-go" id="sl-sortear" ${d.personas.length < 2 ? "disabled" : ""}>Sortear ahora</button></div>` : `<p class="sl-esp">Esperando a que ${"quien creó la sala"} haga el sorteo… Esta pantalla se actualiza sola.</p>`;
+      envolver(`<div class="sl-wrap"><div class="sl-izq"><h1 class="sl-h">${esc(S.nombre)}</h1><p class="sl-sub">Regalos de hasta <b>${bsAS(S.presupuesto)}</b>${S.fecha ? ` · ${esc(S.fecha)}` : ""} · <span>${d.personas.length} ${d.personas.length === 1 ? "persona" : "personas"} en la sala</span></p>
+        ${escena(d.personas, yo.nombre)}</div>
+        <aside class="sl-der">${yo.aviso ? `<p class="sl-aviso">Hubo un cambio en tu sala. Revisa abajo a quién te tocó.</p>` : ""}
+        <div class="sl-codigo"><div class="sl-cod-t"><small>Código de la sala</small><b>${esc(cod)}</b></div><div class="sl-cod-b"><button type="button" class="sl-mini" id="sl-copiar">Copiar enlace</button><a class="sl-mini sl-wa" target="_blank" rel="noopener" href="${esc(waURL(compartir))}">WhatsApp</a></div></div>
+        ${centro}
+        <div class="sl-acc">${yo.es_org && S.estado === "sorteada" && S.modo === "sorteo" ? `<button type="button" class="sl-link2" id="sl-reabrir">Reabrir y volver a sortear</button>` : ""}${yo.es_org ? (d.personas.length > 1 ? `<button type="button" class="sl-link2" id="sl-quitar">Quitar a alguien</button>` : "") : `<button type="button" class="sl-link2" id="sl-salir">Salir de la sala</button>`}</div></aside></div>`, true);
+      $("#sl-copiar").onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(linkSala) : Promise.reject()).then(() => toast("Enlace copiado"), () => toast(linkSala)); };
+      const so = $("#sl-sortear"); if (so) so.onclick = async () => { if (!confirm("¿Sortear ahora? Ya no podrá entrar nadie más.")) return; so.disabled = true; try { await salaRpc("sala_sortear", { p_codigo: cod, p_token: tok }); sala(cod); } catch (x) { toast(x.message); so.disabled = false; } };
+      const rg = $("#sl-regalo"); if (rg) rg.onclick = () => { try { sessionStorage.setItem("as-sala", JSON.stringify({ codigo: cod, para: yo.asignado, gustos: yo.asignado_gustos || "", presupuesto: S.presupuesto })); sessionStorage.setItem("as-sala-go", "1"); } catch (e) {} location.hash = "#/amigo-secreto/" + Math.round(S.presupuesto); };
+      const quitar = async nombre => { try { await salaRpc("sala_quitar", { p_codigo: cod, p_token: tok, p_persona: nombre }); return true; } catch (x) { toast(x.message); return false; } };
+      const qb = $("#sl-quitar"); if (qb) qb.onclick = () => { const otros = d.personas.filter(n => n !== yo.nombre); const v = document.createElement("div"); v.className = "sl-sheet"; v.innerHTML = `<div class="sl-sheet-c"><h3>Quitar a alguien</h3><p>${S.estado === "sorteada" && S.modo === "sorteo" ? "Si ya hubo sorteo, a quien le regalaba a esa persona le tocará quien le tocaba a ella." : "Se borra de la sala."}</p>${otros.map(n => `<div class="sl-q"><span>${esc(n)}</span><button type="button" data-q="${esc(n)}">Quitar</button></div>`).join("")}<button type="button" class="btn sl-cerrar">Cerrar</button></div>`; document.body.appendChild(v);
+        v.onclick = async e => { if (e.target === v || e.target.closest(".sl-cerrar")) { v.remove(); return; } const b = e.target.closest("[data-q]"); if (!b) return; if (!confirm(`¿Quitar a ${b.dataset.q} de la sala?`)) return; if (await quitar(b.dataset.q)) { v.remove(); sala(cod); } }; };
+      const sb = $("#sl-salir"); if (sb) sb.onclick = async () => { if (!confirm("¿Salir de la sala? Tendrás que volver a registrarte si quieres entrar otra vez.")) return; if (await quitar(yo.nombre)) { try { localStorage.removeItem("sala-" + cod); } catch (e) {} location.hash = "#/sala"; } };
+      const ra = $("#sl-reabrir"); if (ra) ra.onclick = async () => { if (!confirm("Se borrarán las asignaciones y todas tendrán que esperar un nuevo sorteo. Si alguien ya hizo su pedido, avísale. ¿Reabrir?")) return; try { await salaRpc("sala_reabrir", { p_codigo: cod, p_token: tok }); sala(cod); } catch (x) { toast(x.message); } };
+      const cb = $("#sl-cambio"); if (cb) cb.onclick = async () => { if (!confirm("Te daremos otro amigo secreto. Solo puedes cambiar una vez. ¿Seguro?")) return; try { await salaRpc("sala_cambiar", { p_codigo: cod, p_token: tok }); sala(cod); } catch (x) { toast(x.message); } };
+    };
+    cargar().then(d => { if (!d) return; pintar(d);
+      let firma = JSON.stringify([d.sala.estado, d.personas.length, d.yo && d.yo.asignado]);
+      salaReloj = setInterval(async () => { if (!location.hash.startsWith("#/sala/" + cod)) return clearInterval(salaReloj); const n = await cargar(true); if (!n) return; const f = JSON.stringify([n.sala.estado, n.personas.length, n.yo && n.yo.asignado]); if (f !== firma && !document.activeElement.closest("form")) { firma = f; pintar(n); } }, 6000); });
+  }
+  // ---------- Polaroids: editor "Tus polaroids" ----------
+  const asegurarCaveat = () => { if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); } };
+  const SVG_CAM = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`;
+  const SVG_X = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+  function abrirPolaroids() {
+    asegurarCaveat();
+    const viejo = document.getElementById("pol-ed"); if (viejo) viejo.remove();
+    const rnd = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), b => "abcdefghijklmnopqrstuvwxyz0123456789"[b % 36]).join("");
+    const F = [null, null, null, null];   // { url, bmp, w, h, x, y, texto }
+    let subiendo = false;
+    const velo = document.createElement("div");
+    velo.className = "pol-velo"; velo.id = "pol-ed"; velo.setAttribute("role", "dialog"); velo.setAttribute("aria-modal", "true"); velo.setAttribute("aria-label", "Tus polaroids");
+    velo.innerHTML = `<div class="pol-hoja">
+      <button type="button" class="pol-x" aria-label="Cerrar">${SVG_X}</button>
+      <h2>Tus polaroids</h2>
+      <p class="pol-sub">Elige 4 fotos. Las imprimimos con marco blanco, como polaroid.</p>
+      <div class="pol-grid" id="pol-grid"></div>
+      <label class="btn btn-sec pol-varias">${SVG_CAM}Subir varias a la vez<input type="file" accept="image/*" multiple hidden id="pol-multi"></label>
+      <button type="button" class="btn pol-ok" id="pol-ok" disabled>Agregar al pedido · ${bs(polPrecio())}</button>
+      <p class="pol-msg" id="pol-msg" role="status"></p>
+      <p class="pol-chica">Listas en 2 a 3 días junto con tu pedido</p>
+    </div>`;
+    document.body.appendChild(velo); document.body.classList.add("pol-abierto");
+    const cerrar = () => { if (subiendo) return; F.forEach(f => f && f.url && URL.revokeObjectURL(f.url)); velo.remove(); document.body.classList.remove("pol-abierto"); document.removeEventListener("keydown", tecla); };
+    const tecla = e => { if (e.key === "Escape") cerrar(); };
+    document.addEventListener("keydown", tecla);
+    const msg = t => { $("#pol-msg").textContent = t || ""; };
+    const lista = () => F.every(Boolean);
+    const sync = () => { const ok = $("#pol-ok"); ok.disabled = !lista() || subiendo; };
+    async function cargar(file, i) {
+      if (!file || !/^image\//.test(file.type || "image/")) return false;
+      try {
+        const bmp = await createImageBitmap(file);
+        if (F[i] && F[i].url) URL.revokeObjectURL(F[i].url);
+        F[i] = { url: URL.createObjectURL(file), bmp, w: bmp.width, h: bmp.height, x: .5, y: .5, texto: (F[i] || {}).texto || "" };
+        return true;
+      } catch (e) { msg("No pudimos abrir esa foto. Prueba con otra."); return false; }
+    }
+    const pintar = () => {
+      $("#pol-grid").innerHTML = F.map((f, i) => `<div class="pol-slot" data-i="${i}"><div class="pol-marco">${f
+        ? `<div class="pol-foto" data-pan="${i}"><img src="${f.url}" alt="Foto ${i + 1}" draggable="false" style="object-position:${f.x * 100}% ${f.y * 100}%"><button type="button" class="pol-q" data-q="${i}" aria-label="Quitar foto ${i + 1}">${SVG_X}</button></div>`
+        : `<label class="pol-vacio">${SVG_CAM}<span>Agregar foto</span><input type="file" accept="image/*" hidden data-uno="${i}"></label>`}
+        <input class="pol-txt" data-t="${i}" maxlength="20" placeholder="Texto abajo (opcional)" aria-label="Texto abajo de la foto ${i + 1}" value="${esc(f ? f.texto : "")}"${f ? "" : " disabled"}></div>
+        ${f && Math.min(f.w, f.h) < 800 ? `<small class="pol-peq">Esta foto es pequeña, puede salir borrosa</small>` : ""}</div>`).join("");
+      sync();
+    };
+    pintar();
+    velo.addEventListener("click", e => { if (e.target === velo || e.target.closest(".pol-x")) cerrar(); const q = e.target.closest("[data-q]"); if (q) { const i = +q.dataset.q; if (F[i].url) URL.revokeObjectURL(F[i].url); F[i] = null; msg(""); pintar(); } });
+    velo.addEventListener("input", e => { const t = e.target.closest("[data-t]"); if (t && F[+t.dataset.t]) F[+t.dataset.t].texto = t.value.slice(0, 20); });
+    velo.addEventListener("change", async e => {
+      const uno = e.target.closest("[data-uno]");
+      if (uno) { msg(""); if (await cargar(uno.files[0], +uno.dataset.uno)) pintar(); uno.value = ""; return; }
+      if (e.target.id === "pol-multi") {
+        msg(""); const fs = [...e.target.files]; let k = 0;
+        for (let i = 0; i < 4 && k < fs.length; i++) if (!F[i]) await cargar(fs[k++], i);
+        pintar(); e.target.value = "";
+      }
+    });
+    // Arrastrar con el dedo para acomodar el encuadre
+    let pan = null;
+    velo.addEventListener("pointerdown", e => { const z = e.target.closest("[data-pan]"); if (!z || e.target.closest(".pol-q")) return; const f = F[+z.dataset.pan]; pan = { f, z, img: z.querySelector("img"), sx: e.clientX, sy: e.clientY, x0: f.x, y0: f.y }; z.setPointerCapture(e.pointerId); });
+    velo.addEventListener("pointermove", e => {
+      if (!pan) return; const { f, z, img } = pan, box = z.clientWidth, a = f.w / f.h;
+      if (a > 1) { const ov = box * (a - 1); f.x = Math.min(1, Math.max(0, pan.x0 - (e.clientX - pan.sx) / ov)); }
+      else if (a < 1) { const ov = box * (1 / a - 1); f.y = Math.min(1, Math.max(0, pan.y0 - (e.clientY - pan.sy) / ov)); }
+      img.style.objectPosition = `${f.x * 100}% ${f.y * 100}%`;
+    });
+    const finPan = () => { pan = null; }; velo.addEventListener("pointerup", finPan); velo.addEventListener("pointercancel", finPan);
+    // Recorte cuadrado según el encuadre, máximo 2000 px, JPG calidad 0,9
+    const recortar = (f, lado, q) => new Promise(ok => {
+      const s = Math.min(f.w, f.h), c = document.createElement("canvas"), out = Math.min(lado, s); c.width = c.height = out;
+      c.getContext("2d").drawImage(f.bmp, (f.w - s) * f.x, (f.h - s) * f.y, s, s, 0, 0, out, out);
+      c.toBlob(b => ok(b), "image/jpeg", q);
+    });
+    $("#pol-ok").onclick = async () => {
+      if (!lista() || subiendo) return;
+      if (!(SB.url && SB.key)) return msg("No pudimos conectar con la tienda. Inténtalo de nuevo en un momento.");
+      subiendo = true; sync(); const id = rnd();
+      try {
+        for (let i = 0; i < 4; i++) {
+          msg(`Subiendo tus fotos… ${i + 1} de 4`);
+          const blob = await recortar(F[i], 2000, .9);
+          const r = await fetch(`${SB.url.replace(/\/$/, "")}/storage/v1/object/polaroids/pack/${id}/${i + 1}.jpg`, { method: "POST", headers: { apikey: SB.key, Authorization: `Bearer ${SB.key}`, "Content-Type": "image/jpeg" }, body: blob });
+          if (!r.ok) throw new Error("subida " + (i + 1) + " " + r.status);
+        }
+        const mini = await recortar(F[0], 160, .7), thumb = await new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(mini); });
+        packsPol.push({ carpeta: `pack/${id}`, textos: F.map(f => (f.texto || "").trim().slice(0, 20)), thumb });
+        subiendo = false; guardarPol(); cerrar(); toast("¡Pack de polaroids agregado!"); setTimeout(() => abrir(true), 250);
+      } catch (e) {
+        console.warn("No se pudieron subir las polaroids", e); subiendo = false; sync();
+        msg("No pudimos subir tus fotos. Revisa tu internet e inténtalo otra vez.");
+      }
+    };
+  }
+  document.addEventListener("click", e => { if (e.target.closest("[data-pol-add]")) { e.preventDefault(); abrirPolaroids(); } });
+
+  // ---------- Rutas ----------
+  let salaReloj = 0;
+  function ruta() {
+    app.onclick = null; clearInterval(carReloj);
+    document.body.classList.toggle("en-scoop", (location.hash.split("/")[1] || "") === "scoops");
+    document.body.classList.toggle("en-asw", ["amigo-secreto", "sala"].includes(location.hash.split("/")[1] || "")); clearInterval(salaReloj);
+    document.body.classList.toggle("en-producto", (location.hash.split("/")[1] || "") === "producto");
+    const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
+    document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
+    $("#menu").classList.remove("abierto");
+    ({ catalogo: () => catalogo(arg), novedades: () => catalogo(null, null, "nuevos"), buscar: () => catalogo(null, decodeURIComponent(arg || "")), todo: () => catalogo(), producto: () => producto(arg), nosotros, contacto, ayuda: contacto, scoops, sellitos, "amigo-secreto": () => amigoSecreto(arg), sala: () => sala(arg) }[sec] || inicio)();
+    cerrarBuscar();
+    window.scrollTo(0, 0);
+  }
+  { let ant = "", act = location.hash, yAS = 0;
+    window.__hashPrev = () => ant;
+    window.addEventListener("hashchange", () => {
+      ant = act; act = location.hash;
+      if (!act.startsWith("#/amigo-secreto") && !act.startsWith("#/producto")) window.__asSalio = true;
+      if (ant.startsWith("#/amigo-secreto") && !act.startsWith("#/amigo-secreto")) yAS = window.scrollY;
+      if (act.startsWith("#/amigo-secreto") && ant.startsWith("#/producto") && yAS) { [150, 500, 1200].forEach(t => setTimeout(() => { if (location.hash.startsWith("#/amigo-secreto")) window.scrollTo(0, yAS); }, t)); }
+    }); }
+  window.addEventListener("hashchange", ruta);
+
+  $("#btn-menu").onclick = () => $("#menu").classList.toggle("abierto");
+  // Buscador que se escribe solo
+  (() => {
+    const inp = $("#input-buscar");
+    const frases = T.busquedas || ["Kuromi…", "Hello Kitty…", "Snoopy…", "Stickers kawaii…", "Papelería…", "Cinnamoroll…"];
+    let f = 0, i = 0, borrando = false;
+    const paso = () => {
+      if (document.activeElement === inp || inp.value) { inp.placeholder = "¿Qué estás buscando?"; return setTimeout(paso, 600); }
+      const txt = "Buscar " + frases[f];
+      if (!borrando) {
+        i++;
+        if (i >= txt.length) { borrando = true; inp.placeholder = txt; return setTimeout(paso, 1600); }
+      } else {
+        i--;
+        if (i <= 7) { borrando = false; f = (f + 1) % frases.length; }
+      }
+      inp.placeholder = txt.slice(0, i) + "|";
+      setTimeout(paso, borrando ? 45 : 95);
+    };
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(paso, 800);
+  })();
+
+  // Búsqueda en ventana (como Momohana)
+  const capa = $("#buscar-capa"), inpB = $("#input-buscar");
+  function abrirBuscar() { if (!capa) return; capa.hidden = false; requestAnimationFrame(() => capa.classList.add("ver")); setTimeout(() => inpB.focus(), 60); pintarPop(""); }
+  function cerrarBuscar() { if (!capa || capa.hidden) return; capa.classList.remove("ver"); setTimeout(() => { capa.hidden = true; }, 200); }
+  function pintarPop(q) {
+    const pop = $("#buscar-pop"); if (!pop) return;
+    if (!q) {
+      const pops = PERS().slice(0, 6);
+      pop.innerHTML = pops.length ? `<p class="pop-tit">Búsquedas populares</p><div class="pop-chips">${pops.map(c => `<a class="pill" href="#/catalogo/${c.id}">${esc(c.nombre)}</a>`).join("")}</div>` : "";
+      return;
+    }
+    const t = sinAcento(q).trim();
+    const res = PRODS.filter(p => sinAcento(p.nombre + " " + (p.variantes || []).map(v => v.nombre).join(" ")).includes(t));
+    pop.innerHTML = res.length ? `<p class="pop-tit">Productos</p><div class="pop-res">${res.slice(0, 6).map(p => `<a href="#/producto/${p.id}"><img src="${foto(p)}" alt=""><span>${esc(sinEmoji(p.nombre))}<b>${bs(p.precio)}</b></span></a>`).join("")}</div>
+      <a class="ver-todo pop-todo" href="#/buscar/${encodeURIComponent(q)}">Ver los ${res.length} resultados</a>` : `<p class="pop-tit">No encontramos “${esc(q)}”</p>`;
+  }
+  if (capa) {
+    $("#btn-buscar").onclick = abrirBuscar;
+    $("#buscar-cerrar").onclick = cerrarBuscar;
+    capa.addEventListener("click", e => { if (e.target === capa) cerrarBuscar(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") cerrarBuscar(); });
+    inpB.addEventListener("input", e => pintarPop(e.target.value.trim()));
+    inpB.addEventListener("keydown", e => { if (e.key === "Enter" && inpB.value.trim()) location.hash = "#/buscar/" + encodeURIComponent(inpB.value.trim()); });
+  }
+
+  // (franja antes del pie eliminada a pedido)
+  { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega(T.avisoCarrito || AVISO_CARRITO_DEF)); }
+  if (selOn()) document.querySelectorAll("#menu-sellitos, .pie-sellitos").forEach(a => a.hidden = false);
+  if (asOn()) document.querySelectorAll("#menu-amigo, .pie-amigo").forEach(a => a.hidden = false);
+  window.__rutaRefrescar = ruta;
+  pintarCarrito(); ruta();
+})();
