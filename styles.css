@@ -2376,3 +2376,12 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .asw-modo img.asw-sobre{max-width:none!important;height:auto!important;width:100%!important;flex:none}
 .asw-modo img.asw-atras-i,.asw-modo img.asw-atras-d{width:86%!important;position:absolute!important}
 @media (max-width:700px){.asw-modos{max-width:290px!important;gap:14px!important}.asw-modo b{font-size:1.1rem!important}.asw-modo small{font-size:.74rem!important}}
+/* Sobres: tamaño según la pantalla (alto y ancho), centrados */
+.asw-modos{display:flex!important;justify-content:center;align-items:flex-start;gap:clamp(14px,5vw,64px)!important;max-width:none!important;margin:0 auto!important;padding:0 4%}
+.asw-modo{container-type:inline-size;flex:none;width:clamp(210px,min(42vw,calc((100vh - 290px) * .96)),440px)}
+.asw-modo b{font-size:max(14px,6.2cqw)!important}
+.asw-modo small{font-size:max(11px,3.7cqw)!important}
+@media (max-width:700px){
+.asw-modos{flex-direction:column;align-items:center;gap:22px!important;padding:0}
+.asw-modo{width:clamp(220px,calc((100vh - 380px) / 2 * .96),300px)}
+}
