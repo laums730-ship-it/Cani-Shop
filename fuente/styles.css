@@ -2801,3 +2801,11 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 .as-mas-fila::-webkit-scrollbar{height:6px}
 .as-mas-fila::-webkit-scrollbar-track{background:transparent}
 .as-mas-fila::-webkit-scrollbar-thumb{background:#f2a9c9;border-radius:999px}
+
+/* listas de color/personaje dentro del combo y de la caja: flecha visible y texto con margen */
+.as-combo-txt li.as-var select,.asw [data-k=combo] .as-combo-txt select,.cj-v{
+  background-color:#fff!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23783746' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;background-position:right 14px center!important;background-size:11px 8px!important;
+  padding:7px 34px 7px 16px!important;border-radius:999px!important;font-weight:600;cursor:pointer}
+.cj-v{padding:4px 28px 4px 10px!important;background-position:right 9px center!important}
