@@ -2025,10 +2025,10 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       }
       const compartir = `¡Únete a mi sala de amigo secreto de Cani Shop! 🎁 Código: ${cod}\n${linkSala}`;
       let centro = "";
-      const regalo = yo.asignado ? `<div class="sl-tocó"><small>Te tocó</small><b>${esc(yo.asignado)}</b>${yo.asignado_gustos ? `<p>Le gusta: ${esc(yo.asignado_gustos)}</p>` : ""}<button class="btn sl-go" id="sl-regalo">Armar su regalo</button>${S.modo === "sorteo" && yo.cambios < 1 ? `<button type="button" class="sl-link" id="sl-cambio">No me gusta, cambiar mi amigo secreto</button>` : ""}</div>` : "";
+      const regalo = yo.asignado ? `<div class="sl-tocó"><small>Te tocó</small><b>${esc(yo.asignado)}</b>${yo.asignado_gustos ? `<p>Le gusta: ${esc(yo.asignado_gustos)}</p>` : ""}<button class="btn sl-go" id="sl-regalo">Armar su regalo</button>${S.modo === "sorteo" && yo.cambios < 1 && d.personas.length > 2 ? `<button type="button" class="sl-link" id="sl-cambio">No me gusta, cambiar mi amigo secreto</button>` : ""}</div>` : "";
       if (S.modo === "manual") centro = regalo || `<p class="sl-aviso">Te falta poner a quién te tocó.</p>`;
       else if (S.estado === "sorteada") centro = regalo;
-      else centro = yo.es_org ? `<div class="sl-sorteo"><p>Cuando estén todas, toca sortear. Se necesitan al menos 3 personas.</p><button class="btn sl-go" id="sl-sortear" ${d.personas.length < 3 ? "disabled" : ""}>Sortear ahora</button></div>` : `<p class="sl-esp">Esperando a que ${"quien creó la sala"} haga el sorteo… Esta pantalla se actualiza sola.</p>`;
+      else centro = yo.es_org ? `<div class="sl-sorteo"><p>Cuando estén todas, toca sortear. Se necesitan al menos 2 personas.</p><button class="btn sl-go" id="sl-sortear" ${d.personas.length < 2 ? "disabled" : ""}>Sortear ahora</button></div>` : `<p class="sl-esp">Esperando a que ${"quien creó la sala"} haga el sorteo… Esta pantalla se actualiza sola.</p>`;
       envolver(`<h1 class="sl-h">${esc(S.nombre)}</h1><p class="sl-sub">Regalos de hasta <b>${bsAS(S.presupuesto)}</b>${S.fecha ? ` · ${esc(S.fecha)}` : ""}</p>
         ${yo.aviso ? `<p class="sl-aviso">Se actualizó tu amigo secreto. Mira abajo a quién te tocó.</p>` : ""}
         ${escena(d.personas, yo.nombre)}<p class="sl-cuenta">${d.personas.length} ${d.personas.length === 1 ? "persona" : "personas"} en la sala</p>
