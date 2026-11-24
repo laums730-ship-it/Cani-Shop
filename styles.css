@@ -2653,3 +2653,16 @@ body.en-asw .sl-pag{max-width:760px;margin:0 auto;padding:0 18px 40px}
 .sl-go{background:#c8213c!important;color:#fff!important;border:0;box-shadow:0 4px 0 #8f1328!important}
 .sl-tocó .sl-go{background:#fff!important;color:#c8213c!important;box-shadow:0 4px 0 #fbd3e4!important}
 .sl-h2{margin-top:32px}
+
+.sl-sala{position:relative;container-type:inline-size;border-radius:22px;overflow:hidden;margin:6px 0 4px;box-shadow:0 5px 0 #fbd3e4;line-height:0}
+.sl-sala img{width:100%;height:auto;display:block}
+.sl-sala-ban{margin-bottom:14px}
+.sl-gal{position:absolute;width:9.5cqw;transform:translate(-50%,-62%);display:flex;flex-direction:column;align-items:center;animation:salgal 3s ease-in-out infinite;line-height:1}
+.sl-gal svg{width:100%;height:auto;filter:drop-shadow(0 1.2cqw 0 rgba(120,20,40,.25))}
+.sl-gal span{margin-top:-.6cqw;padding:.35cqw 1.2cqw;border-radius:99px;background:#fff;color:#783746;font-weight:800;font-size:max(9px,1.7cqw);white-space:nowrap;box-shadow:0 .3cqw 0 #fbd3e4;max-width:16cqw;overflow:hidden;text-overflow:ellipsis}
+.sl-gal.yo span{background:#c8213c;color:#fff}
+.sl-gal:nth-child(odd){animation-delay:-1.2s}.sl-gal:nth-child(3n){animation-delay:-2.1s}
+@keyframes salgal{0%,100%{transform:translate(-50%,-62%)}50%{transform:translate(-50%,-68%)}}
+@media (prefers-reduced-motion:reduce){.sl-gal{animation:none}}
+.sl-mas{margin:8px 0 0;font-size:.85rem;color:#8a5566}
+.sl-cuenta{margin:8px 0 14px;font-weight:700;color:#8a5566;text-align:center}
