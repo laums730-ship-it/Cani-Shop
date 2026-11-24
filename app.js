@@ -1861,7 +1861,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       if (hero && pol && grupo && cards.length === 4 && sec) {
         const bub = t => `<p class="asw-sub">${esc(t)}</p>`;
         const mk = (nodos, k) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.k = k; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
-        const FR = { pres: "Elige un presupuesto y armamos tu regalo.", gusto: "Puedes elegir varios. Si no sabes, sigue.", combo: combos.length ? "Toca el dado para ver más combos." : "No hay combos de este monto. Prueba con otro presupuesto.", carta: "La imprimimos sin costo y va con tu regalo.", pol: "Es opcional. 4 fotos con marco blanco." };
+        const FR = { pres: "Elige un presupuesto y armamos tu regalo.", gusto: "Puedes elegir varios. Si no sabes, sigue.", combo: combos.length ? "Toca el dado para ver más combos." : "No hay combos de este monto. Prueba con otro presupuesto.", carta: "💌 La carta es un extra y no tiene ningún costo. La imprimimos y va con tu regalo.", pol: "Es opcional. 4 fotos con marco blanco." };
         if (asSalaOn && asSalaCtx) FR.gusto = (asSalaCtx.gustos ? "Armamos tu regalo con sus gustos." : "No dijo qué le gusta. Elige tú.");
         ["pres", "gusto", "combo", "carta"].forEach((k, i) => { const c = cards[i], h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FR[k])); });
         if (asSalaOn && asSalaCtx) { const h = cards[1].querySelector("h2"); h.innerHTML = `A <span class="sl-nom">${esc(asSalaCtx.para || "tu amigo secreto")}</span> le gusta…`;
@@ -1878,7 +1878,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         sec.querySelector(".as-form-pasos").before(modo);
         const todosCaja = PRODS.filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio).slice(0, 150);
         const caja = document.createElement("div");
-        caja.innerHTML = `<h2 class="as-tit asw-h">Arma tu propia caja</h2>${bub("Toca los regalos que quieras, hasta " + bsAS(monto) + ".")}
+        caja.innerHTML = `<h2 class="as-tit asw-h">Arma tu propia caja</h2>${bub("Toca los regalos que quieras, hasta " + bsAS(monto) + ". La carta y el envoltorio van sin costo.")}
           <div class="cj-bus"><input type="search" id="cj-q" placeholder="Buscar: llavero, Kuromi, libreta…" aria-label="Buscar regalos"><select id="cj-ord" aria-label="Ordenar"><option value="mayor">Mayor precio</option><option value="menor">Menor precio</option></select></div>
           ${asSalaOn && (filtroAS.per.length || filtroAS.cat.length) ? `<p class="cj-nota">Regalos de lo que le gusta a <b>${esc((asSalaCtx || {}).para || "tu amigo secreto")}</b> <button type="button" class="cj-todo" id="cj-todo" hidden>Ver todo el catálogo</button></p>` : ""}
           <div class="cj-chips" id="cj-chips" ${asSalaOn && (filtroAS.per.length || filtroAS.cat.length) ? "hidden" : ""} role="group" aria-label="Filtrar por personaje o categoría">${PERS().concat(CATEG()).filter(c => !/happy\s*box/i.test(c.nombre)).map(c => `<button type="button" class="cj-chip-f ${filtroAS.per.includes(c.id) || filtroAS.cat.includes(c.id) ? "on" : ""}" data-f="${esc(c.id)}" data-tp="${PERS().some(x => x.id === c.id) ? "per" : "cat"}">${esc(c.nombre)}</button>`).join("")}</div>
@@ -1986,6 +1986,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <form class="sl-form" id="sl-f">
           <label>Nombre del grupo<input name="nombre" maxlength="40" required placeholder="Ej: Oficina, Primos, Colegio 2015"></label>
           <label>Tu nombre<input name="yo" maxlength="30" required placeholder="¿Cómo te llamas?"></label>
+          <label>Tu PIN de 4 números <small>Para volver a entrar desde otro celular. No lo compartas.</small><input name="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="1234" autocomplete="off"></label>
           <div class="sl-campo"><span>Presupuesto por regalo</span><div class="sl-montos">${montos.map(m => `<button type="button" class="sl-monto ${m === pres ? "on" : ""}" data-m="${m}">${bsAS(m)}</button>`).join("")}<input type="number" id="sl-otro" min="15" step="1" inputmode="numeric" placeholder="Otro"></div></div>
           <label>Fecha del intercambio<input name="fecha" maxlength="40" placeholder="Ej: 20 de diciembre"></label>
           <div class="sl-campo"><span>¿Cómo se sortea?</span><div class="sl-modos"><button type="button" class="sl-modo on" data-md="sorteo"><b>Sorteamos aquí</b><small>La página asigna a cada persona</small></button><button type="button" class="sl-modo" data-md="manual"><b>Ya hicimos el sorteo</b><small>Cada una pone a quién le tocó</small></button></div></div>
@@ -1998,7 +1999,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       $("#sl-otro").oninput = e => { const v = Math.round(+e.target.value); if (v >= 15) { pres = v; F.querySelectorAll(".sl-monto").forEach(x => x.classList.remove("on")); } };
       F.querySelectorAll(".sl-modo").forEach(b => b.onclick = () => { modo = b.dataset.md; F.querySelectorAll(".sl-modo").forEach(x => x.classList.toggle("on", x === b)); F.querySelector(".sl-manual").hidden = modo !== "manual"; });
       F.onsubmit = async e => { e.preventDefault(); const btn = F.querySelector(".sl-go"); btn.disabled = true;
-        try { const d = new FormData(F), r = await salaRpc("sala_crear", { p_nombre: d.get("nombre"), p_yo: d.get("yo"), p_presupuesto: pres, p_fecha: d.get("fecha") || "", p_modo: modo, p_gustos: leerGustos(F), p_asignado: modo === "manual" ? (d.get("asig") || "") : "" });
+        try { const d = new FormData(F), r = await salaRpc("sala_crear", { p_nombre: d.get("nombre"), p_yo: d.get("yo"), p_presupuesto: pres, p_fecha: d.get("fecha") || "", p_modo: modo, p_gustos: leerGustos(F), p_asignado: modo === "manual" ? (d.get("asig") || "") : "", p_pin: String(d.get("pin") || "") });
           salaGuardar(r.codigo, r.token); location.hash = "#/sala/" + r.codigo; } catch (x) { toast(x.message); btn.disabled = false; } };
       return;
     }
@@ -2013,28 +2014,33 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       const S = d.sala, yo = d.yo;
       if (!yo) {  // unirse
         envolver(`<h1 class="sl-h">${esc(S.nombre)}</h1><p class="sl-sub">Regalos de hasta <b>${bsAS(S.presupuesto)}</b>${S.fecha ? ` · ${esc(S.fecha)}` : ""} · ${d.personas.length} ${d.personas.length === 1 ? "persona" : "personas"} en la sala</p>
-          ${S.estado === "sorteada" && S.modo === "sorteo" ? `<p class="sl-aviso">Esta sala ya hizo el sorteo. Pídele a quien la creó que te dé el enlace de otra.</p><a class="btn" href="#/sala">Volver</a>` : `<form class="sl-form" id="sl-j">
+          ${S.estado === "sorteada" && S.modo === "sorteo" ? `<p class="sl-aviso">Esta sala ya hizo el sorteo. Si ya estabas en ella, entra con tu PIN. Si eres nueva, pídele a quien la creó que la reabra.</p>` : `<form class="sl-form" id="sl-j">
           <label>Tu nombre<input name="yo" maxlength="30" required placeholder="¿Cómo te llamas?"></label>
+          <label>Tu PIN de 4 números <small>Para volver a entrar desde otro celular. No lo compartas.</small><input name="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="1234" autocomplete="off"></label>
           ${S.modo === "manual" ? `<label>¿A quién te tocó?<input name="asig" maxlength="30" required placeholder="Su nombre"></label>` : ""}
           <div class="sl-campo"><span>¿Qué te gusta? <small>(opcional)</small></span><div class="sl-gustos">${gustosChips()}</div></div>
-          <button class="btn sl-go" type="submit">Entrar a la sala</button></form>`}`);
-        const J = $("#sl-j"); if (J) { ligar(J); J.onsubmit = async e => { e.preventDefault(); const b = J.querySelector(".sl-go"); b.disabled = true; try { const f = new FormData(J), r = await salaRpc("sala_unirse", { p_codigo: cod, p_nombre: f.get("yo"), p_gustos: leerGustos(J), p_asignado: f.get("asig") || "" }); salaGuardar(cod, r.token); sala(cod); } catch (x) { toast(x.message); b.disabled = false; } }; }
+          <button class="btn sl-go" type="submit">Entrar a la sala</button></form>`}
+          <div class="sl-rec"><button type="button" class="sl-link2" id="sl-rec-b">Ya estoy en esta sala</button><form class="sl-form sl-rec-f" id="sl-r" hidden><label>Tu nombre<input name="yo" maxlength="30" required placeholder="Como te registraste"></label><label>Tu PIN<input name="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="1234" autocomplete="off"></label><button class="btn sl-go" type="submit">Volver a mi sala</button></form></div>`);
+        { const rb = $("#sl-rec-b"), R = $("#sl-r"); if (S.estado === "sorteada" && S.modo === "sorteo") { rb.hidden = true; R.hidden = false; } else rb.onclick = () => { R.hidden = !R.hidden; };
+          R.onsubmit = async e => { e.preventDefault(); const b = R.querySelector(".sl-go"); b.disabled = true; try { const f = new FormData(R), r = await salaRpc("sala_recuperar", { p_codigo: cod, p_nombre: f.get("yo"), p_pin: String(f.get("pin") || "") }); if (r.error) throw new Error(r.error); salaGuardar(cod, r.token); sala(cod); } catch (x) { toast(x.message); b.disabled = false; } }; }
+        const J = $("#sl-j"); if (J) { ligar(J); J.onsubmit = async e => { e.preventDefault(); const b = J.querySelector(".sl-go"); b.disabled = true; try { const f = new FormData(J), r = await salaRpc("sala_unirse", { p_codigo: cod, p_nombre: f.get("yo"), p_gustos: leerGustos(J), p_asignado: f.get("asig") || "", p_pin: String(f.get("pin") || "") }); salaGuardar(cod, r.token); sala(cod); } catch (x) { toast(x.message); b.disabled = false; } }; }
         return;
       }
       const compartir = `¡Únete a mi sala de amigo secreto de Cani Shop! 🎁 Código: ${cod}\n${linkSala}`;
       let centro = "";
       const regalo = yo.asignado ? `<div class="sl-tocó"><small>Te tocó</small><b>${esc(yo.asignado)}</b>${yo.asignado_gustos ? `<p>Le gusta: ${esc(yo.asignado_gustos)}</p>` : ""}<button class="btn sl-go" id="sl-regalo">Armar su regalo</button>${S.modo === "sorteo" && yo.cambios < 1 && d.personas.length > 2 ? `<button type="button" class="sl-link" id="sl-cambio">No me gusta, cambiar mi amigo secreto</button>` : ""}</div>` : "";
       if (S.modo === "manual") centro = regalo || `<p class="sl-aviso">Te falta poner a quién te tocó.</p>`;
-      else if (S.estado === "sorteada") centro = regalo;
+      else if (S.estado === "sorteada") centro = regalo + (yo.es_org ? `<button type="button" class="sl-link2" id="sl-reabrir">Reabrir la sala y volver a sortear</button>` : "");
       else centro = yo.es_org ? `<div class="sl-sorteo"><p>Cuando estén todas, toca sortear. Se necesitan al menos 2 personas.</p><button class="btn sl-go" id="sl-sortear" ${d.personas.length < 2 ? "disabled" : ""}>Sortear ahora</button></div>` : `<p class="sl-esp">Esperando a que ${"quien creó la sala"} haga el sorteo… Esta pantalla se actualiza sola.</p>`;
       envolver(`<div class="sl-wrap"><div class="sl-izq"><h1 class="sl-h">${esc(S.nombre)}</h1><p class="sl-sub">Regalos de hasta <b>${bsAS(S.presupuesto)}</b>${S.fecha ? ` · ${esc(S.fecha)}` : ""} · <span>${d.personas.length} ${d.personas.length === 1 ? "persona" : "personas"} en la sala</span></p>
         ${escena(d.personas, yo.nombre)}</div>
-        <aside class="sl-der">${yo.aviso ? `<p class="sl-aviso">Se actualizó tu amigo secreto. Mira a quién te tocó.</p>` : ""}
+        <aside class="sl-der">${yo.aviso ? `<p class="sl-aviso">Hubo un cambio en tu sala. Revisa abajo a quién te tocó.</p>` : ""}
         <div class="sl-codigo"><div class="sl-cod-t"><small>Código de la sala</small><b>${esc(cod)}</b></div><div class="sl-cod-b"><button type="button" class="sl-mini" id="sl-copiar">Copiar enlace</button><a class="sl-mini sl-wa" target="_blank" rel="noopener" href="${esc(waURL(compartir))}">WhatsApp</a></div></div>
         ${centro}</aside></div>`, true);
       $("#sl-copiar").onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(linkSala) : Promise.reject()).then(() => toast("Enlace copiado"), () => toast(linkSala)); };
       const so = $("#sl-sortear"); if (so) so.onclick = async () => { if (!confirm("¿Sortear ahora? Ya no podrá entrar nadie más.")) return; so.disabled = true; try { await salaRpc("sala_sortear", { p_codigo: cod, p_token: tok }); sala(cod); } catch (x) { toast(x.message); so.disabled = false; } };
       const rg = $("#sl-regalo"); if (rg) rg.onclick = () => { try { sessionStorage.setItem("as-sala", JSON.stringify({ codigo: cod, para: yo.asignado, gustos: yo.asignado_gustos || "", presupuesto: S.presupuesto })); sessionStorage.setItem("as-sala-go", "1"); } catch (e) {} location.hash = "#/amigo-secreto/" + Math.round(S.presupuesto); };
+      const ra = $("#sl-reabrir"); if (ra) ra.onclick = async () => { if (!confirm("Se borrarán las asignaciones y todas tendrán que esperar un nuevo sorteo. Si alguien ya hizo su pedido, avísale. ¿Reabrir?")) return; try { await salaRpc("sala_reabrir", { p_codigo: cod, p_token: tok }); sala(cod); } catch (x) { toast(x.message); } };
       const cb = $("#sl-cambio"); if (cb) cb.onclick = async () => { if (!confirm("Te daremos otro amigo secreto. Solo puedes cambiar una vez. ¿Seguro?")) return; try { await salaRpc("sala_cambiar", { p_codigo: cod, p_token: tok }); sala(cod); } catch (x) { toast(x.message); } };
     };
     cargar().then(d => { if (!d) return; pintar(d);

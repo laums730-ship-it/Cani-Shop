@@ -2734,3 +2734,13 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 .sl-likes{margin-top:min(12dvh,110px)}
 .sl-like{font-size:1.6rem;padding:18px 28px;border-radius:24px}
 .sl-likes-n{font-size:1.05rem;max-width:420px;margin-left:auto;margin-right:auto;margin-top:18px}
+
+.sl-rec{margin-top:18px;display:grid;gap:10px;justify-items:center}
+.sl-link2{background:none;border:0;color:#c8213c;text-decoration:underline;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;margin-top:6px}
+.sl-rec-f{width:100%;max-width:420px}
+.sl-form small{font-weight:600;opacity:.8}
+
+.asw [data-k=carta] .as-gratis{display:inline-flex!important;align-items:center;margin:0 0 6px;padding:5px 14px;border-radius:999px;background:#c8213c;color:#fff;font-size:.85rem}
+.asw [data-k=carta] .as-gratis b{color:#fff}
+.asw [data-k=carta] .asw-sub{font-weight:700;color:#783746}
+@media (max-width:820px){.sl-ancha .sl-der{gap:8px}.sl-ancha .sl-der .sl-link2{margin:0;font-size:.82rem;line-height:1.2}.sl-ancha .sl-tocó{padding:10px 12px}.sl-ancha .sl-sala:not(.sl-sala-ban){max-width:min(100%,calc((100dvh - 430px)*.8))}}
