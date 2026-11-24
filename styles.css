@@ -2535,3 +2535,17 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .asw [data-k=carta] .as-carta-form input,.asw [data-k=carta] .as-carta-form textarea{padding:6px 10px;font-size:.88rem;border-radius:12px}
 .asw [data-k=carta] .as-carta-form textarea{height:52px}
 }
+
+.cj-band{position:sticky;top:58px;z-index:10;background:#fff;border:2px solid #fbd3e4;border-radius:16px;padding:8px 10px;margin:6px auto 0;max-width:1000px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 0 #fbd3e4}
+.cj-vacia{font-size:.85rem;color:#8a5566;font-weight:600}
+.cj-fila{display:flex;gap:8px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+.cj-fila::-webkit-scrollbar{display:none}
+.cj-chip{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:#fef2f9;border:1.5px solid #fbd3e4;border-radius:999px;padding:3px 6px 3px 3px;max-width:200px}
+.cj-chip img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#fff}
+.cj-chip>span{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.cj-chip b{font-size:.74rem;color:#783746;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.cj-chip small{font-size:.7rem;color:#c8213c;font-weight:700}
+.cj-chip button{border:0;background:#c8213c;color:#fff;width:22px;height:22px;border-radius:50%;font-size:1rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.cj-resta{flex:none;font-size:.75rem;font-weight:700;color:#8a5566;white-space:nowrap}
+@media (max-width:700px){.cj-resta{display:none}.cj-band{top:52px}}
+.cj-grid{margin-top:12px}
