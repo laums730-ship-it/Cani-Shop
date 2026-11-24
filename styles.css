@@ -2712,3 +2712,12 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
  .sl-ancha .sl-h{margin:0}
  .sl-ancha .sl-mini{padding:5px 10px;font-size:.78rem}
 }
+
+.sl-gal{left:var(--x);top:var(--y)}
+@media (max-width:820px){
+.sl-gal{left:var(--xm);top:var(--ym);width:14cqw!important}
+.sl-gal span{font-size:max(9px,2.6cqw)!important}
+.sl-ancha .sl-sala:not(.sl-sala-ban){max-width:min(100%,calc((100dvh - 400px)*.8));margin-left:auto;margin-right:auto}
+.sl-sala picture{display:block}
+}
+.sl-sala picture{display:block}
