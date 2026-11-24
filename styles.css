@@ -2323,3 +2323,22 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .asw .as-escribe{border:0!important;background:none!important}
 .asw .as-gratis{display:none}
 .asw .as-prev-tit{margin-top:4px}
+
+/* Elegir: una persona o grupo */
+.asw-modos{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:880px}
+.asw-modo{font:inherit;text-align:center;background:#fff;border:2px solid #f3d7e4;border-bottom-width:6px;border-radius:22px;padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:#783746}
+.asw-modo img{width:100%;max-width:240px;height:150px;object-fit:contain}
+.asw-modo b{font-size:1.25rem}
+.asw-modo small{font-size:.9rem;color:#8a5566}
+.asw-modo:active{transform:translateY(3px);border-bottom-width:3px}
+.asw-modo.sel{border-color:#c8213c;border-bottom-color:#8f1328;background:#fff3f7}
+.asw-modo.sel b{color:#c8213c}
+.asw .asw-h{font-size:1.9rem!important;margin:6px 0 10px!important;line-height:1.15}
+@media (min-width:821px){.asw .asw-h{font-size:2.1rem!important}}
+.asw .as-g-form .btn,.asw .as-g-form small{display:none}
+@media (max-width:700px){.asw-modos{grid-template-columns:1fr;gap:12px}.asw-modo{flex-direction:row;text-align:left;padding:12px 14px;gap:12px}.asw-modo img{width:84px;height:84px;flex:none}.asw-modo>b,.asw-modo>small{display:block}.asw .asw-h{font-size:1.5rem!important}}
+
+.asw-modo-t{display:flex;flex-direction:column;gap:4px;align-items:center}
+.en-asw .toast{bottom:auto;top:74px;transform:translate(-50%,-170px)}
+.en-asw .toast.ver{transform:translate(-50%,0)}
+@media (max-width:700px){.asw-modo-t{align-items:flex-start;text-align:left}.asw-modo b{font-size:1.1rem}}

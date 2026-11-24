@@ -1689,7 +1689,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     return true;
   };
   const catDe = p => (p.categorias || [])[0] || "";
-  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = 0;
+  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = "portada", asModo = "";
   const semillaAS = n => () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
   function combosAS(monto) {
     const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
@@ -1717,7 +1717,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     if (!monto) monto = montos[1] || montos[0];
     if (monto < 15) monto = 15;
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
-    if (window.__asSalio) { asPaso = 0; window.__asSalio = false; }
+    if (window.__asSalio) { asPaso = "portada"; asModo = ""; window.__asSalio = false; }
     if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; }
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
@@ -1730,7 +1730,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <div class="as-hero-txt">
           <h1><span class="as-h-caps">El regalo perfecto</span><em class="as-h-script">para tu amigo secreto</em></h1>
           <p><b>Desde Bs 15.</b> Con <b>carta</b> y <b>envoltorio</b> incluidos.</p>
-          <a class="btn as-hero-btn" href="#as-elige">Elegir mi presupuesto</a>
+          <a class="btn as-hero-btn" href="#as-elige">Empezar</a>
         </div>
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
@@ -1844,34 +1844,54 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
 
     // ---- Paso a paso estilo Scoops: una pantalla por paso, Cani habla, botón Continuar ----
     { const hero = app.querySelector(".as-hero"), grupo = app.querySelector(".as-grupo2"), cards = [...app.querySelectorAll(".as-card")], pol = app.querySelector(".pol-promo"), sec = app.querySelector(".as-pag");
-      if (hero && pol && cards.length === 4 && sec) {
-        const FRASES = [null, "Dime tu presupuesto y yo armo el regalo.", "Elige un personaje o categoría. Si no sabes, sigue.", combos.length ? "¡Mira! Armé estos combos para ti. Toca el dado para ver más." : "Uy, no hay combos de este monto. Prueba con otro presupuesto.", "¿Le escribimos una cartita? La imprimimos para ti.", "¿Le sumamos 4 polaroids con tus fotos? Es opcional."];
+      if (hero && pol && grupo && cards.length === 4 && sec) {
         const bub = t => `<div class="asw-charla"><div class="asw-cani" aria-hidden="true"></div><p class="asw-globo">${esc(t)}</p></div>`;
-        const mk = (nodos, i) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.i = i; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
-        const pasos = [mk([hero, grupo].filter(Boolean), 0), ...cards.map((c, i) => mk([c], i + 1)), mk([pol], 5)];
-        cards.forEach(c => { const h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FRASES[cards.indexOf(c) + 1])); });
-        pol.insertAdjacentHTML("beforebegin", bub(FRASES[5]));
-        const N = pasos.length; asPaso = Math.max(0, Math.min(N - 1, asPaso));
+        const mk = (nodos, k) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.k = k; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
+        const FR = { pres: "Dime tu presupuesto y yo armo el regalo.", gusto: "Elige un personaje o categoría. Si no sabes, sigue.", combo: combos.length ? "¡Mira! Armé estos combos para ti. Toca el dado para ver más." : "Uy, no hay combos de este monto. Prueba con otro presupuesto.", carta: "Escribe un mensajito y lo imprimimos sin costo.", pol: "¿Le sumamos 4 polaroids con tus fotos? Es opcional." };
+        ["pres", "gusto", "combo", "carta"].forEach((k, i) => { const c = cards[i], h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FR[k])); });
+        pol.insertAdjacentHTML("beforebegin", bub(FR.pol)); const polBub = pol.previousElementSibling;
+        grupo.insertAdjacentHTML("beforebegin", `<h2 class="as-tit asw-h">Para grupos de amigos</h2>` + bub("Cuéntame cuántos son y te armo el presupuesto."));
+        const modo = document.createElement("div");
+        modo.innerHTML = `<h2 class="as-tit asw-h">Amigo secreto</h2>${bub("¿Es para una persona o para todo un grupo de amigos?")}
+          <div class="asw-modos" role="radiogroup" aria-label="Tipo de amigo secreto">
+            <button type="button" class="asw-modo" data-m="uno" role="radio"><img src="amigo-carrito.webp" alt=""><span class="asw-modo-t"><b>Para una persona</b><small>Un regalo armado con carta y envoltorio</small></span></button>
+            <button type="button" class="asw-modo" data-m="grupo" role="radio"><img src="polaroids-mano.webp" alt=""><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
+          </div>`;
+        sec.querySelector(".as-form-pasos").before(modo);
+        const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), carta: mk([cards[3]], "carta"), pol: mk([polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
+        const ruta = () => asModo === "grupo" ? ["portada", "modo", "grupo"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
         sec.classList.add("asw");
-        sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/${N}</div></div>`);
+        sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);
         sec.insertAdjacentHTML("beforeend", `<div class="asw-pie"><div class="asw-fila">
           <button type="button" class="asw-atras" id="asw-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
           <div class="asw-total" id="asw-total"><small>Total</small><b>${combos.length ? bsAS(combos[asIdx].total) : "—"}</b></div>
           <button type="button" class="asw-btn" id="asw-seguir"><span>Continuar</span></button></div></div>`);
         const llevar = () => { const c = combos[asIdx]; if (!c) return; const card = app.querySelector(".as-combo"); c.items.forEach(p => { const sel = tieneVar(p) && card ? card.querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); };
-        const btn = $("#asw-seguir");
+        const btn = $("#asw-seguir"), gform = $("#as-g-form");
+        const marcar = () => app.querySelectorAll(".asw-modo").forEach(x => { const on = x.dataset.m === asModo; x.classList.toggle("sel", on); x.setAttribute("aria-checked", on); });
+        app.querySelectorAll(".asw-modo").forEach(x => x.onclick = () => { asModo = x.dataset.m; marcar(); ver(); });
         const ver = () => {
-          pasos.forEach((p, i) => p.hidden = i !== asPaso);
-          $("#asw-n").textContent = asPaso + 1; $("#asw-fill").style.width = ((asPaso + 1) / N * 100) + "%";
-          $("#asw-atras").style.visibility = asPaso ? "visible" : "hidden";
-          $("#asw-total").style.visibility = asPaso >= 3 && combos.length ? "visible" : "hidden";
-          btn.querySelector("span").textContent = asPaso === 0 ? "Empezar" : asPaso === N - 1 ? "Agregar mi regalo al carrito" : "Continuar";
-          btn.classList.toggle("apagado", asPaso === 3 && !combos.length);
-          pasos[asPaso].classList.remove("asw-in"); void pasos[asPaso].offsetWidth; pasos[asPaso].classList.add("asw-in");
+          const R = ruta(); if (!R.includes(asPaso)) asPaso = "portada";
+          const i = R.indexOf(asPaso), k = asPaso;
+          Object.entries(P).forEach(([n, el]) => el.hidden = n !== k);
+          $("#asw-n").textContent = i + 1; $("#asw-t").textContent = R.length; $("#asw-fill").style.width = ((i + 1) / R.length * 100) + "%";
+          $("#asw-atras").style.visibility = i ? "visible" : "hidden";
+          $("#asw-total").style.visibility = (k === "combo" || k === "carta" || k === "pol") && combos.length ? "visible" : "hidden";
+          const ultimo = i === R.length - 1;
+          btn.querySelector("span").textContent = k === "portada" ? "Empezar" : k === "grupo" ? "Pedir presupuesto por WhatsApp" : k === "pol" ? "Agregar mi regalo al carrito" : "Continuar";
+          btn.classList.toggle("apagado", (k === "modo" && !asModo) || (k === "combo" && !combos.length));
+          P[k].classList.remove("asw-in"); void P[k].offsetWidth; P[k].classList.add("asw-in");
         };
-        btn.onclick = () => { if (asPaso === 3 && !combos.length) { toast("No hay combos para este monto"); return; } if (asPaso === N - 1) { llevar(); return; } asPaso++; ver(); window.scrollTo(0, 0); };
-        $("#asw-atras").onclick = () => { if (asPaso > 0) { asPaso--; ver(); window.scrollTo(0, 0); } };
-        ver();
+        btn.onclick = () => {
+          const R = ruta(), i = R.indexOf(asPaso);
+          if (asPaso === "modo" && !asModo) { toast("Elige una opción"); return; }
+          if (asPaso === "combo" && !combos.length) { toast("No hay combos para este monto"); return; }
+          if (asPaso === "grupo") { if (gform.reportValidity()) gform.requestSubmit(); return; }
+          if (asPaso === "pol") { llevar(); return; }
+          if (i < R.length - 1) { asPaso = R[i + 1]; ver(); window.scrollTo(0, 0); }
+        };
+        $("#asw-atras").onclick = () => { const R = ruta(), i = R.indexOf(asPaso); if (i > 0) { asPaso = R[i - 1]; ver(); window.scrollTo(0, 0); } };
+        marcar(); ver();
       } }
   }
 
