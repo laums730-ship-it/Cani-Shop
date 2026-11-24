@@ -2514,3 +2514,24 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .asw [data-k=combo] .as-card-c,.asw [data-k=combo] .as-card{padding-top:0!important;margin:0!important}
 @media (max-height:700px){.asw [data-k=combo] .as-mas{display:none}}
 @media (max-width:700px){.asw [data-k=combo] .as-tit{font-size:1.3rem!important}}
+/* paso 4/carta: sin borde y sin deslizar */
+.asw .as-llega,.asw .as-escribe{box-shadow:none!important;border:0!important;background:none!important;padding:0!important}
+.asw [data-k=carta] .as-llega-cab{margin:0!important}
+.asw [data-k=carta] .asw-sub{margin:0 0 6px!important}
+.asw [data-k=carta] .as-tit,.asw [data-k=carta] .as-llega-cab h2{margin:2px 0 4px!important}
+.asw [data-k=carta] .as-carta-grid{gap:18px;align-items:center;margin-top:0}
+.asw [data-k=carta] .as-carta-form{gap:8px}
+.asw [data-k=carta] .as-carta-form label{gap:3px}
+.asw [data-k=carta] .as-carta-form input,.asw [data-k=carta] .as-carta-form textarea{padding:8px 12px;font-size:.92rem}
+.asw [data-k=carta] .as-carta-form textarea{rows:3;height:calc(var(--ch,1) * 74px);resize:none}
+.asw [data-k=carta] .as-prev-wrap{width:100%;max-width:calc((100dvh - 330px)*1.5)}
+.asw [data-k=carta] .as-prev{width:100%}
+@media (max-width:700px){
+.asw [data-k=carta] .as-carta-grid{grid-template-columns:1fr;gap:8px}
+.asw [data-k=carta] .as-prev-wrap{order:-1;justify-self:center;max-width:min(100%,calc((100dvh - 470px)*1.5))}
+.asw [data-k=carta] .as-prev-tit{display:none}
+.asw [data-k=carta] .as-carta-form{gap:6px}
+.asw [data-k=carta] .as-carta-form label{font-size:.72rem}
+.asw [data-k=carta] .as-carta-form input,.asw [data-k=carta] .as-carta-form textarea{padding:6px 10px;font-size:.88rem;border-radius:12px}
+.asw [data-k=carta] .as-carta-form textarea{height:52px}
+}
