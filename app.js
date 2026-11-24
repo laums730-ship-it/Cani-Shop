@@ -1689,7 +1689,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     return true;
   };
   const catDe = p => (p.categorias || [])[0] || "";
-  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = "portada", asModo = "";
+  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = "portada", asModo = "", asCajaOn = false, asSel = {};
   const semillaAS = n => () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
   function combosAS(monto) {
     const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
@@ -1717,8 +1717,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     if (!monto) monto = montos[1] || montos[0];
     if (monto < 15) monto = 15;
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
-    if (window.__asSalio) { asPaso = "portada"; asModo = ""; window.__asSalio = false; }
-    if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; }
+    if (window.__asSalio) { asPaso = "portada"; asModo = ""; asCajaOn = false; asSel = {}; window.__asSalio = false; }
+    if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; asSel = {}; asCajaOn = false; }
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
     const combos = combosAS(monto);
@@ -1775,11 +1775,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         : `<p class="vacio">Todavía no tenemos combos para este monto. Mira los regalos sueltos de abajo.</p>`}
         ${combos.length > 1 ? `<div class="as-mas"><h3>También te puede gustar</h3><div class="as-mas-fila">${combos.map((c, k) => k === asIdx ? "" : `<button type="button" class="as-mini" data-asir="${k}"><span class="as-mini-f">${c.items.map(p => `<img src="${esc(foto(p))}" alt="" loading="lazy">`).join("")}</span><b>${bsAS(c.total)}</b><small>${esc(c.items.map(p => sinEmoji(p.nombre)).join(" + "))}</small></button>`).filter(Boolean).slice(0, 8).join("")}</div></div>` : ""}
         ${combos.length ? `<div class="as-dado-wrap"><button type="button" class="as-dado" id="as-dado"><span class="as-dado-ic" aria-hidden="true">🎲</span> Ver otro combo</button><small class="as-dado-n">Combo ${asIdx + 1} de ${combos.length}</small></div>` : ""}
-      </div>
-      <div class="as-bloque as-sueltos">
-        <h3 class="as-sub-tit">¿Prefieres elegir tú? Regalos sueltos de hasta ${bsAS(monto)}</h3>
-        ${sueltos.length ? grilla(sueltos.slice(0, asMas ? 24 : 4)) : `<p class="vacio">No hay regalos de este monto por ahora. Prueba con otro presupuesto.</p>`}
-        ${sueltos.length > 4 ? `<div class="as-dado-wrap"><button type="button" class="as-vermas" id="as-vermas">${asMas ? "Ver menos" : `Ver más regalos (${Math.min(sueltos.length, 24) - 4} más)`}</button></div>` : ""}
+        <div class="as-caja-wrap"><button type="button" class="as-caja-ir" id="as-caja-ir">🎁 Armar mi caja</button></div>
       </div>
 
       </div></section>
@@ -1864,15 +1860,27 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
             <button type="button" class="asw-modo" data-m="grupo" role="radio"><img class="asw-sobre asw-atras-i" src="amigo-sobre.webp" alt="" width="732" height="760"><img class="asw-sobre asw-atras-d" src="amigo-sobre.webp" alt="" width="732" height="760"><img class="asw-sobre" src="amigo-sobre.webp" alt="" width="732" height="760"><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
           </div>`;
         sec.querySelector(".as-form-pasos").before(modo);
-        const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
-        const ruta = () => asModo === "grupo" ? ["portada", "modo", "grupo"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
+        const caja = document.createElement("div");
+        caja.innerHTML = `<h2 class="as-tit asw-h">Arma tu propia caja</h2>${bub("Toca los regalos que quieras, hasta " + bsAS(monto) + ".")}
+          <div class="cj-grid">${sueltos.slice(0, 40).map(p => `<div class="cj-p" data-cj="${esc(p.id)}" role="button" tabindex="0" aria-pressed="false"><img src="${esc(foto(p))}" alt="" loading="lazy"><b>${esc(sinEmoji(p.nombre))}</b><span class="cj-pr">${bsAS(p.precio)}</span>${tieneVar(p) ? `<select class="cj-v" data-cjv="${esc(p.id)}" aria-label="Elige color o personaje">${(p.variantes || []).map(v => `<option value="${esc(v.nombre)}">${esc(v.nombre)}</option>`).join("")}</select>` : ""}<i class="cj-ok">✓</i></div>`).join("") || `<p class="vacio">No hay regalos de este monto por ahora.</p>`}</div>`;
+        cards[3].before(caja);
+        const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), caja: mk([caja], "caja"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
+        const ruta = () => asModo === "grupo" ? ["portada", "modo", "grupo"] : asCajaOn ? ["portada", "modo", "pres", "gusto", "combo", "caja", "carta", "pol"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
+        const selIds = () => Object.keys(asSel), sumaSel = () => selIds().reduce((t, id) => t + (+(PRODS.find(p => String(p.id) === id) || {}).precio || 0), 0);
+        const totalAct = () => asCajaOn ? sumaSel() : (combos.length ? combos[asIdx].total : null);
+        const pintaTotal = () => { const t = totalAct(); $("#asw-total b").textContent = t === null ? "—" : bsAS(t); };
+        caja.querySelectorAll(".cj-p").forEach(el => { const id = el.dataset.cj, v = el.querySelector("select"), sel = !!asSel[id];
+          if (sel) { el.classList.add("on"); el.setAttribute("aria-pressed", "true"); if (v && asSel[id].v) v.value = asSel[id].v; }
+          const alt = () => { if (asSel[id]) { delete asSel[id]; } else { const p = PRODS.find(x => String(x.id) === id); if (sumaSel() + (+p.precio) > monto) { toast("Pasarías tu presupuesto de " + bsAS(monto)); return; } asSel[id] = { v: v ? v.value : null }; } el.classList.toggle("on", !!asSel[id]); el.setAttribute("aria-pressed", !!asSel[id]); pintaTotal(); btn.classList.toggle("apagado", asPaso === "caja" && !selIds().length); };
+          el.onclick = e => { if (e.target.closest("select")) return; alt(); }; el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alt(); } };
+          if (v) v.onchange = () => { if (asSel[id]) asSel[id].v = v.value; }; });
         sec.classList.add("asw");
         sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);
         sec.insertAdjacentHTML("beforeend", `<div class="asw-pie"><div class="asw-fila">
           <button type="button" class="asw-atras" id="asw-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
           <div class="asw-total" id="asw-total"><small>Total</small><b>${combos.length ? bsAS(combos[asIdx].total) : "—"}</b></div>
           <button type="button" class="asw-btn" id="asw-seguir"><span>Continuar</span></button></div></div>`);
-        const llevar = () => { const c = combos[asIdx]; if (!c) return; const card = app.querySelector(".as-combo"); c.items.forEach(p => { const sel = tieneVar(p) && card ? card.querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); };
+        const llevar = () => { if (asCajaOn && selIds().length) { selIds().forEach(id => agregar(id, asSel[id].v || null, 1)); setTimeout(() => abrir(true), 250); return; } const c = combos[asIdx]; if (!c) return; const card = app.querySelector(".as-combo"); c.items.forEach(p => { const sel = tieneVar(p) && card ? card.querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); };
         const btn = $("#asw-seguir"), gform = $("#as-g-form");
         const marcar = () => app.querySelectorAll(".asw-modo").forEach(x => { const on = x.dataset.m === asModo; x.classList.toggle("sel", on); x.setAttribute("aria-checked", on); });
         app.querySelectorAll(".asw-modo").forEach(x => x.onclick = () => { asModo = x.dataset.m; marcar(); ver(); });
@@ -1882,21 +1890,24 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           Object.entries(P).forEach(([n, el]) => el.hidden = n !== k);
           $("#asw-n").textContent = i + 1; $("#asw-t").textContent = R.length; $("#asw-fill").style.width = ((i + 1) / R.length * 100) + "%";
           $("#asw-atras").style.visibility = i ? "visible" : "hidden";
-          $("#asw-total").style.visibility = (k === "combo" || k === "carta" || k === "pol") && combos.length ? "visible" : "hidden";
+          $("#asw-total").style.visibility = (k === "combo" || k === "caja" || k === "carta" || k === "pol") && (combos.length || asCajaOn) ? "visible" : "hidden"; pintaTotal();
           const ultimo = i === R.length - 1;
           btn.querySelector("span").textContent = k === "portada" ? "Empezar" : k === "grupo" ? "Pedir presupuesto por WhatsApp" : k === "pol" ? "Agregar mi regalo al carrito" : "Continuar";
-          btn.classList.toggle("apagado", (k === "modo" && !asModo) || (k === "combo" && !combos.length));
+          btn.classList.toggle("apagado", (k === "modo" && !asModo) || (k === "combo" && !combos.length && !asCajaOn) || (k === "caja" && !selIds().length));
           P[k].classList.remove("asw-in"); void P[k].offsetWidth; P[k].classList.add("asw-in");
         };
         btn.onclick = () => {
+          if (asPaso === "combo") asCajaOn = false;
           const R = ruta(), i = R.indexOf(asPaso);
           if (asPaso === "modo" && !asModo) { toast("Elige una opción"); return; }
           if (asPaso === "combo" && !combos.length) { toast("No hay combos para este monto"); return; }
+          if (asPaso === "caja" && !selIds().length) { toast("Toca al menos un regalo"); return; }
           if (asPaso === "grupo") { if (gform.reportValidity()) gform.requestSubmit(); return; }
           if (asPaso === "pol") { llevar(); return; }
           if (i < R.length - 1) { asPaso = R[i + 1]; ver(); window.scrollTo(0, 0); }
         };
         $("#asw-atras").onclick = () => { const R = ruta(), i = R.indexOf(asPaso); if (i > 0) { asPaso = R[i - 1]; ver(); window.scrollTo(0, 0); } };
+        { const ir = $("#as-caja-ir"); if (ir) ir.onclick = () => { asCajaOn = true; asPaso = "caja"; ver(); window.scrollTo(0, 0); }; }
         marcar(); ver();
       } }
   }
