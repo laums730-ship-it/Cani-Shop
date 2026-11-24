@@ -1866,13 +1866,13 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         cards[3].before(caja);
         const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), caja: mk([caja], "caja"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
         const ruta = () => asModo === "grupo" ? ["portada", "modo", "grupo"] : asCajaOn ? ["portada", "modo", "pres", "gusto", "combo", "caja", "carta", "pol"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
-        const selIds = () => Object.keys(asSel), sumaSel = () => selIds().reduce((t, id) => t + (+(PRODS.find(p => String(p.id) === id) || {}).precio || 0), 0);
+        const selIds = () => Object.keys(asSel).filter(id => caja.querySelector(`.cj-p[data-cj="${CSS.escape(id)}"]`)), sumaSel = () => selIds().reduce((t, id) => t + (+(PRODS.find(p => String(p.id) === id) || {}).precio || 0), 0);
         const totalAct = () => asCajaOn ? sumaSel() : (combos.length ? combos[asIdx].total : null);
         const pintaTotal = () => { const t = totalAct(); $("#asw-total b").textContent = t === null ? "—" : bsAS(t); };
         caja.querySelectorAll(".cj-p").forEach(el => { const id = el.dataset.cj, v = el.querySelector("select"), sel = !!asSel[id];
           if (sel) { el.classList.add("on"); el.setAttribute("aria-pressed", "true"); if (v && asSel[id].v) v.value = asSel[id].v; }
           const alt = () => { if (asSel[id]) { delete asSel[id]; } else { const p = PRODS.find(x => String(x.id) === id); if (sumaSel() + (+p.precio) > monto) { toast("Pasarías tu presupuesto de " + bsAS(monto)); return; } asSel[id] = { v: v ? v.value : null }; } el.classList.toggle("on", !!asSel[id]); el.setAttribute("aria-pressed", !!asSel[id]); pintaTotal(); btn.classList.toggle("apagado", asPaso === "caja" && !selIds().length); };
-          el.onclick = e => { if (e.target.closest("select")) return; alt(); }; el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alt(); } };
+          el.onclick = e => { if (e.target.closest("select")) return; alt(); }; el.onkeydown = e => { if (e.target.closest("select")) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alt(); } };
           if (v) v.onchange = () => { if (asSel[id]) asSel[id].v = v.value; }; });
         sec.classList.add("asw");
         sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);
@@ -1907,7 +1907,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           if (i < R.length - 1) { asPaso = R[i + 1]; ver(); window.scrollTo(0, 0); }
         };
         $("#asw-atras").onclick = () => { const R = ruta(), i = R.indexOf(asPaso); if (i > 0) { asPaso = R[i - 1]; ver(); window.scrollTo(0, 0); } };
-        { const ir = $("#as-caja-ir"); if (ir) ir.onclick = () => { asCajaOn = true; asPaso = "caja"; ver(); window.scrollTo(0, 0); }; }
+        { const ir = $("#as-caja-ir"); if (ir) ir.onclick = () => { asCajaOn = true; asSel = {}; caja.querySelectorAll(".cj-p.on").forEach(x => { x.classList.remove("on"); x.setAttribute("aria-pressed", "false"); }); pintaTotal(); asPaso = "caja"; ver(); window.scrollTo(0, 0); }; }
         marcar(); ver();
       } }
   }
