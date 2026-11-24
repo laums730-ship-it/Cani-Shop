@@ -65,8 +65,23 @@
     }
   }
 
-  app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii…</p>`;
-  await Promise.all([cargarAjustes(), cargarProductos()]);
+  // Arranque rápido: si ya visitó antes, se muestra al instante lo último guardado en el teléfono
+  // y mientras tanto se pide lo nuevo a Supabase (si cambió algo, se actualiza la pantalla sola).
+  const crudoCopia = () => { try { return (localStorage.getItem("cani-productos") || "") + (localStorage.getItem("cani-ajustes") || ""); } catch (e) { return ""; } };
+  const vProd = copiaLeer("productos"), vAj = copiaLeer("ajustes"), antesCopia = crudoCopia();
+  if (Array.isArray(vProd) && vProd.length) {
+    PRODS = vProd.map(p => ({ ...p, precio: Number(p.precio), variantes: tieneVar(p) ? p.variantes : null }));
+    if (vAj) for (const [k, v] of Object.entries(vAj)) if (v !== null && v !== undefined) T[k] = v;
+    window.__refrescoDatos = Promise.all([cargarAjustes(), cargarProductos()]).then(() => {
+      if (crudoCopia() === antesCopia) return;
+      if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
+      const sec = (location.hash.split("/")[1] || "");
+      if (["", "catalogo", "novedades", "todo"].includes(sec) && window.scrollY < 80 && typeof window.__rutaRefrescar === "function") window.__rutaRefrescar();
+    });
+  } else {
+    app.innerHTML = `<p class="vacio" style="padding:80px 16px">Cargando cositas kawaii…</p>`;
+    await Promise.all([cargarAjustes(), cargarProductos()]);
+  }
   if (Array.isArray(T.categorias) && T.categorias.length) CATS = T.categorias;
   const inicial = n => String(n || "?").replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
   const circ = c => c.imagen ? `<img src="${esc(c.imagen)}" alt="">` : `<span class="circ-emoji circ-letra">${esc(inicial(c.nombre))}</span>`;
@@ -358,9 +373,10 @@
   let tt; function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("ver"); clearTimeout(tt); tt = setTimeout(() => el.classList.remove("ver"), 1800); }
 
   // ---------- Vistas ----------
+  let cardN = 0;
   const tarjeta = p => { const img2 = (p.imagenes || [])[1], per = personajeDe(p); return `
     <a class="tarjeta ${img2 ? "doble" : ""}" href="#/producto/${p.id}">
-      <div class="foto"><img class="f1 ${(p.imagenes || []).length ? "" : "sin-foto"}" loading="lazy" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" src="${esc(img2)}" alt="">` : ""}
+      <div class="foto"><img class="f1 ${(p.imagenes || []).length ? "" : "sin-foto"}" ${(cardN++ < 4) ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" width="400" height="400" src="${foto(p)}" alt="${esc(p.nombre)}">${img2 ? `<img class="f2" loading="lazy" decoding="async" width="400" height="400" src="${esc(img2)}" alt="">` : ""}
         ${!hayStock(p) ? `<span class="etiqueta agotado">Agotado</span>` : p.nuevo ? `<span class="etiqueta">Nuevo</span>` : ""}</div>
       <div class="info">${per ? `<span class="t-per">${esc(per.nombre)}</span>` : ""}<h3>${esc(sinEmoji(p.nombre))}</h3><div class="precio">${bs(p.precio)}</div>
         <span class="ver-mas">${hayStock(p) ? "Ver opciones →" : "Ver detalles →"}</span></div>
@@ -2223,5 +2239,6 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   { const n = document.querySelector("#carrito-pie .nota"); if (n) n.insertAdjacentHTML("afterend", avisoEntrega(T.avisoCarrito || AVISO_CARRITO_DEF)); }
   if (selOn()) document.querySelectorAll("#menu-sellitos, .pie-sellitos").forEach(a => a.hidden = false);
   if (asOn()) document.querySelectorAll("#menu-amigo, .pie-amigo").forEach(a => a.hidden = false);
+  window.__rutaRefrescar = ruta;
   pintarCarrito(); ruta();
 })();
