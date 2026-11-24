@@ -326,7 +326,7 @@
     btn.disabled = false;
     if (numero) {
       carrito = []; packsPol = []; guardarPol(); guardar(); if (e.target.elements.nota) e.target.elements.nota.value = "";
-      ["as_para", "as_msg", "as_firma"].forEach(n => { if (e.target.elements[n]) e.target.elements[n].value = ""; }); if (e.target.elements.as_es) e.target.elements.as_es.checked = false; try { localStorage.removeItem("as-pedido"); sessionStorage.removeItem("as-sala"); } catch (x) {}
+      ["as_para", "as_msg", "as_firma"].forEach(n => { if (e.target.elements[n]) e.target.elements[n].value = ""; }); if (e.target.elements.as_es) e.target.elements.as_es.checked = false; try { localStorage.removeItem("as-pedido"); ["as-sala", "as-sala-on", "as-paso", "as-caja", "as-sel", "as-extra"].forEach(k => sessionStorage.removeItem(k)); } catch (x) {}
       abrir(false);
       toast(`¡Pedido #${numero} enviado! 💕`);
     }
@@ -1711,6 +1711,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const nomCatAS = id => ((CATS.find(c => c.id === id) || {}).nombre) || "";
   const coincideAS = p => {
     const ids = p.categorias || [];
+    // En una sala, los gustos de tu amigo secreto se suman (le gusta Gatitos O Juegos), no se exigen todos a la vez
+    if (asSalaOn && (filtroAS.per.length || filtroAS.cat.length)) return filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id)))) || filtroAS.cat.some(id => ids.includes(id));
     if (filtroAS.per.length && !filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id))))) return false;
     if (filtroAS.cat.length && !filtroAS.cat.some(id => ids.includes(id))) return false;
     return true;
@@ -1718,9 +1720,9 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const catDe = p => (p.categorias || [])[0] || "";
   let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = "portada", asModo = "", asCajaOn = false, asSalaOn = false, asSalaCtx = null, asSel = {}, asExtra = 0;
   const semillaAS = n => () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
-  function combosAS(monto) {
+  function combosAS(monto, fmin = .7) {
     const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
-    const min = monto * 0.7, sale = [];
+    const min = monto * fmin, sale = [];
     for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
       const a = L[i], b = L[j], t = +a.precio + +b.precio;
       if (t >= min && t <= monto) sale.push({ items: [a, b], total: t, mezcla: catDe(a) !== catDe(b) });
@@ -1736,6 +1738,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     const cupo = { 2: 12, 3: 12, 4: 8 }, hay = { 2: 0, 3: 0, 4: 0 };
     for (const c of sale) { const n = c.items.length; if (hay[n] >= cupo[n] || c.items.some(p => (usos[p.id] || 0) >= 3)) continue; hay[n]++; elegidos.push(c); c.items.forEach(p => usos[p.id] = (usos[p.id] || 0) + 1); if (elegidos.length === 30) break; }
     if (asRonda === 0) { const rnd = semillaAS(Math.round(monto) + new Date().getDate() * 31); for (let i = elegidos.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [elegidos[i], elegidos[j]] = [elegidos[j], elegidos[i]]; } }
+    if (elegidos.length < 6 && fmin > .35) { const mas = combosAS(monto, fmin - .2); if (mas.length > elegidos.length) return mas; }
     return elegidos;
   }
   const NOMBRES_COMBO = ["El combo dulzura", "El combo sorpresa", "El combo favorito", "El combo ternura", "El combo brillito", "El combo cositas lindas", "El combo kawaii", "El combo confeti", "El combo abrazo", "El combo chispa"];
@@ -1748,11 +1751,13 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     if (!monto) monto = montos[1] || montos[0];
     if (monto < 15) monto = 15;
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
-    try { const go = sessionStorage.getItem("as-sala-go"); if (go) { sessionStorage.removeItem("as-sala-go"); const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); if (sl) { asSalaOn = true; asSalaCtx = sl; asModo = "uno"; asPaso = "gusto"; asCajaOn = false; asSel = {}; window.__asSalio = false;
+    try { const go = sessionStorage.getItem("as-sala-go"); if (go) { sessionStorage.removeItem("as-sala-go"); const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); if (sl) { asSalaOn = true; asSalaCtx = sl; asModo = "uno"; asPaso = "gusto"; asCajaOn = false; asSel = {}; window.__asSalio = false; sessionStorage.setItem("as-sala-on", "1"); ["as-paso", "as-caja", "as-sel", "as-extra"].forEach(k => sessionStorage.removeItem(k));
       const nombres = String(sl.gustos || "").split(",").map(x => sinAcento(x.trim())).filter(Boolean); filtroAS.per = PERS().filter(c => nombres.includes(sinAcento(c.nombre))).map(c => c.id); filtroAS.cat = CATEG().filter(c => nombres.includes(sinAcento(c.nombre))).map(c => c.id); guardarFiltroAS();
       sessionStorage.setItem("as-carta", JSON.stringify({ as_para: sl.para || "", as_msg: "", as_firma: "" })); } } } catch (e) {}
-    if (window.__asSalio) { asPaso = "portada"; asModo = ""; asCajaOn = false; asSalaOn = false; asSalaCtx = null; asSel = {}; asExtra = 0; window.__asSalio = false; }
+    if (window.__asSalio) { try { ["as-sala-on", "as-paso", "as-caja", "as-sel", "as-extra"].forEach(k => sessionStorage.removeItem(k)); } catch (e) {} asPaso = "portada"; asModo = ""; asCajaOn = false; asSalaOn = false; asSalaCtx = null; asSel = {}; asExtra = 0; window.__asSalio = false; }
     if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; asSel = {}; asCajaOn = false; asExtra = 0; }
+    // Si el celular recargó la página (por ejemplo al ir a WhatsApp y volver), seguimos en la sala donde estábamos
+    try { if (!asSalaOn && sessionStorage.getItem("as-sala-on")) { const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); if (sl) { asSalaOn = true; asSalaCtx = sl; asModo = "uno"; asPaso = sessionStorage.getItem("as-paso") || "gusto"; asCajaOn = sessionStorage.getItem("as-caja") === "1"; asExtra = +sessionStorage.getItem("as-extra") || 0; try { asSel = JSON.parse(sessionStorage.getItem("as-sel") || "{}") || {}; } catch (e) { asSel = {}; } } } } catch (e) {}
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
     const combos = combosAS(monto);
@@ -1888,7 +1893,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       if (hero && pol && grupo && cards.length === 4 && sec) {
         const bub = t => `<p class="asw-sub">${esc(t)}</p>`;
         const mk = (nodos, k) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.k = k; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
-        const FR = { pres: "Elige un presupuesto y armamos tu regalo.", gusto: "Puedes elegir varios. Si no sabes, sigue.", combo: combos.length ? "Toca el dado para ver más combos." : "No hay combos de este monto. Prueba con otro presupuesto.", carta: "💌 La carta es un extra y no tiene ningún costo. La imprimimos y va con tu regalo.", pol: "Es opcional. 4 fotos con marco blanco." };
+        const FR = { pres: "Elige un presupuesto y armamos tu regalo.", gusto: "Puedes elegir varios. Si no sabes, sigue.", combo: combos.length ? "Toca el dado para ver más combos." : (asSalaOn ? "No encontramos combos con sus gustos. Arma tu caja y elige tú." : "No hay combos de este monto. Prueba con otro presupuesto."), carta: "💌 La carta es un extra y no tiene ningún costo. La imprimimos y va con tu regalo.", pol: "Es opcional. 4 fotos con marco blanco." };
         if (asSalaOn && asSalaCtx) FR.gusto = (asSalaCtx.gustos ? "Armamos tu regalo con sus gustos." : "No dijo qué le gusta. Elige tú.");
         ["pres", "gusto", "combo", "carta"].forEach((k, i) => { const c = cards[i], h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FR[k])); });
         if (asSalaOn && asSalaCtx) { const h = cards[1].querySelector("h2"); h.innerHTML = `A <span class="sl-nom">${esc(asSalaCtx.para || "tu amigo secreto")}</span> le gusta…`;
@@ -1915,17 +1920,18 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         cards[3].before(caja);
         const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), caja: mk([caja], "caja"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
         const ruta = () => asSalaOn ? (asCajaOn ? ["gusto", "combo", "caja", "carta", "pol"] : ["gusto", "combo", "carta", "pol"]) : asModo === "grupo" ? ["portada", "modo", "grupo"] : asCajaOn ? ["portada", "modo", "pres", "gusto", "combo", "caja", "carta", "pol"] : ["portada", "modo", "pres", "gusto", "combo", "carta", "pol"];
+        const guardaEstado = () => { if (!asSalaOn) return; try { sessionStorage.setItem("as-paso", asPaso); sessionStorage.setItem("as-caja", asCajaOn ? "1" : "0"); sessionStorage.setItem("as-sel", JSON.stringify(asSel)); sessionStorage.setItem("as-extra", String(asExtra)); } catch (e) {} };
         const tope = () => monto + asExtra;
         const selIds = () => Object.keys(asSel).filter(id => caja.querySelector(`.cj-p[data-cj="${CSS.escape(id)}"]`)), sumaSel = () => selIds().reduce((t, id) => t + (+(PRODS.find(p => String(p.id) === id) || {}).precio || 0), 0);
         const totalAct = () => asCajaOn ? sumaSel() : (combos.length ? combos[asIdx].total : null);
         const pintaBand = () => { const b = caja.querySelector("#cj-band"), ids = selIds(); if (!ids.length) { b.innerHTML = `<span class="cj-vacia">Tu caja está vacía. Toca los regalos que quieras.</span>`; return; }
           b.innerHTML = `<div class="cj-fila">${ids.map(id => { const p = PRODS.find(x => String(x.id) === id); return `<span class="cj-chip"><img src="${esc(foto(p))}" alt=""><span><b>${esc(sinEmoji(p.nombre))}</b><small>${asSel[id].v ? esc(asSel[id].v) + " · " : ""}${bsAS(p.precio)}</small></span><button type="button" data-cjq="${esc(id)}" aria-label="Quitar ${esc(sinEmoji(p.nombre))}">×</button></span>`; }).join("")}</div><span class="cj-resta">${ids.length} ${ids.length === 1 ? "regalo" : "regalos"} · te quedan ${bsAS(Math.max(0, monto - sumaSel()))}</span>`;
           b.querySelectorAll("[data-cjq]").forEach(x => x.onclick = () => { const id = x.dataset.cjq; delete asSel[id]; const t = caja.querySelector(`.cj-p[data-cj="${CSS.escape(id)}"]`); if (t) { t.classList.remove("on"); t.setAttribute("aria-pressed", "false"); } pintaTotal(); btn.classList.toggle("apagado", asPaso === "caja" && !selIds().length); }); };
-        const pintaTotal = () => { const t = totalAct(), n = asCajaOn ? selIds().length : 0; $("#asw-total b").textContent = t === null ? "—" : bsAS(t); $("#asw-total small").textContent = n ? "Total · " + n + (n === 1 ? " regalo" : " regalos") : "Total"; pintaBand(); };
+        const pintaTotal = () => { const t = totalAct(), n = asCajaOn ? selIds().length : 0; $("#asw-total b").textContent = t === null ? "—" : bsAS(t); guardaEstado(); $("#asw-total small").textContent = n ? "Total · " + n + (n === 1 ? " regalo" : " regalos") : "Total"; pintaBand(); };
         const filtrarCaja = () => { const q = sinAcento(caja.querySelector("#cj-q").value.trim()), act = [...caja.querySelectorAll(".cj-chip-f.on")], per = act.filter(x => x.dataset.tp === "per"), cat = act.filter(x => x.dataset.tp === "cat"); let n = 0;
           caja.querySelectorAll(".cj-p").forEach(el => { const ids = el.dataset.c.split(","), t = el.dataset.t;
             const okP = !per.length || per.some(x => ids.includes(x.dataset.f) || t.includes(sinAcento(nomCatAS(x.dataset.f)))), okC = !cat.length || cat.some(x => ids.includes(x.dataset.f)), okQ = !q || t.includes(q);
-            const ver = okP && okC && okQ && +el.dataset.pr <= tope(); el.hidden = !ver; if (ver) n++; });
+            const uni = asSalaOn && (per.length || cat.length), hit = per.some(x => ids.includes(x.dataset.f) || t.includes(sinAcento(nomCatAS(x.dataset.f)))) || cat.some(x => ids.includes(x.dataset.f)), ver = (uni ? hit : okP && okC) && okQ && +el.dataset.pr <= tope(); el.hidden = !ver; if (ver) n++; });
           caja.querySelector("#cj-nada").hidden = n > 0; const td = caja.querySelector("#cj-todo"); if (td) td.hidden = n >= 4; };
         const ordenarCaja = () => { const g = caja.querySelector("#cj-grid"), men = caja.querySelector("#cj-ord").value === "menor"; [...g.children].sort((a, b) => men ? a.dataset.pr - b.dataset.pr : b.dataset.pr - a.dataset.pr).forEach(x => g.appendChild(x)); };
         caja.querySelector("#cj-q").oninput = filtrarCaja; caja.querySelector("#cj-ord").onchange = ordenarCaja;
@@ -1941,7 +1947,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
           el.onclick = e => { if (e.target.closest("select")) return; alt(); }; el.onkeydown = e => { if (e.target.closest("select")) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); alt(); } };
           if (v) v.onchange = () => { if (asSel[id]) { asSel[id].v = v.value; pintaBand(); } }; });
         sec.classList.add("asw");
-        sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);
+        sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="${asSalaOn && asSalaCtx ? "#/sala/" + esc(asSalaCtx.codigo) : "#/"}" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/<span id="asw-t">7</span></div></div>`);
         sec.insertAdjacentHTML("beforeend", `<div class="asw-pie"><div class="asw-fila">
           <button type="button" class="asw-atras" id="asw-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
           <div class="asw-total" id="asw-total"><small>Total</small><b>${combos.length ? bsAS(combos[asIdx].total) : "—"}</b></div>
@@ -1951,7 +1957,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         const marcar = () => app.querySelectorAll(".asw-modo").forEach(x => { const on = x.dataset.m === asModo; x.classList.toggle("sel", on); x.setAttribute("aria-checked", on); });
         app.querySelectorAll(".asw-modo").forEach(x => x.onclick = () => { if (x.dataset.m === "grupo") { location.hash = "#/sala"; return; } asModo = x.dataset.m; marcar(); ver(); });
         const ver = () => {
-          const R = ruta(); if (!R.includes(asPaso)) asPaso = "portada";
+          const R = ruta(); if (!R.includes(asPaso)) asPaso = "portada"; guardaEstado();
           const i = R.indexOf(asPaso), k = asPaso;
           Object.entries(P).forEach(([n, el]) => el.hidden = n !== k);
           $("#asw-n").textContent = i + 1; $("#asw-t").textContent = R.length; $("#asw-fill").style.width = ((i + 1) / R.length * 100) + "%";
@@ -1995,6 +2001,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const SLOTSM = [[27, 66], [73, 66], [16, 85], [84, 85], [50, 91], [36, 57], [55, 56], [8, 74], [92, 74], [28, 92], [72, 92]];
   const escena = (personas, yo) => `<div class="sl-sala"><picture><source media="(max-width:820px)" srcset="sala-fondo-v.webp"><img src="sala-fondo.webp" alt="" width="1400" height="788"></picture>${personas.slice(0, SLOTS.length).map((n, i) => `<div class="sl-gal ${n === yo ? "yo" : ""}" style="--x:${SLOTS[i][0]}%;--y:${SLOTS[i][1]}%;--xm:${SLOTSM[i][0]}%;--ym:${SLOTSM[i][1]}%">${galleta(i)}<span>${esc(n)}</span></div>`).join("")}</div>${personas.length > SLOTS.length ? `<p class="sl-mas">y ${personas.length - SLOTS.length} más: ${personas.slice(SLOTS.length).map(esc).join(", ")}</p>` : ""}`;
   function sala(arg) {
+    clearInterval(salaReloj);
     const cod = String(arg || "").toUpperCase().replace(/[^A-Z0-9-]/g, "");
     const top = `<div class="sl-top"><a class="asw-x" href="#/amigo-secreto" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><span>Sala de amigo secreto</span></div>`;
     const envolver = (html, ancha) => { app.innerHTML = `<section class="seccion sl-pag ${ancha ? "sl-ancha" : ""}">${top}<div class="sl-cont">${html}</div></section>`; };
@@ -2082,7 +2089,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     };
     cargar().then(d => { if (!d) return; pintar(d);
       let firma = JSON.stringify([d.sala.estado, d.personas.length, d.yo && d.yo.asignado]);
-      salaReloj = setInterval(async () => { if (!location.hash.startsWith("#/sala/" + cod)) return clearInterval(salaReloj); const n = await cargar(true); if (!n) return; const f = JSON.stringify([n.sala.estado, n.personas.length, n.yo && n.yo.asignado]); if (f !== firma && !document.activeElement.closest("form")) { firma = f; pintar(n); } }, 6000); });
+      const mid = salaReloj = setInterval(async () => { if (document.hidden) return; if (!location.hash.startsWith("#/sala/" + cod)) return clearInterval(mid); const n = await cargar(true); if (!n) return; const f = JSON.stringify([n.sala.estado, n.personas.length, n.yo && n.yo.asignado]); if (f !== firma && !document.activeElement.closest("form")) { firma = f; pintar(n); } }, 6000); });
   }
   // ---------- Polaroids: editor "Tus polaroids" ----------
   const asegurarCaveat = () => { if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); } };
