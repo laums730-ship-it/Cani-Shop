@@ -2269,3 +2269,57 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .as-card-n{width:36px;height:36px;font-size:1.05rem;box-shadow:0 0 0 3px #fff,0 0 0 5px #fbd3e4}
 .as-card .as-tit,.as-card .as-llega-cab h2{font-size:1.1rem!important;margin:6px 0 12px!important}
 }
+
+/* ===== Amigo secreto paso a paso (estilo Scoops) ===== */
+.en-asw{background:#fff}
+.en-asw .aviso,.en-asw .cabecera,.en-asw .pie,.en-asw .wa-flotante{display:none!important}
+.asw{max-width:1120px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 150px max(16px,env(safe-area-inset-left,0px))}
+.asw-paso[hidden]{display:none!important}
+.asw-paso.asw-in{animation:aswIn .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes aswIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+.asw-top{position:sticky;top:0;z-index:15;background:#fff;display:flex;align-items:center;gap:14px;padding:16px 0 12px}
+.asw-x{width:34px;height:34px;display:grid;place-items:center;color:#c7a9b6;flex:none;border-radius:10px}
+.asw-x svg{width:22px;height:22px}
+.asw-barra{flex:1;height:16px;border-radius:999px;background:#f4ebef;position:relative;overflow:hidden}
+.asw-barra i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;background:#c8213c;transition:width .5s cubic-bezier(.3,.9,.3,1)}
+.asw-barra i::after{content:"";position:absolute;left:8px;right:8px;top:4px;height:4px;border-radius:999px;background:rgba(255,255,255,.35)}
+.asw-cont{font-weight:700;font-size:.95rem;color:#c8213c;min-width:34px;text-align:right}
+.asw .as-form-pasos{max-width:none;margin:0;gap:0}
+.asw .as-card{display:block;box-shadow:none;background:none;padding:0;border-radius:0}
+.asw .as-card-n{display:none}
+.asw .as-card .as-tit,.asw .as-card .as-llega-cab h2{font-size:1.9rem!important;margin:6px 0 10px!important;line-height:1.15}
+.asw .as-card .as-opc{vertical-align:middle}
+.asw-charla{display:flex;align-items:flex-end;gap:10px;margin:0 0 20px;max-width:760px}
+.asw-cani{width:96px;height:84px;flex:none;background:url(cani-charla.webp) center bottom/contain no-repeat}
+.asw-globo{position:relative;flex:1;margin:0 0 14px;border:2px solid #f3d7e4;border-radius:18px;padding:12px 16px;font-weight:700;color:#783746;background:#fff;font-size:1.02rem;line-height:1.35}
+.asw-globo::before,.asw-globo::after{content:"";position:absolute;left:-10px;bottom:12px;border:9px solid transparent;border-right-color:#f3d7e4;border-left:0}
+.asw-globo::after{left:-7px;border-right-color:#fff}
+.asw .as-llevar{display:none}
+.asw .as-combos{margin:0}
+.asw .as-hero{margin-top:6px}
+.asw-pie{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:2px solid #f4ebef}
+.asw-fila{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:14px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.asw-atras{width:54px;height:54px;flex:none;border:2px solid #f3d7e4;border-bottom-width:5px;border-radius:16px;background:#fff;display:grid;place-items:center;color:#783746;cursor:pointer;padding:0}
+.asw-atras svg{width:22px;height:22px}
+.asw-total{display:flex;flex-direction:column;line-height:1.1;padding:0 4px}
+.asw-total small{font-size:.75rem;color:#a87a8b;font-weight:700}
+.asw-total b{font-size:1.2rem;color:#c8213c;white-space:nowrap}
+.asw-btn{flex:1;min-width:0;border:0;border-bottom:5px solid #8f1328;border-radius:16px;padding:15px 18px;font:inherit;font-weight:700;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:#c8213c;cursor:pointer}
+.asw-btn:active{transform:translateY(3px);border-bottom-width:2px;margin-top:3px}
+.asw-btn.apagado{background:#f4ebef;color:#c7a9b6;border-bottom-color:#e9dde3}
+@media (min-width:821px){
+.asw-btn{flex:none;width:380px;margin-left:auto}
+.asw-top{padding-top:22px}
+.asw-cani{width:120px;height:104px}
+.asw-globo{font-size:1.1rem;padding:14px 18px}
+.asw .as-card .as-tit{font-size:2.1rem!important}
+}
+@media (max-width:700px){
+.asw .as-card .as-tit,.asw .as-card .as-llega-cab h2{font-size:1.5rem!important}
+.asw-btn{font-size:.95rem;padding:14px 12px}
+}
+@media (prefers-reduced-motion:reduce){.asw-paso.asw-in{animation:none}}
+
+.asw .as-escribe{border:0!important;background:none!important}
+.asw .as-gratis{display:none}
+.asw .as-prev-tit{margin-top:4px}

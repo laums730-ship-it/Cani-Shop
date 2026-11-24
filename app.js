@@ -1171,7 +1171,7 @@
       : p.querySelector("[data-grupo=personajes]") ? `¡Ahora tus personajes favoritos! Elige al menos ${minP}.`
       : p.querySelector("[name=caja]") ? "¿En qué cajita te lo enviamos?"
       : p.querySelector("[name=tiktok]") ? "¿Grabamos cómo armamos tu Scoop? Te etiquetamos en TikTok."
-      : p.querySelector("#sc-carta") ? "¿Le escribimos una cartita? La imprimimos para ti."
+      : p.querySelector("#sc-carta") ? "Escribe un mensajito y lo imprimimos sin costo."
       : p.querySelector("[name=nombre]") ? "¡Casi listo! ¿A quién se lo enviamos?"
       : "¡Tu Scoop está listo! Envíanos tu pedido y te pasamos el QR por WhatsApp.";
     const ANIMOS = [["¡Qué lindo!", "Cani aprueba tu elección"], ["¡Buena elección!", "Vas súper bien"], ["¡Me encanta!", "Tu Scoop va quedando precioso"], ["¡Perfecto!", "Sigamos"], ["¡Genial!", "Ya casi terminamos"], ["¡Listo!", "Solo un pasito más"]];
@@ -1689,7 +1689,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     return true;
   };
   const catDe = p => (p.categorias || [])[0] || "";
-  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false;
+  let asRonda = 0, asRondaMonto = 0, asIdx = 0, asMas = false, asPaso = 0;
   const semillaAS = n => () => { n = (n * 1664525 + 1013904223) % 4294967296; return n / 4294967296; };
   function combosAS(monto) {
     const L = PRODS.filter(simpleAS).filter(coincideAS).filter(p => +p.precio < monto);
@@ -1717,6 +1717,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     if (!monto) monto = montos[1] || montos[0];
     if (monto < 15) monto = 15;
     try { sessionStorage.setItem("as-monto", monto); } catch (e) {}
+    if (window.__asSalio) { asPaso = 0; window.__asSalio = false; }
     if (asRondaMonto !== monto) { asRonda = 0; asIdx = 0; asMas = false; asRondaMonto = monto; }
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
@@ -1818,7 +1819,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         </form>
       </div>
     </section>`;
-    { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); $("#as-elige").scrollIntoView({ behavior: "smooth", block: "start" }); }; }
+    { const ir = app.querySelector(".as-hero-btn"); if (ir) ir.onclick = e => { e.preventDefault(); const b = $("#asw-seguir"); if (b) b.click(); }; }
     try { localStorage.setItem("as-pedido", "1"); } catch (e) {}
     { const d = $("#as-dado"); if (d) d.onclick = () => { asIdx++; if (asIdx >= combos.length) { asIdx = 0; asRonda++; } d.classList.add("rueda"); setTimeout(() => amigoSecreto(monto), 380); }; }
     app.querySelectorAll("[data-asir]").forEach(b => b.onclick = () => { asIdx = +b.dataset.asir; amigoSecreto(monto); const t = $(".as-combos"); if (t) t.scrollIntoView({ behavior: "smooth", block: "center" }); });
@@ -1840,6 +1841,38 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     app.querySelectorAll("[data-combo]").forEach(b => b.onclick = () => { const c = combos[+b.dataset.combo]; c.items.forEach(p => { const sel = tieneVar(p) ? b.closest(".as-combo").querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); });
     { const g = $("#as-g-form"); if (g) g.onsubmit = e => { e.preventDefault(); const n = Math.max(4, Math.round(+$("#as-g-n").value) || 4), m = Math.max(15, Math.round(+$("#as-g-m").value) || monto), fe = ($("#as-g-f").value || "").trim(); window.open(waURL(`¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto: queremos ${n} regalos de hasta ${bsAS(m)} cada uno${fe ? ", para el " + fe : ""}. ¿Nos arman el presupuesto? (Vi que por 4 regalos o más van 4 polaroids de regalo 📸)`), "_blank", "noopener"); }; }
     const f = $("#as-otro"); f.onsubmit = e => { e.preventDefault(); const n = Math.round(+$("#as-otro-n").value); if (n >= 15) location.hash = "#/amigo-secreto/" + n; };
+
+    // ---- Paso a paso estilo Scoops: una pantalla por paso, Cani habla, botón Continuar ----
+    { const hero = app.querySelector(".as-hero"), grupo = app.querySelector(".as-grupo2"), cards = [...app.querySelectorAll(".as-card")], pol = app.querySelector(".pol-promo"), sec = app.querySelector(".as-pag");
+      if (hero && pol && cards.length === 4 && sec) {
+        const FRASES = [null, "Dime tu presupuesto y yo armo el regalo.", "Elige un personaje o categoría. Si no sabes, sigue.", combos.length ? "¡Mira! Armé estos combos para ti. Toca el dado para ver más." : "Uy, no hay combos de este monto. Prueba con otro presupuesto.", "¿Le escribimos una cartita? La imprimimos para ti.", "¿Le sumamos 4 polaroids con tus fotos? Es opcional."];
+        const bub = t => `<div class="asw-charla"><div class="asw-cani" aria-hidden="true"></div><p class="asw-globo">${esc(t)}</p></div>`;
+        const mk = (nodos, i) => { const d = document.createElement("div"); d.className = "asw-paso"; d.dataset.i = i; nodos[0].before(d); nodos.forEach(n => d.appendChild(n)); return d; };
+        const pasos = [mk([hero, grupo].filter(Boolean), 0), ...cards.map((c, i) => mk([c], i + 1)), mk([pol], 5)];
+        cards.forEach(c => { const h = c.querySelector("h2"); (h.closest(".as-llega-cab") || h).insertAdjacentHTML("afterend", bub(FRASES[cards.indexOf(c) + 1])); });
+        pol.insertAdjacentHTML("beforebegin", bub(FRASES[5]));
+        const N = pasos.length; asPaso = Math.max(0, Math.min(N - 1, asPaso));
+        sec.classList.add("asw");
+        sec.insertAdjacentHTML("afterbegin", `<div class="asw-top"><a class="asw-x" href="#/" aria-label="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></a><div class="asw-barra"><i id="asw-fill"></i></div><div class="asw-cont"><span id="asw-n">1</span>/${N}</div></div>`);
+        sec.insertAdjacentHTML("beforeend", `<div class="asw-pie"><div class="asw-fila">
+          <button type="button" class="asw-atras" id="asw-atras" aria-label="Paso anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <div class="asw-total" id="asw-total"><small>Total</small><b>${combos.length ? bsAS(combos[asIdx].total) : "—"}</b></div>
+          <button type="button" class="asw-btn" id="asw-seguir"><span>Continuar</span></button></div></div>`);
+        const llevar = () => { const c = combos[asIdx]; if (!c) return; const card = app.querySelector(".as-combo"); c.items.forEach(p => { const sel = tieneVar(p) && card ? card.querySelector(`select[data-asv="${CSS.escape(String(p.id))}"]`) : null; agregar(p.id, sel ? sel.value : null, 1); }); setTimeout(() => abrir(true), 250); };
+        const btn = $("#asw-seguir");
+        const ver = () => {
+          pasos.forEach((p, i) => p.hidden = i !== asPaso);
+          $("#asw-n").textContent = asPaso + 1; $("#asw-fill").style.width = ((asPaso + 1) / N * 100) + "%";
+          $("#asw-atras").style.visibility = asPaso ? "visible" : "hidden";
+          $("#asw-total").style.visibility = asPaso >= 3 && combos.length ? "visible" : "hidden";
+          btn.querySelector("span").textContent = asPaso === 0 ? "Empezar" : asPaso === N - 1 ? "Agregar mi regalo al carrito" : "Continuar";
+          btn.classList.toggle("apagado", asPaso === 3 && !combos.length);
+          pasos[asPaso].classList.remove("asw-in"); void pasos[asPaso].offsetWidth; pasos[asPaso].classList.add("asw-in");
+        };
+        btn.onclick = () => { if (asPaso === 3 && !combos.length) { toast("No hay combos para este monto"); return; } if (asPaso === N - 1) { llevar(); return; } asPaso++; ver(); window.scrollTo(0, 0); };
+        $("#asw-atras").onclick = () => { if (asPaso > 0) { asPaso--; ver(); window.scrollTo(0, 0); } };
+        ver();
+      } }
   }
 
   // ---------- Polaroids: editor "Tus polaroids" ----------
@@ -1942,6 +1975,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   function ruta() {
     app.onclick = null; clearInterval(carReloj);
     document.body.classList.toggle("en-scoop", (location.hash.split("/")[1] || "") === "scoops");
+    document.body.classList.toggle("en-asw", (location.hash.split("/")[1] || "") === "amigo-secreto");
     document.body.classList.toggle("en-producto", (location.hash.split("/")[1] || "") === "producto");
     const [, sec, arg] = (location.hash.slice(1) || "/").split("/");
     document.querySelectorAll(".menu a").forEach(a => a.classList.toggle("activo", a.getAttribute("href") === "#/" + (sec || "")));
@@ -1954,6 +1988,7 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     window.__hashPrev = () => ant;
     window.addEventListener("hashchange", () => {
       ant = act; act = location.hash;
+      if (!act.startsWith("#/amigo-secreto") && !act.startsWith("#/producto")) window.__asSalio = true;
       if (ant.startsWith("#/amigo-secreto") && !act.startsWith("#/amigo-secreto")) yAS = window.scrollY;
       if (act.startsWith("#/amigo-secreto") && ant.startsWith("#/producto") && yAS) { [150, 500, 1200].forEach(t => setTimeout(() => { if (location.hash.startsWith("#/amigo-secreto")) window.scrollTo(0, yAS); }, t)); }
     }); }
