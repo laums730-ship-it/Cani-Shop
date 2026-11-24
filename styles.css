@@ -2355,3 +2355,24 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .asw-modo.sel{background-color:#a8132c;outline:4px solid #fd95c8;outline-offset:3px}
 .asw-modo.sel::after{content:"✓";position:absolute;top:16px;right:18px;width:30px;height:30px;border-radius:50%;background:#fff;color:#c8213c;display:grid;place-items:center;font-weight:800}
 @media (max-width:700px){.asw-modos{grid-template-columns:1fr;gap:16px}.asw-modo{aspect-ratio:16/9;flex-direction:column;text-align:center;padding:18px}.asw-modo b{font-size:1.35rem}.asw-modo-t{align-items:center;text-align:center}}
+
+/* Sobres rojos (imagen) como opciones del paso 2 */
+.asw-modos{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;max-width:900px}
+.asw-modo{aspect-ratio:auto!important;background:none!important;box-shadow:none!important;border:0!important;padding:0!important;border-radius:0;overflow:visible;display:block;color:#783746;position:relative;transition:transform .18s}
+.asw-modo::before,.asw-modo.sel::after{display:none}
+.asw-modo:hover{transform:translateY(-4px)}
+.asw-modo:active{transform:translateY(2px)}
+.asw-sobre{display:block;width:100%;height:auto;position:relative;z-index:1;filter:drop-shadow(0 12px 14px rgba(143,19,40,.22));transition:filter .18s}
+.asw-atras-i,.asw-atras-d{position:absolute;inset:0;z-index:0;width:86%;left:auto;right:auto;top:6%;filter:drop-shadow(0 6px 8px rgba(143,19,40,.18))}
+.asw-atras-i{left:-4%;transform:rotate(-9deg)}
+.asw-atras-d{right:-4%;transform:rotate(9deg)}
+.asw-modo-t{position:absolute!important;z-index:2;left:13%;width:60%;top:37%;height:25%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;pointer-events:none}
+.asw-modo b{color:#8f1328!important;font-size:clamp(1.05rem,2.4vw,1.55rem);line-height:1.1;text-wrap:balance}
+.asw-modo small{color:#8a5566!important;font-size:clamp(.72rem,1.4vw,.92rem);line-height:1.25}
+.asw-modo.sel .asw-sobre{filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 7px #fd95c8) drop-shadow(0 10px 12px rgba(143,19,40,.3))}
+.asw-modo.sel{outline:0!important}
+.asw-modo.sel .asw-modo-t::after{content:"✓ Elegido";margin-top:5px;font-size:.78rem;font-weight:800;color:#fff;background:#c8213c;border-radius:999px;padding:2px 10px}
+@media (max-width:700px){.asw-modos{grid-template-columns:1fr;gap:20px;max-width:360px;margin:0 auto}.asw-modo{aspect-ratio:auto!important;flex-direction:initial;padding:0!important}.asw-modo-t{align-items:center!important;text-align:center!important}.asw-modo b{font-size:1.25rem}}
+.asw-modo img.asw-sobre{max-width:none!important;height:auto!important;width:100%!important;flex:none}
+.asw-modo img.asw-atras-i,.asw-modo img.asw-atras-d{width:86%!important;position:absolute!important}
+@media (max-width:700px){.asw-modos{max-width:290px!important;gap:14px!important}.asw-modo b{font-size:1.1rem!important}.asw-modo small{font-size:.74rem!important}}

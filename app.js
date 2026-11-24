@@ -1854,8 +1854,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         const modo = document.createElement("div");
         modo.innerHTML = `<h2 class="as-tit asw-h">Amigo secreto</h2>${bub("¿Es para una persona o para todo un grupo?")}
           <div class="asw-modos" role="radiogroup" aria-label="Tipo de amigo secreto">
-            <button type="button" class="asw-modo" data-m="uno" role="radio"><span class="asw-modo-t"><b>Para una persona</b><small>Un regalo armado con carta y envoltorio</small></span></button>
-            <button type="button" class="asw-modo" data-m="grupo" role="radio"><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
+            <button type="button" class="asw-modo" data-m="uno" role="radio"><img class="asw-sobre" src="amigo-sobre.webp" alt="" width="732" height="760"><span class="asw-modo-t"><b>Para una persona</b><small>Un regalo armado con carta y envoltorio</small></span></button>
+            <button type="button" class="asw-modo" data-m="grupo" role="radio"><img class="asw-sobre asw-atras-i" src="amigo-sobre.webp" alt="" width="732" height="760"><img class="asw-sobre asw-atras-d" src="amigo-sobre.webp" alt="" width="732" height="760"><img class="asw-sobre" src="amigo-sobre.webp" alt="" width="732" height="760"><span class="asw-modo-t"><b>Para grupos de amigos</b><small>Desde 4 regalos: 4 polaroids gratis</small></span></button>
           </div>`;
         sec.querySelector(".as-form-pasos").before(modo);
         const P = { portada: mk([hero], "portada"), modo: mk([modo], "modo"), pres: mk([cards[0]], "pres"), gusto: mk([cards[1]], "gusto"), combo: mk([cards[2]], "combo"), carta: mk([cards[3]], "carta"), pol: mk([polTit, polBub, pol], "pol"), grupo: mk([...(grupo.previousElementSibling ? [grupo.previousElementSibling.previousElementSibling, grupo.previousElementSibling] : []), grupo].filter(Boolean), "grupo") };
