@@ -2826,3 +2826,7 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 .cj-fijo{max-width:none;margin:0;padding-top:6px}
 .cj-fijo>*{max-width:1000px;margin-left:auto;margin-right:auto}
 .cj-fijo .cj-band{max-width:1000px;margin:8px auto 0}
+
+.sl-tocó b{overflow-wrap:anywhere}
+.sl-tocó b.largo{font-size:1.6rem;line-height:1.15}
+.sl-nom{overflow-wrap:anywhere}
