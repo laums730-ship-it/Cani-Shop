@@ -1748,10 +1748,13 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       <div class="as-filtros" id="as-filtros">
         <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
         <div class="as-tira as-mosaico" role="group" aria-label="Filtrar por personaje o categoría">
-          ${(() => { const TM = { 1: [1, 1], 2: [0, 1], 3: [1, 0], 4: [0, 0], 5: [1, 1], 6: [1, 0], 7: [0, 0], 8: [1, 0], 9: [0, 1], 10: [0, 0], 11: [1, 1] }, SEQ = [4, 2, 3, 7, 5, 10, 6, 9, 8, 11];
-            let k = 0; const tile = (id, on, attr, nombre) => { const n = id === "todos" ? 1 : SEQ[k++ % SEQ.length], [d, w] = TM[n]; return `<button type="button" class="as-chip as-tile ${w ? "as-w" : ""} ${d ? "as-d" : ""} ${on ? "on" : ""}" ${id === "todos" ? 'id="as-limpiar"' : ""} aria-pressed="${on}" ${attr} style="background-image:url(tile-gusto-${n}.webp)"><span>${esc(nombre)}</span></button>`; };
+          ${(() => { const AR = { 1: [520, 247, 1], 2: [474, 277, 0], 3: [351, 276, 1], 4: [309, 298, 0], 5: [520, 295, 1], 6: [293, 298, 1], 7: [272, 302, 0], 8: [274, 245, 1], 9: [413, 257, 0], 10: [237, 249, 0], 11: [473, 245, 1] }, ANCHOS = [2, 5, 9, 11], CUADR = [4, 3, 7, 6, 8, 10];
+            let ka = 0, kc = 0; const tile = (id, on, attr, nombre) => { const n = id === "todos" ? 1 : (nombre.length > 5 ? ANCHOS[ka++ % 4] : CUADR[kc++ % 6]), [w, h, d] = AR[n]; return `<button type="button" class="as-chip as-tile ${d ? "as-d" : ""} ${on ? "on" : ""}" ${id === "todos" ? 'id="as-limpiar"' : ""} aria-pressed="${on}" ${attr} style="background-image:url(tile-gusto-${n}.webp);aspect-ratio:${w}/${h}"><span>${esc(nombre)}</span></button>`; };
             const sin = !(filtroAS.per.length || filtroAS.cat.length);
-            return tile("todos", sin, "", "Todos") + PERS().map(c => tile(c.id, filtroAS.per.includes(c.id), `data-asper="${esc(c.id)}"`, c.nombre)).join("") + CATEG().map(c => tile(c.id, filtroAS.cat.includes(c.id), `data-ascat="${esc(c.id)}"`, c.nombre)).join(""); })()}
+            const lista = PERS().map(c => ({ id: c.id, on: filtroAS.per.includes(c.id), attr: `data-asper="${esc(c.id)}"`, nombre: c.nombre })).concat(CATEG().map(c => ({ id: c.id, on: filtroAS.cat.includes(c.id), attr: `data-ascat="${esc(c.id)}"`, nombre: c.nombre })));
+            const iH = lista.findIndex(x => /happy\s*box/i.test(x.nombre)), iA = lista.findIndex(x => /^accesorios$/i.test(x.nombre));
+            if (iH > -1) { if (iA > -1) { const acc = lista.splice(iA, 1)[0]; lista[iH > iA ? iH - 1 : iH] = acc; } else lista.splice(iH, 1); }
+            return tile("todos", sin, "", "Todos") + lista.map(x => tile(x.id, x.on, x.attr, x.nombre)).join(""); })()}
         </div>
       </div>
 
