@@ -2763,3 +2763,9 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 .sl-ficha .sl-like,.sl-ficha .sl-like:nth-child(n){font-family:inherit;font-weight:600;font-size:.95rem;color:#a2415a;background:#fff;border:1.5px solid #f2a9c9;border-radius:999px;padding:6px 14px;box-shadow:none;cursor:default;pointer-events:none;user-select:none}
 .sl-ficha .sl-likes-n{font-size:.85rem;font-weight:500;margin:8px auto 0;max-width:340px;color:#8a5566}
 .sl-sig{text-align:center;color:#c8213c;font-weight:700;font-size:.95rem;margin:14px 0 0}
+
+/* subir presupuesto en la caja */
+.cj-pres{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:2px 0 6px;font-size:.88rem;color:#783746;font-weight:600}
+.cj-step{display:inline-flex;gap:6px}
+.cj-step button{font:inherit;font-weight:700;font-size:.85rem;color:#c8213c;background:#fff;border:2px solid #f2a9c9;border-radius:999px;padding:3px 12px;cursor:pointer}
+.cj-step button:disabled{opacity:.35;cursor:default}
