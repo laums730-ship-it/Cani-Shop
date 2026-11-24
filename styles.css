@@ -2721,3 +2721,16 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 .sl-sala picture{display:block}
 }
 .sl-sala picture{display:block}
+
+.sl-nom{color:#c8213c}
+.sl-likes{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px auto 8px;max-width:640px}
+.sl-like{font-family:var(--f-tit);font-weight:600;font-size:1.3rem;color:#fff;background:#c8213c;border-radius:20px;padding:14px 22px;box-shadow:0 5px 0 #8f1328}
+.sl-like:nth-child(3n+2){background:#fd95c8;color:#8f1328;box-shadow:0 5px 0 #e873b0}
+.sl-like:nth-child(3n){background:#8f1328;box-shadow:0 5px 0 #5c0c1a}
+.sl-likes-n{text-align:center;color:#8a5566;font-weight:600;margin:10px 0 0}
+.cj-nota{max-width:1000px;margin:8px auto 0;font-size:.9rem;color:#783746;font-weight:600}
+.cj-nota[hidden],.cj-todo[hidden]{display:none}
+.cj-todo{background:none;border:0;color:#c8213c;text-decoration:underline;font:inherit;font-size:.85rem;cursor:pointer;margin-left:6px}
+.sl-likes{margin-top:min(12dvh,110px)}
+.sl-like{font-size:1.6rem;padding:18px 28px;border-radius:24px}
+.sl-likes-n{font-size:1.05rem;max-width:420px;margin-left:auto;margin-right:auto;margin-top:18px}
