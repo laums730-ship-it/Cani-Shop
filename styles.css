@@ -2385,3 +2385,15 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .asw-modos{flex-direction:column;align-items:center;gap:22px!important;padding:0}
 .asw-modo{width:clamp(220px,calc((100vh - 380px) / 2 * .96),300px)}
 }
+/* Texto más legible */
+.asw-modo b{font-weight:800!important}
+.asw-modo small{font-weight:600!important;color:#6b3342!important}
+/* Celular: sobres lado a lado y texto debajo, sin deslizar */
+@media (max-width:700px){
+.asw-modos{flex-direction:row!important;align-items:flex-start;justify-content:center;gap:14px!important;padding:0 2px!important;max-width:none!important}
+.asw-modo{width:calc(50% - 7px)!important;max-width:200px;min-width:0}
+.asw-modo-t{position:static!important;width:auto!important;height:auto!important;margin-top:10px;pointer-events:auto}
+.asw-modo b{font-size:1.05rem!important;color:#8f1328!important}
+.asw-modo small{font-size:.8rem!important}
+.asw-atras-i{left:-6%}.asw-atras-d{right:-6%}
+}
