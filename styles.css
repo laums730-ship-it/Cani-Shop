@@ -2247,3 +2247,25 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .as-carta-form input:focus,.as-carta-form textarea:focus{outline:none;border-color:#c8213c}
 .as-escribe .as-prev-wrap{margin:0}
 @media (max-width:700px){.as-carta-grid{grid-template-columns:1fr;gap:14px}}
+
+/* Estilo Scoops: cada paso es una tarjeta con su número */
+.as-form-pasos{display:flex;flex-direction:column;gap:16px;max-width:980px;margin:0 auto 26px}
+.as-card{display:grid;grid-template-columns:46px minmax(0,1fr);gap:14px;background:#fff;border-radius:26px;padding:22px 22px 24px 16px;box-shadow:0 8px 24px rgba(120,55,70,.08)}
+.as-card-n{width:46px;height:46px;border-radius:50%;background:#c8213c;color:#fff;display:grid;place-items:center;font-weight:700;font-size:1.3rem;box-shadow:0 0 0 4px #fff,0 0 0 6px #fbd3e4}
+.as-card-c{min-width:0}
+.as-card .as-num{display:none}
+.as-card .as-tit,.as-card .as-llega-cab h2{font-size:1.25rem!important;margin:8px 0 14px!important}
+.as-card #as-elige{margin-top:8px!important}
+.as-card .as-filtros,.as-card .as-bloque:not(.as-sueltos){margin:0!important;padding:0!important;border:0!important}
+.as-card .as-llega{background:none!important;padding:0!important;border-radius:0!important;margin:0!important}
+.as-card .as-filtros{display:block!important}
+.as-card .as-combos,.as-card .as-mas,.as-card .as-sueltos{max-width:none}
+.as-card .as-sueltos{margin-top:22px!important}
+.as-card .as-llega-cab{margin:0}
+.as-card .as-gratis{background:#fef2f9;box-shadow:none;border:0;padding:4px 12px;font-size:.8rem;margin:0 0 10px}
+.as-card .as-combo{box-shadow:none}
+@media (max-width:700px){
+.as-card{grid-template-columns:36px minmax(0,1fr);gap:10px;padding:16px 14px 18px 12px;border-radius:22px}
+.as-card-n{width:36px;height:36px;font-size:1.05rem;box-shadow:0 0 0 3px #fff,0 0 0 5px #fbd3e4}
+.as-card .as-tit,.as-card .as-llega-cab h2{font-size:1.1rem!important;margin:6px 0 12px!important}
+}

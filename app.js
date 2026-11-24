@@ -1734,15 +1734,18 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <img class="as-foto" src="amigo-secreto-banner.webp" alt="Regalos kawaii colgando de cintas rojas con lazo" width="900" height="1125" fetchpriority="high">
       </div>
 
+      <div class="as-form-pasos">
+      <section class="as-card"><div class="as-card-n">1</div><div class="as-card-c">
       <h2 class="as-tit" id="as-elige"><span class="as-num">1</span>¿Cuánto quieres gastar?</h2>
       <div class="as-montos" role="group" aria-label="Presupuesto">
         ${montos.map(m => `<a class="as-monto ${m === monto ? "on" : ""}" href="#/amigo-secreto/${m}" aria-current="${m === monto}"><span class="as-solapa"></span><small>hasta</small><b>${bsAS(m)}</b></a>`).join("")}
         <form class="as-otro" id="as-otro"><label for="as-otro-n">¿Otro monto?</label><div><span>${esc(T.moneda)}</span><input id="as-otro-n" type="number" min="15" step="1" inputmode="numeric" placeholder="40" value="${montos.includes(monto) ? "" : monto}"><button type="submit">Ver</button></div></form>
       </div>
 
+      </div></section>
+      <section class="as-card"><div class="as-card-n">2</div><div class="as-card-c">
       <div class="as-filtros" id="as-filtros">
         <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
-        <p class="as-sub-paso">Si no sabes, déjalo en “Todos”.</p>
         <div class="as-tira" role="group" aria-label="Filtrar por personaje o categoría">
           <button type="button" class="as-chip ${filtroAS.per.length || filtroAS.cat.length ? "" : "on"}" id="as-limpiar" aria-pressed="${!(filtroAS.per.length || filtroAS.cat.length)}">Todos</button>
           ${PERS().length ? `<span class="as-sep" aria-hidden="true"></span>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
@@ -1751,9 +1754,10 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <p class="as-desliza">Desliza para ver más</p>
       </div>
 
+      </div></section>
+      <section class="as-card"><div class="as-card-n">3</div><div class="as-card-c">
       <div class="as-bloque">
         <h2 class="as-tit"><span class="as-num">3</span>Elige tu combo de hasta ${bsAS(monto)}</h2>
-        <p class="as-sub">Listos para regalar, con carta y envoltorio.</p>
         ${combos.length ? `<div class="as-combos">${combos.map((c, k) => k !== asIdx ? "" : `<article class="as-combo">
             <div class="as-combo-fotos as-n${c.items.length}">${c.items.map(p => `<a href="#/producto/${esc(p.id)}" data-asf="${esc(p.id)}"><img src="${esc(foto(p))}" alt="${esc(sinEmoji(p.nombre))}" loading="lazy"></a>`).join("")}</div>
             <div class="as-combo-txt"><h3>${NOMBRES_COMBO[(k + asRonda * 3) % NOMBRES_COMBO.length] || "Combo"}</h3>
@@ -1771,9 +1775,10 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         ${sueltos.length > 4 ? `<div class="as-dado-wrap"><button type="button" class="as-vermas" id="as-vermas">${asMas ? "Ver menos" : `Ver más regalos (${Math.min(sueltos.length, 24) - 4} más)`}</button></div>` : ""}
       </div>
 
+      </div></section>
+      <section class="as-card"><div class="as-card-n">4</div><div class="as-card-c">
       <div class="as-llega as-escribe">
         <div class="as-llega-cab"><h2><span class="as-num">4</span>Escribe tu carta <small class="as-opc">Opcional</small></h2><p class="as-gratis"><b>Sin costo</b></p></div>
-        <p class="as-sub-paso">La imprimimos y va con tu regalo.</p>
         <div class="as-carta-grid">
           <div class="as-carta-form">
             <label>¿Para quién es?<input id="as-c-para" maxlength="40" placeholder="Su nombre"></label>
@@ -1785,6 +1790,9 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
             <div class="as-prev" id="as-prev-pg"><img src="amigo-carta-fondo.webp" alt="" width="1536" height="1024" loading="lazy"><div class="as-prev-msg"></div><div class="as-prev-para"></div><div class="as-prev-de"></div></div>
           </div>
         </div>
+      </div>
+
+      </div></section>
       </div>
 
       <div class="pol-promo">
