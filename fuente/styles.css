@@ -2809,3 +2809,20 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
   background-repeat:no-repeat!important;background-position:right 14px center!important;background-size:11px 8px!important;
   padding:7px 34px 7px 16px!important;border-radius:999px!important;font-weight:600;cursor:pointer}
 .cj-v{padding:4px 28px 4px 10px!important;background-position:right 9px center!important}
+
+/* caja: título, límite y bandeja siempre a la vista al deslizar */
+.cj-fijo{position:sticky;top:58px;z-index:10;background:#fff;padding:2px 0 8px;max-width:1000px;margin:0 auto}
+.cj-cab{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap}
+.cj-cab .asw-h{margin:0!important;font-size:clamp(1.15rem,3.4vw,1.7rem)!important}
+.cj-cab .cj-pres{margin:0}
+.cj-fijo .cj-band{position:static;top:auto;margin:8px 0 0;max-width:none;display:block;padding:7px 10px 8px}
+.cj-bh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.cj-bh b{font-size:.88rem;color:#783746}
+.cj-bh .cj-resta,.cj-bh .cj-vacia{display:block;font-size:.8rem;color:#8a5566;font-weight:600;white-space:normal}
+.cj-resta strong{color:#c8213c}
+.cj-fijo .cj-chip{max-width:230px}
+.cj-fijo .cj-chip b{max-width:150px;font-size:.78rem}
+@media (max-width:700px){.cj-fijo{top:52px}.cj-lim{display:none}.cj-cab .asw-h{font-size:1.1rem!important}.cj-fijo .cj-resta{display:block}}
+.cj-fijo{max-width:none;margin:0;padding-top:6px}
+.cj-fijo>*{max-width:1000px;margin-left:auto;margin-right:auto}
+.cj-fijo .cj-band{max-width:1000px;margin:8px auto 0}
