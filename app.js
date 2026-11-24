@@ -1747,12 +1747,12 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
       <section class="as-card"><div class="as-card-n">2</div><div class="as-card-c">
       <div class="as-filtros" id="as-filtros">
         <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
-        <div class="as-tira" role="group" aria-label="Filtrar por personaje o categoría">
-          <button type="button" class="as-chip ${filtroAS.per.length || filtroAS.cat.length ? "" : "on"}" id="as-limpiar" aria-pressed="${!(filtroAS.per.length || filtroAS.cat.length)}">Todos</button>
-          ${PERS().length ? `<span class="as-sep" aria-hidden="true"></span>${PERS().map(c => `<button type="button" class="as-chip ${filtroAS.per.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.per.includes(c.id)}" data-asper="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
-          ${CATEG().length ? `<span class="as-sep" aria-hidden="true"></span>${CATEG().map(c => `<button type="button" class="as-chip ${filtroAS.cat.includes(c.id) ? "on" : ""}" aria-pressed="${filtroAS.cat.includes(c.id)}" data-ascat="${esc(c.id)}">${esc(c.nombre)}</button>`).join("")}` : ""}
+        <div class="as-tira as-mosaico" role="group" aria-label="Filtrar por personaje o categoría">
+          ${(() => { const TM = { 1: [1, 1], 2: [0, 1], 3: [1, 0], 4: [0, 0], 5: [1, 1], 6: [1, 0], 7: [0, 0], 8: [1, 0], 9: [0, 1], 10: [0, 0], 11: [1, 1] }, SEQ = [4, 2, 3, 7, 5, 10, 6, 9, 8, 11];
+            let k = 0; const tile = (id, on, attr, nombre) => { const n = id === "todos" ? 1 : SEQ[k++ % SEQ.length], [d, w] = TM[n]; return `<button type="button" class="as-chip as-tile ${w ? "as-w" : ""} ${d ? "as-d" : ""} ${on ? "on" : ""}" ${id === "todos" ? 'id="as-limpiar"' : ""} aria-pressed="${on}" ${attr} style="background-image:url(tile-gusto-${n}.webp)"><span>${esc(nombre)}</span></button>`; };
+            const sin = !(filtroAS.per.length || filtroAS.cat.length);
+            return tile("todos", sin, "", "Todos") + PERS().map(c => tile(c.id, filtroAS.per.includes(c.id), `data-asper="${esc(c.id)}"`, c.nombre)).join("") + CATEG().map(c => tile(c.id, filtroAS.cat.includes(c.id), `data-ascat="${esc(c.id)}"`, c.nombre)).join(""); })()}
         </div>
-        <p class="as-desliza">Desliza para ver más</p>
       </div>
 
       </div></section>

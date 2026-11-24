@@ -2409,3 +2409,21 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 }
 @media (min-width:821px){.asw .as-otro input{width:150px!important;min-width:150px;flex:none}.asw .as-otro > div{flex:none}}
 @media (min-width:821px){.asw .as-monto{aspect-ratio:auto!important;min-width:0}}
+
+/* Mosaico de gustos (estilo calendario de adviento) */
+.asw .as-mosaico{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:clamp(96px,17vh,150px);grid-auto-flow:dense;gap:14px;overflow:visible!important;flex-wrap:wrap;max-width:1040px;margin:6px auto 0;padding:0}
+.asw .as-tile{position:relative;display:grid;place-items:center;border:0!important;border-radius:20px;padding:10px 12px!important;background-color:transparent!important;background-size:100% 100%;background-repeat:no-repeat;color:#8f1328!important;font:inherit;font-weight:800;font-size:clamp(.95rem,1.7vw,1.3rem);line-height:1.1;text-align:center;cursor:pointer;min-width:0;height:auto;box-shadow:0 5px 0 rgba(143,19,40,.14);transition:transform .15s,box-shadow .15s}
+.asw .as-tile.as-w{grid-column:span 2}
+.asw .as-tile.as-d{color:#fff!important}
+.asw .as-tile span{position:relative;z-index:1;text-wrap:balance;text-shadow:none;pointer-events:none}
+.asw .as-tile:hover{transform:translateY(-3px)}
+.asw .as-tile:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(143,19,40,.14)}
+.asw .as-tile.on{outline:4px solid #fd95c8;outline-offset:3px}
+.asw .as-tile.on span::before{content:"✓ ";font-weight:900}
+.asw .as-tile::after{display:none!important}
+@media (max-width:700px){.asw .as-mosaico{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:clamp(84px,13vh,112px);gap:10px}.asw .as-tile{font-size:.95rem;border-radius:16px}}
+.asw .as-mosaico{align-items:stretch!important;align-content:start;justify-content:stretch!important}
+.asw .as-tile{align-self:stretch!important;justify-self:stretch!important;width:auto!important;height:auto!important;max-height:none!important}
+.asw .as-mosaico{-webkit-mask-image:none!important;mask-image:none!important;overflow:visible!important;scroll-snap-type:none}
+.asw .as-mosaico::after,.asw .as-mosaico::before{display:none}
+@media (max-width:700px){.asw .as-mosaico{width:100%;box-sizing:border-box;padding-right:2px}}
