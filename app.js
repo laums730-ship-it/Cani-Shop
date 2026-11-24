@@ -1753,15 +1753,18 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         <h2 class="as-tit"><span class="as-num">2</span>¿Qué le gusta? <small class="as-opc">Opcional</small></h2>
         <div class="as-tira as-mosaico" role="group" aria-label="Filtrar por personaje o categoría">
           ${(() => { const AR = { 1: [520, 247, 1], 2: [474, 277, 0], 3: [351, 276, 1], 4: [309, 298, 0], 5: [520, 295, 1], 6: [293, 298, 1], 7: [272, 302, 0], 8: [274, 245, 1], 9: [413, 257, 0], 10: [237, 249, 0], 11: [473, 245, 1] }, ANCHOS = [2, 5, 9, 11], CUADR = [4, 3, 7, 6, 8, 10];
+            let calOn = false; const CAL = [[1, 45, 81, 501, 285, 1], [2, 555, 81, 344, 281, 0], [3, 909, 81, 277, 281, 1], [4, 1197, 81, 289, 281, 0], [5, 51, 383, 277, 295, 0], [6, 336, 383, 481, 296, 1], [7, 827, 383, 315, 296, 1], [8, 1149, 383, 336, 295, 0], [9, 45, 698, 224, 257, 1], [10, 276, 698, 237, 257, 0], [11, 514, 698, 352, 257, 0], [12, 871, 698, 217, 257, 0], [13, 1094, 698, 397, 257, 1]];
+            let ki = 0, cdk = 0; const calc = () => { cdk = 0; if (!calOn) return ""; const [n, x, y, w, h, d] = CAL[ki++]; cdk = d; return `;--cbg:url(tile-c-${n}.webp);--cx:${((x - 45) / 1446 * 100).toFixed(3)}%;--cy:${((y - 81) / 874 * 100).toFixed(3)}%;--cw:${(w / 1446 * 100).toFixed(3)}%;--ch:${(h / 874 * 100).toFixed(3)}%;--cd:${d}`; };
             let ka = 0, kc = 0, kt = 0, ks = 0, kw = 0; const MV = { t: [[2, 260, 404, 1], [7, 267, 327, 0], [8, 262, 325, 0]], s: [[4, 273, 278, 0], [5, 275, 277, 0], [10, 268, 270, 1], [11, 269, 271, 1]], w: [[3, 424, 350, 0], [6, 411, 275, 1], [9, 425, 289, 1], [12, 419, 262, 0]] };
             const tile = (id, on, attr, nombre) => { const n = id === "todos" ? 1 : (nombre.length > 5 ? ANCHOS[ka++ % 4] : CUADR[kc++ % 6]), [w, h, d] = AR[n];
               const cl = id === "todos" ? "t" : nombre.length >= 10 ? "w" : nombre.length >= 7 ? "s" : "t", L = MV[cl], m = id === "todos" ? [1, 260, 413, 1] : L[(cl === "t" ? kt++ : cl === "s" ? ks++ : kw++) % L.length];
-              return `<button type="button" class="as-chip as-tile as-m${cl} ${d ? "as-d" : ""} ${m[3] ? "as-dm" : ""} ${on ? "on" : ""}" ${id === "todos" ? 'id="as-limpiar"' : ""} aria-pressed="${on}" ${attr} style="background-image:url(tile-gusto-${n}.webp);aspect-ratio:${w}/${h};--bgm:url(tile-v-${m[0]}.webp);--arm:${m[1]}/${m[2]}"><span>${esc(nombre)}</span></button>`; };
+              const cc = calc();
+              return `<button type="button" class="as-chip as-tile as-m${cl} ${calOn ? "as-cal-t" : ""} ${cdk ? "as-cdk" : ""} ${d ? "as-d" : ""} ${m[3] ? "as-dm" : ""} ${on ? "on" : ""}" ${id === "todos" ? 'id="as-limpiar"' : ""} aria-pressed="${on}" ${attr} style="background-image:url(tile-gusto-${n}.webp);aspect-ratio:${w}/${h};--bgm:url(tile-v-${m[0]}.webp);--arm:${m[1]}/${m[2]}${cc}"><span>${esc(nombre)}</span></button>`; };
             const sin = !(filtroAS.per.length || filtroAS.cat.length);
             const lista = PERS().map(c => ({ id: c.id, on: filtroAS.per.includes(c.id), attr: `data-asper="${esc(c.id)}"`, nombre: c.nombre })).concat(CATEG().map(c => ({ id: c.id, on: filtroAS.cat.includes(c.id), attr: `data-ascat="${esc(c.id)}"`, nombre: c.nombre })));
             const iH = lista.findIndex(x => /happy\s*box/i.test(x.nombre)), iA = lista.findIndex(x => /^accesorios$/i.test(x.nombre));
             if (iH > -1) { if (iA > -1) { const acc = lista.splice(iA, 1)[0]; lista[iH > iA ? iH - 1 : iH] = acc; } else lista.splice(iH, 1); }
-            return tile("todos", sin, "", "Todos") + lista.map(x => tile(x.id, x.on, x.attr, x.nombre)).join(""); })()}
+            calOn = lista.length === 12; return tile("todos", sin, "", "Todos") + lista.map(x => tile(x.id, x.on, x.attr, x.nombre)).join(""); })()}
         </div>
       </div>
 

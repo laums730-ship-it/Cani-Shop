@@ -2563,3 +2563,25 @@ body:has(.as-combos) .wa-flotante{display:none!important}
 .as-combo-fotos.as-n4{grid-template-columns:repeat(4,1fr)!important}
 @media (max-width:700px){.asw [data-k=combo] .as-combo-fotos.as-n4{grid-template-columns:repeat(4,calc(var(--ph)*.8))!important;gap:5px!important}}
 @media (min-width:701px){.asw [data-k=combo]{--ph:clamp(60px,calc(100dvh - 520px),170px)}.asw [data-k=combo] .as-combo-fotos.as-n4 a{width:calc(var(--ph)*.8);height:calc(var(--ph)*.8)}}
+
+/* computadora: la hoja de 13 casillas, tal cual, sin deformar */
+@media (min-width:701px){
+.asw .as-mosaico:has(.as-cal-t){display:block!important;position:relative;width:min(100%,1100px,calc((100dvh - 280px)*1.654));aspect-ratio:1446/874;margin:6px auto 0;gap:0}
+.asw .as-tile.as-cal-t{position:absolute;left:var(--cx);top:var(--cy);width:var(--cw)!important;height:var(--ch)!important;aspect-ratio:auto!important;background-image:var(--cbg)!important;background-size:100% 100%!important;background-position:center;grid-column:auto!important;grid-row:auto!important;border-radius:0;box-shadow:none;color:#8f1328!important;font-size:clamp(.8rem,1.35vw,1.3rem);display:grid;place-items:center;padding:4px 10px!important}
+.asw .as-tile.as-cal-t.as-cdk{color:#fff!important}
+.asw .as-tile.as-cal-t#as-limpiar{place-items:center;padding-top:4px!important;font-size:clamp(1rem,2vw,1.8rem);background-position:center}
+.asw .as-tile.as-cal-t.on{outline:0;filter:drop-shadow(0 0 0 #fd95c8) drop-shadow(0 0 4px #fd95c8) drop-shadow(0 0 4px #fd95c8)}
+.asw .as-tile.as-cal-t:hover{transform:scale(1.02)}
+}
+@media (max-width:700px){.asw .as-tile.as-cal-t{position:static}}
+@media (min-width:701px){.asw .as-tile.as-cal-t#as-limpiar{justify-items:end;padding-right:14%!important}}
+@media (min-width:701px){
+.asw .as-mosaico:has(.as-cal-t){container-type:inline-size}
+.asw .as-tile.as-cal-t{font-size:clamp(9px,1.85cqw,22px);padding:2px 4px!important}
+.asw .as-tile.as-cal-t#as-limpiar{font-size:clamp(12px,3cqw,32px);padding:2px 4px 2px 38%!important;justify-items:center}
+}
+@media (min-width:701px){
+.asw .as-tile.as-cal-t{font-size:clamp(9px,2.05cqw,23px)}
+.asw .as-tile.as-cal-t#as-limpiar{padding:2px 4px!important}
+.asw .as-tile.as-cal-t#as-limpiar span{margin-left:40%}
+}
