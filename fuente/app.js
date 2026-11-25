@@ -951,7 +951,6 @@
     });
   }
   window.abrirQuiz = abrirQuiz;
-  try { if (T.quiz && T.quiz.activo && !localStorage.getItem("quiz-visto")) setTimeout(() => { if (!document.querySelector(".quiz-velo") && !location.hash.includes("scoops")) abrirQuiz(); }, 2500); } catch (e) {}
 
   const COLOR_HEX = { rosa: "#f7a1c4", lila: "#c9a7f0", celeste: "#9fd4f5", verde: "#9fe0b4", "verde menta": "#a8ecd0", amarillo: "#ffe27a",
     blanco: "#ffffff", negro: "#2b2b2b", naranja: "#ffb27a", rojo: "#f26b6b", morado: "#a77bdb", azul: "#7fa8f0",
