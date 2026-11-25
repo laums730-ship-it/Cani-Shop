@@ -994,7 +994,6 @@
             <img class="scp-cuchara-img" src="cuchara-scoops.webp" alt="Cani Scoops: letras de gelatina brillante sobre una cuchara con leche" width="800" height="999" fetchpriority="high">
             <h2>¿De qué trata?</h2>
             <p>Sacamos piedritas de nuestra taza al azar, y cada piedrita que sale es un producto sorpresa que va directo a tu caja.</p>
-            <p class="scp-vid">Todo se hace por video, así ves cada piedrita que sale.</p>
           </div>
         </div></section>
 

@@ -2840,7 +2840,7 @@ body.en-asw .sl-pag.sl-ancha{max-width:1300px;padding:0 24px}
 
 /* Scoops: portada con la cuchara */
 .scp-cuchara{align-items:center;gap:0}
-.scp-cuchara-img{display:block;width:100%;max-width:min(300px,calc((100dvh - 430px)*.8));min-width:200px;height:auto;margin:0 auto 4px}
+.scp-cuchara-img{display:block;width:100%;max-width:min(300px,calc((100dvh - 430px)*.8));min-width:200px;height:auto;margin:26px auto 4px}
 .en-scoop .scp-cuchara h2{text-align:center;font-size:1.85rem;color:var(--cafe);margin:8px 0 10px}
 .scp-cuchara p{margin:0 0 10px;color:var(--cafe);font-family:var(--f-txt,Comfortaa),sans-serif;font-size:1.02rem;line-height:1.55;text-align:center;text-wrap:pretty}
 .scp-cuchara .scp-vid{font-size:.92rem;color:var(--gris);margin-bottom:0}
