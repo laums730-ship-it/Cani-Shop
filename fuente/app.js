@@ -990,20 +990,11 @@
       </section>
       <form id="sc-form" class="sc-form" novalidate>
         <section class="sc-paso scp-info-paso"><div class="sc-num">0</div><div class="sc-cont">
-          <h2>¿Qué es un Lucky Scoop?</h2>
-          <div class="scp-info">
-            <div class="lucky-anim" aria-hidden="true">
-              <img class="la-taza" src="taza-cani.webp" alt="">
-              <img class="la-perla" src="perla.webp" alt="">
-              <span class="la-brillo"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <img class="la-premio la-p1" src="llavero.webp" alt="">
-              <img class="la-premio la-p2" src="libreta.webp" alt="">
-            </div>
-            <ul class="scp-filas">
-              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M9 9.500a3.500 3.500 0 0 1 3-1.500"/></svg></span><div><b>Sacamos piedritas de una taza</b><small>Al azar.</small></div></li>
-              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.500"/><path d="M3 6.500h18V9H3zM12 6.500V20"/></svg></span><div><b>Cada piedrita es un producto</b><small>Lo que te toca es lo que llega a tu caja.</small></div></li>
-              <li><span class="scp-ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2.500"/><path d="M16 10.500l5-3v9l-5-3z"/></svg></span><div><b>Todo se hace por video</b><small>Así ves cada piedrita que sale.</small></div></li>
-            </ul>
+          <div class="scp-info scp-cuchara">
+            <img class="scp-cuchara-img" src="cuchara-scoops.webp" alt="Cani Scoops: letras de gelatina brillante sobre una cuchara con leche" width="800" height="999" fetchpriority="high">
+            <h2>¿De qué trata?</h2>
+            <p>Sacamos piedritas de nuestra taza al azar, y cada piedrita que sale es un producto sorpresa que va directo a tu caja.</p>
+            <p class="scp-vid">Todo se hace por video, así ves cada piedrita que sale.</p>
           </div>
         </div></section>
 
@@ -1229,7 +1220,7 @@
       if (globo) globo.textContent = si ? (k === "video" ? "¡Genial! Grabaremos cómo armamos tu Scoop." : "¡Qué lindo! Escribe tu mensaje aquí abajo.") : "¡Está súper! Igual lo armamos con mucho amor.";
     });
     pasos.forEach((p, i) => {
-      p.querySelector("h2").insertAdjacentHTML("afterend", `<div class="scd-charla"><div class="scd-cani" aria-hidden="true"></div><p class="scd-globo">${esc(frase(p))}</p></div>`);
+      if (!p.querySelector(".scp-cuchara")) p.querySelector("h2").insertAdjacentHTML("afterend", `<div class="scd-charla"><div class="scd-cani" aria-hidden="true"></div><p class="scd-globo">${esc(frase(p))}</p></div>`);
       const g = p.querySelector("[data-grupo]"); if (g) g.insertAdjacentHTML("beforebegin", `<p class="scd-cuenta" data-c="${g.dataset.grupo}"></p>`);
       if (i === N - 1) p.classList.add("scd-final");
     });
