@@ -1712,8 +1712,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
   const nomCatAS = id => ((CATS.find(c => c.id === id) || {}).nombre) || "";
   const coincideAS = p => {
     const ids = p.categorias || [];
-    // En una sala, los gustos de tu amigo secreto se suman (le gusta Gatitos O Juegos), no se exigen todos a la vez
-    if (asSalaOn && (filtroAS.per.length || filtroAS.cat.length)) return filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id)))) || filtroAS.cat.some(id => ids.includes(id));
+    // Los gustos se suman (le gusta Sanrio O Peluches), no se exigen todos a la vez; así siempre salen combos
+    if (filtroAS.per.length || filtroAS.cat.length) return filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id)))) || filtroAS.cat.some(id => ids.includes(id));
     if (filtroAS.per.length && !filtroAS.per.some(id => ids.includes(id) || textoAS(p).includes(sinAcento(nomCatAS(id))))) return false;
     if (filtroAS.cat.length && !filtroAS.cat.some(id => ids.includes(id))) return false;
     return true;
@@ -1761,7 +1761,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
     try { if (!asSalaOn && sessionStorage.getItem("as-sala-on")) { const sl = JSON.parse(sessionStorage.getItem("as-sala") || "null"); if (sl) { asSalaOn = true; asSalaCtx = sl; asModo = "uno"; asPaso = sessionStorage.getItem("as-paso") || "gusto"; asCajaOn = sessionStorage.getItem("as-caja") === "1"; asExtra = +sessionStorage.getItem("as-extra") || 0; try { asSel = JSON.parse(sessionStorage.getItem("as-sel") || "{}") || {}; } catch (e) { asSel = {}; } } } } catch (e) {}
     if (!document.getElementById("fuente-banner")) { const l = document.createElement("link"); l.id = "fuente-banner"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@600&display=swap"; document.head.appendChild(l); }
     if (!document.getElementById("fuente-caveat")) { const l = document.createElement("link"); l.id = "fuente-caveat"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap"; document.head.appendChild(l); }
-    const combos = combosAS(monto);
+    let combos = combosAS(monto);
+    if (!combos.length && (filtroAS.per.length || filtroAS.cat.length)) { const g = [filtroAS.per, filtroAS.cat]; filtroAS.per = []; filtroAS.cat = []; combos = combosAS(monto); filtroAS.per = g[0]; filtroAS.cat = g[1]; }
     const sueltos = PRODS.filter(coincideAS).filter(p => noAS(p) && hayStock(p) && +p.precio > 0 && +p.precio <= monto).sort((a, b) => b.precio - a.precio);
     const msgGrupo = `¡Hola Cani Shop! 🎁 Somos un grupo de amigo secreto y queremos pedir varios regalos de ${bsAS(monto)}. ¿Nos ayudan?`;
     app.innerHTML = `<section class="seccion as-pag">
@@ -1931,7 +1932,8 @@ El universo Obakenu está organizado en familias, y cada personaje tiene su prop
         const filtrarCaja = () => { const q = sinAcento(caja.querySelector("#cj-q").value.trim()), act = [...caja.querySelectorAll(".cj-chip-f.on")], per = act.filter(x => x.dataset.tp === "per"), cat = act.filter(x => x.dataset.tp === "cat"); let n = 0;
           caja.querySelectorAll(".cj-p").forEach(el => { const ids = el.dataset.c.split(","), t = el.dataset.t;
             const okP = !per.length || per.some(x => ids.includes(x.dataset.f) || t.includes(sinAcento(nomCatAS(x.dataset.f)))), okC = !cat.length || cat.some(x => ids.includes(x.dataset.f)), okQ = !q || t.includes(q);
-            const uni = asSalaOn && (per.length || cat.length), hit = per.some(x => ids.includes(x.dataset.f) || t.includes(sinAcento(nomCatAS(x.dataset.f)))) || cat.some(x => ids.includes(x.dataset.f)), ver = (uni ? hit : okP && okC) && okQ && +el.dataset.pr <= tope(); el.hidden = !ver; if (ver) n++; });
+            const uni = per.length || cat.length, hit = per.some(x => ids.includes(x.dataset.f) || t.includes(sinAcento(nomCatAS(x.dataset.f)))) || cat.some(x => ids.includes(x.dataset.f)), ver = (uni ? hit : okP && okC) && okQ && +el.dataset.pr <= tope(); el.hidden = !ver; if (ver) n++; });
+          if (!n && !q && (per.length || cat.length)) caja.querySelectorAll(".cj-p").forEach(el => { const ver = +el.dataset.pr <= tope(); el.hidden = !ver; if (ver) n++; });
           caja.querySelector("#cj-nada").hidden = n > 0; const td = caja.querySelector("#cj-todo"); if (td) td.hidden = n >= 4; };
         const ordenarCaja = () => { const g = caja.querySelector("#cj-grid"), men = caja.querySelector("#cj-ord").value === "menor"; [...g.children].sort((a, b) => men ? a.dataset.pr - b.dataset.pr : b.dataset.pr - a.dataset.pr).forEach(x => g.appendChild(x)); };
         caja.querySelector("#cj-q").oninput = filtrarCaja; caja.querySelector("#cj-ord").onchange = ordenarCaja;
