@@ -696,6 +696,18 @@
     .ped-gan b.bien{color:#2e7d4f}.ped-gan b.mal{color:var(--rojo)}
     .ped-gan .nota-gan{font-size:.8rem;color:var(--gris);margin:0}
     .ped-pie .btn:first-child{flex:1}
+    /* Celular: botones de abajo en dos filas y fechas sin salirse */
+    @media (max-width:640px){
+      .ed-pie.ped-pie{flex-wrap:wrap}
+      .ed-pie.ped-pie .btn:first-child{flex:1 1 100%}
+      .ed-pie.ped-pie .btn:not(:first-child){flex:1 1 auto;white-space:normal;line-height:1.2}
+      .ed-pie.ped-pie #ped-as{flex:1 1 100%;order:2}
+      .ed-pie.ped-pie #ped-nota,.ed-pie.ped-pie #ped-wa,.ed-pie.ped-pie #ped-borrar{order:3}
+      .ed-pie.ped-pie #ped-wa,.ed-pie.ped-pie #ped-borrar{flex:0 0 52px;padding:0}
+      .fechas{grid-template-columns:minmax(0,1fr)}
+      .fechas .campo,.fechas input{min-width:0;max-width:100%;box-sizing:border-box}
+      .fechas input[type=date]{width:100%;min-height:46px;text-align:left}
+    }
     .bloqueado .pit input,.bloqueado .pit select,.bloqueado .pit .q,.bloqueado .agregar-prod{pointer-events:none;opacity:.6}
     @media (max-width:640px){ .pit .nums{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .pr-vars{padding-left:4px} .ped-card{grid-template-columns:1fr} .ped-card .der{text-align:left} }
 
@@ -1366,7 +1378,7 @@
       <p class="ayuda">Cámbialas para registrar un pedido de otro día. Si dejas pago o entrega vacías, se usa la fecha de hoy al guardar.</p>
     </div>
 
-    <div class="campo"><label>👤 Cliente registrado</label><input id="ped-cli" list="ped-clis" placeholder="Busca por nombre o teléfono para llenar sus datos…"><datalist id="ped-clis"></datalist></div>
+    <div class="campo"><label>👤 Cliente registrado</label><input id="ped-cli" list="ped-clis" placeholder="Busca por nombre o teléfono…"><datalist id="ped-clis"></datalist></div>
     <div class="fila">
       <div class="campo"><label>Cliente</label><input name="cliente"></div>
       <div class="campo"><label>Teléfono</label><input name="telefono" inputmode="tel"></div>
