@@ -3648,7 +3648,8 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
     const w = window.open("", "_blank"); if (!w) return toast("Permite las ventanas emergentes para imprimir", true);
     const u = f => new URL(f, location.href).href, fondo = u("amigo-carta-fondo.webp"), est = u("estrella-rosa.svg");
     const e = t => String(t || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Carta de amigo secreto</title>
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carta de amigo secreto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Comfortaa:wght@700&family=Sue+Ellen+Francisco&display=block" rel="stylesheet">
 <style>@page{size:150mm 100mm;margin:0}html,body{margin:0;color:#783746}
 .h{position:relative;width:150mm;height:100mm;margin:0 auto;overflow:hidden;background:#fef2f9;page-break-after:always;box-sizing:border-box}
@@ -3663,7 +3664,12 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
 .et small{font-family:Comfortaa,sans-serif;font-size:3mm}
 .et img{width:9mm;margin-bottom:1mm}
 .corte{position:absolute;left:0;right:0;top:5mm;text-align:center;font:3mm Comfortaa,sans-serif;color:#b4708a;margin:0}
-@media screen{body{background:#eee;padding:20px}.h{box-shadow:0 6px 20px rgba(0,0,0,.15);margin-bottom:20px}}</style></head>
+.barra{display:none}
+@media screen{body{background:#eee;padding:12px 12px 96px}.h{box-shadow:0 6px 20px rgba(0,0,0,.15);margin-bottom:20px}
+.barra{display:flex;gap:8px;flex-wrap:wrap;position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid #f3c9dd;z-index:9}
+.barra button{flex:1 1 auto;border:0;border-radius:999px;padding:13px 16px;font:700 15px Comfortaa,sans-serif;color:#783746;background:#fce3ee;box-shadow:0 3px 0 #f08fb9}
+.barra button.p{background:#fd95c8;flex:1 1 100%}.barra button:disabled{opacity:.6}}
+@media print{.barra{display:none!important}}</style></head>
 <body>
 <div class="h"><img class="f" src="${fondo}" alt="">
   <div class="msg" id="msg">${e(a.msg || "¡Feliz Navidad! Espero que este regalito te saque una sonrisa.")}</div>
@@ -3674,12 +3680,34 @@ const i=document.querySelector("img");(i.complete?Promise.resolve():new Promise(
   <div class="et" style="left:9mm"><img src="${est}" alt=""><b>Para</b><span>${e(a.para || "ti")}</span><small>¡No lo abras antes del amigo secreto!</small></div>
   <div class="et" style="left:79mm"><img src="${est}" alt=""><b>Amigo secreto</b><span>Cani Shop</span><small>hecho con cariño en Santa Cruz</small></div>
 </div>
+<div class="barra"><button class="p" id="b-pdf" type="button">Descargar PDF</button><button id="b-comp" type="button" hidden>Compartir</button><button id="b-imp" type="button">Imprimir</button></div>
 <script>
 document.fonts.ready.then(()=>{
 const t=document.getElementById("msg");let k=1;
 while(t.scrollHeight>t.clientHeight+1&&k>.3){k-=.05;t.style.fontSize="calc(8.6mm*"+k+")";if(k<.62)t.style.lineHeight="3.85mm";}
 ["para","de"].forEach(id=>{const n=document.getElementById(id);let q=1;while(n.scrollWidth>n.clientWidth+1&&q>.4){q-=.05;n.style.fontSize="calc("+getComputedStyle(n).fontSize+" * .95)";}});
-Promise.all([...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>print(),300));});<\/script></body></html>`);
+const movil=matchMedia("(pointer:coarse)").matches||Math.min(innerWidth,screen.width||innerWidth)<700;
+const hojas=[...document.querySelectorAll(".h")];
+const ancho=Math.min(innerWidth,screen.width||innerWidth);if(ancho<700){const z=Math.min(1,(ancho-24)/hojas[0].offsetWidth);hojas.forEach(h=>h.style.zoom=z);}
+const nombre="Carta-amigo-secreto-"+(${JSON.stringify(String(a.para||"").replace(/[^\wáéíóúñ ]+/gi,"").trim().replace(/\s+/g,"-"))}||"carta");
+async function hacerPDF(){
+  await document.fonts.ready;
+  const caja=document.createElement("div");caja.style.cssText="position:fixed;left:-10000px;top:0";document.body.appendChild(caja);
+  const {jsPDF}=window.jspdf,pdf=new jsPDF({unit:"mm",format:[150,100],orientation:"landscape"});
+  try{for(let i=0;i<hojas.length;i++){
+    const c=hojas[i].cloneNode(true);c.style.zoom="1";c.style.margin="0";c.style.boxShadow="none";caja.innerHTML="";caja.appendChild(c);
+    const cv=await html2canvas(c,{scale:3,useCORS:true,backgroundColor:"#ffffff"});
+    if(i)pdf.addPage([150,100],"landscape");
+    pdf.addImage(cv.toDataURL("image/jpeg",.95),"JPEG",0,0,150,100);
+  }}finally{caja.remove();}
+  return pdf;
+}
+const bp=document.getElementById("b-pdf"),bc=document.getElementById("b-comp"),bi=document.getElementById("b-imp");
+bi.onclick=()=>print();
+bp.onclick=async()=>{bp.disabled=true;bp.textContent="Preparando…";try{(await hacerPDF()).save(nombre+".pdf");}catch(e){alert("No se pudo crear el PDF. Prueba con Imprimir.");}bp.disabled=false;bp.textContent="Descargar PDF";};
+try{const prueba=new File([""],"x.pdf",{type:"application/pdf"});if(navigator.canShare&&navigator.canShare({files:[prueba]})){bc.hidden=false;
+  bc.onclick=async()=>{bc.disabled=true;try{const blob=(await hacerPDF()).output("blob");await navigator.share({files:[new File([blob],nombre+".pdf",{type:"application/pdf"})],title:"Carta de amigo secreto"});}catch(e){}bc.disabled=false;};}}catch(e){}
+Promise.all([...document.images].map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>{if(!movil)setTimeout(()=>print(),300);});});<\/script></body></html>`);
     w.document.close();
   }
   $("#ped-as").onclick = () => { const a = leerAS(FP.nota.value); if (a) imprimirAS(a); else toast("Este pedido no es de amigo secreto", true); };
